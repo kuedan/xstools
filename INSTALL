@@ -1,0 +1,41 @@
+#######################################################
+#                Xonotic Server Tools                 #
+#                 Installation Guide                  #
+#######################################################
+
+#                PLEASE READ CAREFULLY                #
+
+
+
+EXPLANATION:
+
+The folder of this tool will be your new Xonotic 'user 
+directory', which is normally '~/.xonotic'.
+The name of this folder is user-defined and can be named
+'.xonotic' like default for sure.
+
+INSTALLATION:
+
+1) Move this folder to a location you like 
+   and name this folder as you like.
+   (Do not forget: This is your user directory)
+
+2) Open xstools.conf in the subfolder 'scripts/'
+   and define the location of your Xonotic Git
+   Installation and your Xonotic 'user directory'
+   (basedir and userdir)
+   If Xonotic git is not allready installed, you can
+   run --install after you have set 'basedir' in 
+   xstools.conf
+
+3) Open 'xstools' (not xstools.sh) in this folder and 
+   fix the path of this script. This means: 
+   rename 'please-fix-me' to the location of your new
+   Xonotic 'user directory'
+
+4) Move 'xstools' (not xstools.sh) to a folder which 
+   is part of your PATH variable.
+   You can run Xonotic Server Tools now with
+   xstools 'arguments'
+   eg: xstools --help 
+

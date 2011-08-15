@@ -1,0 +1,101 @@
+ 
+                      __  __                 _   _      
+                      \ \/ /___  _ __   ___ | |_(_) ___ 
+                       \  // _ \| '_ \ / _ \| __| |/ __|
+                       /  \ (_) | | | | (_) | |_| | (__ 
+                      /_/\_\___/|_| |_|\___/ \__|_|\___|
+             ____                             _____           _     
+            / ___|  ___ _ ____   _____ _ __  |_   _|__   ___ | |___ 
+            \___ \ / _ \ '__\ \ / / _ \ '__|   | |/ _ \ / _ \| / __|
+             ___) |  __/ |   \ V /  __/ |      | | (_) | (_) | \__ \
+            |____/ \___|_|    \_/ \___|_|      |_|\___/ \___/|_|___/
+
+
+----- Version: 0.95 beta 
+      Release date: 09. August 2011
+      Created by: It'sMe
+                  
+      For any questions, help, and reporting bugs, join #xstools, quakenet (IRC).
+
+----- Required Software: tmux
+      Optional Software: perl (for rcon2irc)
+                         qstat (to list server informations)
+
+----- Description:
+      Xonotic Server Tools is a collection of functions to manage many different
+      servers by loading every single server in a seperate tmux window. You can 
+      easily control those servers by their names. In current release this script
+      only supports Xonotic git servers.
+      Next to managing servers and rcon2irc bots Xonotic Server Tools supports
+      a more extended home folder tree, but it still supports 'the default'.
+      The new folder tree gives a better overview of your server files:
+      'pk3' packages, log files, server configuration files ... 
+
+      ├── configs
+      │   ├── rcon2irc         - your rcon2irc configuration files
+      │   └── servers          - your individual server configuration files
+      │       └── common       - your 'common' server configuration files
+      ├── data                 - the default 'data' folder
+      │   ├── logs             - all generated logs will be here
+      │   └── maps             - the default map folder - add your mapinfo files here
+      ├── logs -> data/logs/   - just a symlink 
+      └── packages             - place your packages (.pk3) here
+
+      If the 'Xonotic Server Tools' should be able to recongize your configuration 
+      files then use for Xonotic servers .cfg and for rcon2irc .rcon2irc.conf as file 
+      extension.
+        
+----- General Usage:
+      xstools
+        --install                   - download xonotic git into basedir 
+        --start-all                 - start all servers
+        --start <server(s)>         - start servers
+        --stop-all                  - stop all servers
+        --stop <server(s)>          - stop servers
+        --restart-all               - restart all servers
+        --restart-all-c             - + send countdown of 15min
+        --restart <server(s)>       - restart-servers
+        --update-all                - update git and restart all servers
+        --update-all-c              - + send countdown of 15min
+        --list                      - list running servers/rcon2irc bots
+        --list-configs              - list server and rcon2irc configs
+        --info <server(s)>          - show info about server(s)
+        --info-all                  - show info about all servers    
+        --view <server(s)>          - view server window
+        --add-pk3 <url(s)>          - add pk3 files from given urls
+        --rescan                    - rescan for new added packages
+        --time2console              - print date/time to server console
+        --set-logfile               - set a new logfile for all servers
+
+        --rcon2irc                  syntax: --rcon2irc command <bot(s)>
+             start-all               - start all rcon2irc bots
+             start <bot(s)>          - start rcon2irc bots
+             stop-all                - stop all rcon2irc bots
+             stop <bot(s)>           - stop rcon2irc bots
+             restart-all             - restart all rcon2irc bots
+             restart <bot(s)>        - restart rcon2irc bots
+             view <bot(s)>           - view rcon2irc window
+
+        --help                      - print full help
+        -h                          - print this help
+
+      for more information check --help
+
+----- Installation:
+      For installation please read the INSTALL file. 
+
+----- Common Important Usage Notes:
+      Xonotic Server Tools recognize your server configuration files in 
+      'configs/servers' by their file extension .cfg. The name of the server 
+      is created by the file name without extension. 
+      That is "config_file%\.cfs". The name of the tmux window has a 
+      prefix "server-".
+      rcon2irc files are recogized by .rcon2irc.conf. The name of the rcon2irc bot 
+      is created by the filename without extension, too. 
+      That is "config_file%\.rcon2irc.conf". The name of the tmux window has a 
+      prefix "rcon2irc-".
+----- rcon2irc Important Usage Notes:
+      If you are loading extra plugins in your .rcon2irc.conf configuration file
+      ... then use the full path '/home/user/..../plugin.pl' 
+      ... or put them into 'configs/rcon2irc' folder.
+      

@@ -1,0 +1,1 @@
+Put your individual Xonotic server configuration files into this folder 'configs/servers'.
