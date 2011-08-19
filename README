@@ -18,7 +18,8 @@
       For any questions and help, join #xstools, quakenet (IRC).
 
 ----- Required Software: tmux
-      Optional Software: perl (for rcon2irc)
+      Optional Software: perl  (for rcon2irc)
+                         git   (for running 'git' servers)
                          qstat (to list server informations)
 
 ----- Description:
