@@ -11,11 +11,11 @@
             |____/ \___|_|    \_/ \___|_|      |_|\___/ \___/|_|___/
 
 
------ Version: 0.95 beta 
-      Release date: 09. August 2011
+----- Version: 0.99 beta 
+      Release date: 19. August 2011
       Created by: It'sMe
                   
-      For any questions, help, and reporting bugs, join #xstools, quakenet (IRC).
+      For any questions and help, join #xstools, quakenet (IRC).
 
 ----- Required Software: tmux
       Optional Software: perl (for rcon2irc)
@@ -47,39 +47,97 @@
         
 ----- General Usage:
       xstools
-        --install                   - download xonotic git into basedir 
-        --start-all                 - start all servers
-        --start <server(s)>         - start servers
-        --stop-all                  - stop all servers
-        --stop <server(s)>          - stop servers
-        --restart-all               - restart all servers
-        --restart-all-c             - + send countdown of 15min
-        --restart <server(s)>       - restart-servers
-        --update-all                - update git and restart all servers
-        --update-all-c              - + send countdown of 15min
-        --list                      - list running servers/rcon2irc bots
-        --list-configs              - list server and rcon2irc configs
-        --info <server(s)>          - show info about server(s)
-        --info-all                  - show info about all servers    
-        --view <server(s)>          - view server window
-        --add-pk3 <url(s)>          - add pk3 files from given urls
-        --rescan                    - rescan for new added packages
-        --time2console              - print date/time to server console
-        --set-logfile               - set a new logfile for all servers
+        --install-git           Download Xonotic Git and save it in the given 'basedir' 
+                                folder. Check xtools.conf to adjust this.
 
-        --rcon2irc                  syntax: --rcon2irc command <bot(s)>
-             start-all               - start all rcon2irc bots
-             start <bot(s)>          - start rcon2irc bots
-             stop-all                - stop all rcon2irc bots
-             stop <bot(s)>           - stop rcon2irc bots
-             restart-all             - restart all rcon2irc bots
-             restart <bot(s)>        - restart rcon2irc bots
-             view <bot(s)>           - view rcon2irc window
+        --start-all             Start all servers whose configuration files are placed
+                                in 'configs/servers'. Those configuration files are 
+                                recognized by their extension .cfg.
 
-        --help                      - print full help
-        -h                          - print this help
+        --start <server(s)>     Same as --start-all, but you can specify server(s).
 
-      for more information check --help
+        --stop-all              Stop all currently running servers. Those servers must
+                                run in the defined tmux session. Otherwise xstools 
+                                cannot stop them.
+
+        --stop <server(s)>      Stop specific server(s).
+
+        --restart-all           Restart all running server(s).
+
+        --restart-all -c        Same as --restart-all, but with a countdown of 15min.
+                                This countdown will be sent to players as a message.
+
+        --restart <server(s)>   Restart specific server(s).
+
+        All start/stop/restart functions support an optional parameter '-r' or '-g'.
+        If you use -r (-g) as argument for start functions, xstools will start
+        'release' ('git') servers. Otherwise default will be used (check xstools.conf).
+        Example: xstools --start -g server1 
+                (start server1 as git server)
+                 xstools --start-all -r 
+                (start all servers, which are not running, as 'release' server)
+                If you use -r (-g) as argument for restart functions, xstools will only restart
+                'release' ('git') servers.
+                If you use -r (-g) as argument for stop functios, xstools will only stop
+                'release' ('git') servers.
+
+        --update-git            Update Xonotic git and restart all servers.
+
+        --update-git -c         Same as --update-all, but with a countdown of 15min
+                                This countdown will be sent to players as a message.
+
+        --list                  List all running servers and bots.
+
+        --list-configs          List all server and rcon2irc configuration files.
+
+        --info                  Show informations like hostname, port.... of server(s).
+                                If qstat is enabled you will get more informations.
+
+        --info-all              Same as --info, but this lists info for all servers.
+
+        --view <server(s)>      Attach a tmux window and show server window of server(s).
+
+        --add-pk3 <url(s)>      Add .pk3 files to 'packages' from given urls and rescan 
+                                for them at endmatch with every server.
+
+        --rescan                Rescan for new added packages at endmatch with every 
+                                Server.
+
+        --time2console          Print date/time to server console. This gives a better 
+                                overview, when parsing output or logs. Very usefull as 
+                                part of crontab.
+                                Instead of using this function (as part of your crontab)
+                                you can use the cvars 'timestamps' and 'timeformat'.
+
+        --set-logfile           Change the logfile of all running servers to 
+                                'serverconfig.date.log', where 'serverconfig' is the
+                                server name  and 'date' is 'YearMonthDay'. 
+
+        --rcon2irc              <syntax> --rcon2irc command <bot(s)
+                                command is one of the following options:
+       
+             start-all          Start all rcon2irc bots, whose configuration files are
+                                are placed in 'configs/rcon2irc'. Those configuration 
+                                files are recognized by their extenstion .rcon2irc.conf
+
+             start <bot(s)>     same as --rcon-start-all, but you can specify bot(s)
+
+             stop-all           Stop all currently running bots. Those servers must
+                                run in the defined tmux session. Otherwise xstools 
+                                cannot stop them.
+
+             stop <bot(s)>      Stop specific bot(s).
+
+             restart-all        Restart all running bot(s).
+
+             restart <bot(s)>   Restart rcon2irc specific bot(s).
+
+             view <bot(s)       Attach a tmux window and show bot window of bot(s).
+
+
+        --help                  print this help
+
+        -h                      print a list of available functions
 
 ----- Installation:
       For installation please read the INSTALL file. 
