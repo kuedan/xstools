@@ -3,9 +3,6 @@
 # You can move this file to any location you want
 # and run 'Xonotic Server Tools' with this script.
 #
-# You have to mark this file as execetuable.
-# chmod u+x xtools
-#
 # And you need to fix the path.
 # fix 'please-fix-me' to the real location 
 
