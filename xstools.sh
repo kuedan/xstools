@@ -1049,7 +1049,7 @@ xstools
     --list-configs              - list server and rcon2irc configs
     --info <server(s)>          - show info about server(s)
     --info-all                  - show info about all server(s)    
-    --view <server(s)>          - view server window
+    --view <server(s)>          - view server console
     --add-pk3 <url(s)>          - add pk3 files from given urls
     --rescan                    - rescan for new added packages
     --time2console              - print date/time to server console
@@ -1062,7 +1062,7 @@ xstools
         stop <bot(s)>           - stop rcon2irc bots
         restart-all             - restart all rcon2irc bots
         restart <bot(s)>        - restart rcon2irc bots
-        view <bot(s)            - view rcon2irc window
+        view <bot(s)>           - view rcon2irc console
 
     --help                      - print full help
     -h                          - print this help
@@ -1137,12 +1137,12 @@ Exampe: Congiguration file: my-bot.rcon.cfg
 
 --list-configs          List all server and rcon2irc configuration files.
 
---info                  Show informations like hostname, port.... of server(s).
+--info <server(s)>      Show informations like hostname, port.... of server(s).
                         If qstat is enabled you will get more informations.
 
 --info-all              Same as --info, but this lists info for all servers.
 
---view <server(s)>      Attach a tmux window and show server window of server(s).
+--view <server(s)>      Attach a tmux window and show server console of server(s).
 
 --add-pk3 <url(s)>      Add .pk3 files to 'packages' from given urls and rescan 
                         for them at endmatch with every server.
@@ -1160,10 +1160,10 @@ Exampe: Congiguration file: my-bot.rcon.cfg
                         'serverconfig.date.log', where 'serverconfig' is the
                         server name  and 'date' is 'YearMonthDay'. 
 
---rcon2irc              <syntax> --rcon2irc command <bot(s)
+--rcon2irc              <syntax> --rcon2irc command <bot(s)>
                         command is one of the following options:
        
-      start-all         Start all rcon2irc bots, whose configuration files are
+      start-all         Start all rcon2irc bots, whose configuration files
                         are placed in 'configs/rcon2irc'. Those configuration 
                         files are recognized by their extenstion .rcon2irc.conf
 
@@ -1179,7 +1179,7 @@ Exampe: Congiguration file: my-bot.rcon.cfg
 
       restart <bot(s)>  Restart rcon2irc specific bot(s).
 
-      view <bot(s)      Attach a tmux window and show bot window of bot(s).
+      view <bot(s)>     Attach a tmux window and show bot console of bot(s).
 
 
 --help                  print this help
