@@ -1,0 +1,17 @@
+=== My ToDo List ===
+
+==== Wiki ==== 
+
+* finish parts that belong to xstools
+* add a wiki to configure servers in general
+
+==== Files ====
+
+* add server file for releases
+* perhaps add pickup alias
+
+==== add functions ====
+ 
+* to send commands to server console
+* to edit server configuration files
+* to display logs (full logs/live logs)
