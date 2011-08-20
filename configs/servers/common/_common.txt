@@ -1,1 +1,2 @@
 Put your 'common' configuration files, which can be loaded by other server configuration files, into this folder 'configs/servers/common'
+You can load them by 'exec config.cfg'

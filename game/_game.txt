@@ -1,3 +1,2 @@
-Folder for your Xonotic git repository.
-If you use the download function of xstools you will can find downloaded repository here.
-If needed, do not forget to adjust xtools.conf
+Folder for your Xonotic release and Xonotic git. 
+You have to set their locations in xstools.conf.

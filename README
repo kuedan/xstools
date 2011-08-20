@@ -25,8 +25,8 @@
 ----- Description:
       Xonotic Server Tools is a collection of functions to manage many different
       servers by loading every single server in a seperate tmux window. You can 
-      easily control those servers by their names. In current release this script
-      only supports Xonotic git servers.
+      easily control those servers by their names. This script supports Xonotic 
+      release and git servers.
       Next to managing servers and rcon2irc bots Xonotic Server Tools supports
       a more extended home folder tree, but it still supports 'the default'.
       The new folder tree gives a better overview of your server files:

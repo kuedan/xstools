@@ -16,27 +16,28 @@ The name of this folder is user-defined and can be named as you like.
 
 INSTALLATION:
 
-1) Move this folder to a location you like and name this folder as you like.
-   (Do not forget: This is your xonotic user directory)
+1)  Extract the .zip file and move this folder to a location you like and name 
+    this folder as you like. (Do not forget: This is your xonotic user directory)
 
 2) Open xstools.conf in the subfolder 'scripts/' and define the location of your 
-   Xonotic 'user directory' and your 'basedir'.
+   Xonotic 'user directory' and your 'basedirs'.
    You can define a 'basedir' for a Xonotic release and git installation.
    Next to those folder variables there is an option to set the default version
    you are going to host. Set it to 'release' or 'git'
    Please download the release version on your own and move it to the 'basedir'
-   you have set for 'release'.
+   you have set for 'release'. (http://www.xonotic.org/download/)
    If you want to host git servers, you must clone Xonotic git. Therefore you
    can run './xstools.sh --install-git' (after you have set userdir and basedir
-   for git servers in xstools.conf)
+   for git servers in xstools.conf) ATTENTION: A compiler and libraries are needed.
+   (http://dev.xonotic.org/projects/xonotic/wiki/Repository_Access)
 
 3) Open 'xstools' (not xstools.sh) in this folder and fix the path of this script. 
    This means: 
    Rename 'please-fix-me' to the location of your new Xonotic 'user directory'
-   Now you can execute xstools.sh from any location with the command 'xstools'.
-
+ 
 4) Move 'xstools' (not xstools.sh) to a folder which is part of your PATH variable.
-   You can run Xonotic Server Tools now with
+   Now you can run xstools.sh from any location with the command 'xstools'.
+   You can run Xonotic Server Tools with
    xstools 'arguments'
    eg: xstools --help 
 

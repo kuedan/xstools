@@ -1,1 +1,1 @@
-Here you can find your log files, if enabled.
+Here you can find your log files if enabled.
