@@ -7,7 +7,6 @@
 
 ==== Files ====
 
-* add server file for releases
 * perhaps add pickup alias
 
 ==== add functions ====
