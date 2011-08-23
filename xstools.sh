@@ -558,7 +558,7 @@ done
 # list all running servers
 function xstools_list_all() {
 if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
-    activ_server_windows=$(tmux list-windows -t $tmux_session |awk -F\  '$1 ~ /[0-9]+\:/ && $2 ~ /server-.*/ {print $2}' | awk -F"-" '{print $2}')
+    activ_server_windows=$(tmux list-windows -t $tmux_session |awk -F\  '$1 ~ /[0-9]+\:/ && $2 ~ /server-.*/ {print $2}' | cut -f2- -d-)
     if [[ -z $activ_server_windows ]]; then
         echo -e "$print_info No servers are running."
     else
@@ -580,7 +580,7 @@ if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
         fi
     done
     # same for rcon2irc bots
-    activ_rcon2irc_windows=$(tmux list-windows -t $tmux_session |awk -F\  '$1 ~ /[0-9]+\:/ && $2 ~ /rcon2irc-.*/ {print $2}' | awk -F"-" '{print $2}')
+    activ_rcon2irc_windows=$(tmux list-windows -t $tmux_session |awk -F\  '$1 ~ /[0-9]+\:/ && $2 ~ /rcon2irc-.*/ {print $2}' | cut -f2- -d-)
     if [[ -z $activ_rcon2irc_windows ]]; then
         echo -e "$print_info No rcon2irc bots are running."
     else
@@ -668,7 +668,7 @@ done
 # print info of all running servers
 function server_info_all() {
 if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
-    activ_server_windows=$(tmux list-windows -t $tmux_session |awk -F\  '$1 ~ /[0-9]+\:/ && $2 ~ /server-.*/ {print $2}' | awk -F"-" '{print $2}')
+    activ_server_windows=$(tmux list-windows -t $tmux_session |awk -F\  '$1 ~ /[0-9]+\:/ && $2 ~ /server-.*/ {print $2}' | cut -f2- -d-)
     for var in $activ_server_windows; do
         server_config_check_and_set $var
         if [[ $(ps -Af | grep "+set serverconfig $server_config"  2>/dev/null|grep -v grep ) ]]; then
