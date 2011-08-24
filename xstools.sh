@@ -1114,7 +1114,8 @@ xstools
                                   optional argument '-c' to send countdown
     --restart <server(s)>       - restart-servers
     
-     All start/stop/restart functions support an optional argument '-r' or '-g'
+     start-all/start/stop-all/restart-all support an optional argument
+     '-r' or '-g'
 
     --update-git                - update git and restart git servers
                                   optional argument '-c' to send countdown   
@@ -1190,10 +1191,10 @@ Exampe: Congiguration file: my-bot.rcon.cfg
 
 --restart <server(s)>   Restart specific server(s).
 
- All start/stop/restart functions support an optional parameter '-r' or '-g'.
- If you use -r (-g) as argument for start functions, xstools will start
- 'release' ('git') servers. Otherwise default will be used (check xstools.conf).
- Example: xstools --start -g server1 
+start-all/start/stop-all/restart-all support an optional argument '-r' or '-g'.
+If you use -r (-g) as argument for start functions, xstools will start
+'release' ('git') servers. Otherwise default will be used (check xstools.conf).
+Example: xstools --start -g server1 
           (start server1 as git server)
           xstools --start-all -r 
           (start all servers, which are not running, as 'release' server)

@@ -70,7 +70,7 @@
 
         --restart <server(s)>   Restart specific server(s).
 
-        All start/stop/restart functions support an optional parameter '-r' or '-g'.
+        start-all/start/stop-all/restart-all support an optional argument '-r' or '-g'
         If you use -r (-g) as argument for start functions, xstools will start
         'release' ('git') servers. Otherwise default will be used (check xstools.conf).
         Example: xstools --start -g server1 
