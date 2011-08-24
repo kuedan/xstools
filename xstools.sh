@@ -201,7 +201,7 @@ server_config_check_and_set $var
     # in this case: print error and continue with for loop
     elif [[ $(tmux list-windows -t $tmux_session 2>/dev/null | grep "$tmux_window" ) ]]; then
         echo -e "$print_error Server '$server_name' does not run, but tmux window '$tmux_window' exists."
-        echo -e "        Use '--view $server_name' to check window status."  
+        echo -e "          Use '--view $server_name' to check window status."  
         continue
     else
     # option 4; server is not running, tmux session exists, window does not exists 
@@ -550,7 +550,7 @@ server_config_check_and_set $var
             tmux attach -t $tmux_session
         else
             echo -e "$print_error tmux window '$tmux_window' does not exist."
-            echo -e "        Use '--list' to list all servers running servers."
+            echo -e "          Use '--list' to list all servers running servers."
         fi
 done
 } # end of server_view()
@@ -573,10 +573,10 @@ if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
                 server_players=$(quakestat -nh -nexuizs localhost:$server_port | awk '{print " - "$2" - "}')
                 server_version=$(quakestat -R -nh -nexuizs localhost:$server_port | tail -1 | awk -F, '{print $6}' | awk -F= '{print $2}' | awk -F: '{print $2}')
                 fi
-            echo -e "       - $server_name	${server_players}${server_version}"
+            echo -e "       - $server_name  ${server_players}${server_version}"
         else
             echo -e "       - $print_error window: '$tmux_window' has no running server"
-            echo -e "                Use '--view $server_name' to fix it."  
+            echo -e "                 Use '--view $server_name' to fix it."  
         fi
     done
     # same for rcon2irc bots
@@ -592,7 +592,7 @@ if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
             echo -e "       - $rcon2irc_name"
         else
             echo -e "       - $print_error window: '$tmux_window' has no running rcon2irc bot"
-            echo -e "               Use '--rcon2irc view $rcon2irc_name' to fix it."
+            echo -e "                 Use '--rcon2irc view $rcon2irc_name' to fix it."
         fi
     done
 else
@@ -741,6 +741,79 @@ for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
     fi
 done
 } # end of server_send_rescan()
+
+# send commands to your server via rcon.pl and recieve its output
+function server_send_command() {
+# check if everything is fine ...
+if [[ ! -x $rcon_script ]]; then
+    echo -e "$print_error Could not find rcon script."
+    echo -e "        Check xstools.conf. Also check flags, need +x"
+    exit
+elif [[ "$password_file" == "configs" ]]; then
+    search_in_configs="true"
+elif [[ -f $password_file ]]; then
+        search_in_configs="false"
+        single_rcon_password=$(awk '/^rcon_password/ {print $2}' $password_file)
+else 
+    echo -e "$print_error Could not find rcon password(s)."
+    echo -e "        Check xstools.conf."
+    exit
+fi
+# check if first argument is a valid config
+server_first_config_check $1
+# for each server we save a rcon password and port until 'command to send' begins
+for var in "$@"; do
+    if [[ "$var" == "-c" ]]; then
+        shift
+        break
+    fi
+server_config_check_and_set $var
+# we use servers config name, to save the port
+server_port=$(awk '/^port/ {print $2}' $userdir/configs/servers/$server_config)
+# test if we have found a port... simply grep for a field of digits :)
+if ! echo $server_port | grep -E '[0-9]{4,5}' >/dev/null 2>&1; then
+    echo -e "$print_error Could not find a port in $server_config"
+    echo -e "       No command has been sent to any server..." 
+    exit
+fi
+all_server_names="$all_server_names $server_name"
+all_server_ports="$all_server_ports $server_port"
+# if we have to search the rcon_password in every config file, then...
+if [[ $search_in_configs == "true" ]]; then
+    rcon_password=$(awk '/^rcon_password/ {print $2}' $userdir/configs/servers/$server_config)
+    # test if we have found a rcon_password.... simply test if rcon_password is NOT empty
+    if [[ $rcon_password == "" ]]; then
+        echo -e "$print_error Could not find a rcon password in $server_config"
+        echo -e "       No command has been sent to any server..."
+        exit    
+    fi
+    all_rcon_passwords="$all_rcon_passwords $rcon_password"
+    else
+        if [[ $single_rcon_password == "" ]]; then
+            echo -e "$print_error Could not find a rcon password in your passwords file."
+            echo -e "       No command has been sent to any server..."  
+            exit
+        fi
+    all_rcon_passwords="$all_rcon_passwords $single_rcon_password"
+    fi
+    # if server port is saved, drop it argument, which is the analyzed server
+    shift
+done
+# everything (also -c) is deleted from arguments, our 'command to send' is the rest
+my_command="$@"
+# now save server names, ports and passwords in an array
+a_name=( $all_server_names )
+a_port=( $all_server_ports )
+a_pass=( $all_rcon_passwords )
+counter=0
+while [ "$counter" -lt "${#a_name[@]}" ]; do
+    echo -e "$print_info Sending command to server '${a_name[$counter]}'..."
+    echo
+    rcon_address=127.0.0.1:${a_port[$counter]} rcon_password=${a_pass[$counter]} $rcon_script "$my_command"
+    echo 
+    counter=$[$counter+1]
+done
+} # end of server_send_command()
 
 # print date/time to server console
 # havent known that there is a cvar allready in xonotic :P - timestamps 1 
@@ -1052,6 +1125,7 @@ xstools
     --view <server(s)>          - view server console
     --add-pk3 <url(s)>          - add pk3 files from given urls
     --rescan                    - rescan for new added packages
+    --send <server(s)>  -c ...  - send a command to given server(s)
     --time2console              - print date/time to server console
     --set-logfile               - set a new logfile for all servers
 
@@ -1081,7 +1155,7 @@ and 'git' servers.
 Xonotic Server Tools recognize your server configuration files in 
 'configs/servers' by their file extension .cfg. The name of the server 
 is created by the file name without extension. 
-That is "config_file%\.cfs". The name of the tmux window has a 
+That is "config_file%\.cfg". The name of the tmux window has a 
 prefix "server-".
 Example: Configuration file: my-server.cfg
          Server name: my-server      Window name: my-server
@@ -1149,6 +1223,10 @@ Exampe: Congiguration file: my-bot.rcon.cfg
 
 --rescan                Rescan for new added packages at endmatch with every 
                         Server.
+
+--send <server(s)>      Send a command to given servers and recieve output.
+      -c <command>      The beginning of command is defined by -c.                  
+                        
 
 --time2console          Print date/time to server console. This gives a better 
                         overview, when parsing output or logs. Very usefull as 
@@ -1237,6 +1315,7 @@ case $1 in
  --view)                    basic_config_check; shift && server_view "$@";;
  --add-pk3)                 basic_config_check; shift && server_add_pk3 "$@";;
  --rescan)                  basic_config_check; server_send_rescan;;
+ --send)                    basic_config_check; shift && server_send_command "$@";;
  --time2console)            basic_config_check; server_time2console;;
  --set-logfile)             basic_config_check; server_set_logfile;;
  --rcon2irc)                basic_config_check; shift && rcon2irc_control "$@";;
