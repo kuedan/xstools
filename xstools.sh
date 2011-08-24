@@ -573,7 +573,7 @@ if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
                 server_players=$(quakestat -nh -nexuizs localhost:$server_port | awk '{print " - "$2" - "}')
                 server_version=$(quakestat -R -nh -nexuizs localhost:$server_port | tail -1 | awk -F, '{print $6}' | awk -F= '{print $2}' | awk -F: '{print $2}')
                 fi
-            echo -e "       - $server_name  ${server_players}${server_version}"
+            echo -e "       - $server_name	${server_players}${server_version}"
         else
             echo -e "       - $print_error window: '$tmux_window' has no running server"
             echo -e "                 Use '--view $server_name' to fix it."  
@@ -1300,28 +1300,28 @@ esac
 }
 
 case $1 in
- --install-git)                 basic_config_check; install_git;;
- --start-all)               basic_config_check; shift && server_start_all "$@";;
- --start)                   basic_config_check; shift && server_start_one "$@";;
- --stop-all)                basic_config_check; shift && server_stop_all "$@";;
- --stop)                    basic_config_check; shift && server_stop "$@";;
- --restart-all)             basic_config_check; shift && server_restart_all "$@";;
- --restart)                 basic_config_check; shift && server_restart "$@";;
- --update-git)              basic_config_check; server_update_git "$@";;
- --list)                    basic_config_check; xstools_list_all;;
- --list-configs)            basic_config_check; xstools_list_configs;;
- --info)                    basic_config_check; shift && server_info $@;;
- --info-all)                basic_config_check; server_info_all "$@";;
- --view)                    basic_config_check; shift && server_view "$@";;
- --add-pk3)                 basic_config_check; shift && server_add_pk3 "$@";;
- --rescan)                  basic_config_check; server_send_rescan;;
- --send)                    basic_config_check; shift && server_send_command "$@";;
- --time2console)            basic_config_check; server_time2console;;
- --set-logfile)             basic_config_check; server_set_logfile;;
- --rcon2irc)                basic_config_check; shift && rcon2irc_control "$@";;
- --help | --usage)          xstools_more_help;;
- -h)                        xstools_help;;
- "")                        echo "xstools needs an argument, check -h or --help";;
- *)                         echo "This is not a valid argument! Check -h or --help";;
+ --install-git|install-git)          basic_config_check; install_git;;
+ --start-all|start-all)              basic_config_check; shift && server_start_all "$@";;
+ --start|start)                      basic_config_check; shift && server_start_one "$@";;
+ --stop-all|stop-all)                basic_config_check; shift && server_stop_all "$@";;
+ --stop|stop)                        basic_config_check; shift && server_stop "$@";;
+ --restart-all|restart-all)          basic_config_check; shift && server_restart_all "$@";;
+ --restart|restart)                  basic_config_check; shift && server_restart "$@";;
+ --update-git|update-git)            basic_config_check; server_update_git "$@";;
+ --list|list)                        basic_config_check; xstools_list_all;;
+ --list-configs|list-configs)        basic_config_check; xstools_list_configs;;
+ --info|info)                        basic_config_check; shift && server_info $@;;
+ --info-all|info-all)                basic_config_check; server_info_all "$@";;
+ --view|view)                        basic_config_check; shift && server_view "$@";;
+ --add-pk3|add-pk3)                  basic_config_check; shift && server_add_pk3 "$@";;
+ --rescan|rescan)                    basic_config_check; server_send_rescan;;
+ --send|send)                        basic_config_check; shift && server_send_command "$@";;
+ --time2console|time2console)        basic_config_check; server_time2console;;
+ --set-logfile|set-logfile)          basic_config_check; server_set_logfile;;
+ --rcon2irc|rcon2irc)                basic_config_check; shift && rcon2irc_control "$@";;
+ --help|--usage|help|ụsage)          xstools_more_help;;
+ -h|h)                               xstools_help;;
+ "")                                 echo "xstools needs an argument, check -h or --help";;
+ *)                                  echo "This is not a valid argument! Check -h or --help";;
 esac    
 
