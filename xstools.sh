@@ -1198,9 +1198,9 @@ Example: xstools --start -g server1
           (start server1 as git server)
           xstools --start-all -r 
           (start all servers, which are not running, as 'release' server)
- If you use -r (-g) as argument for restart functions, xstools will only restart
- 'release' ('git') servers.
- If you use -r (-g) as argument for stop functios, xstools will only stop
+ If you use -r (-g) as argument for --restart-all, xstools will only 
+ restart 'release' ('git') servers.
+ If you use -r (-g) as argument for --stop-all, xstools will only stop
  'release' ('git') servers.
 
 --update-git            Update Xonotic git and restart all servers.
