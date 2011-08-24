@@ -1113,11 +1113,11 @@ xstools
     --restart-all               - restart all servers
                                   optional argument '-c' to send countdown
     --restart <server(s)>       - restart-servers
-    --update-all                - update git and restart all servers
-                                  optional argument '-c' to send countdown
     
-     All start/stop/restart functions support an optional argument '-r' or '-g'     
-    
+     All start/stop/restart functions support an optional argument '-r' or '-g'
+
+    --update-git                - update git and restart git servers
+                                  optional argument '-c' to send countdown   
     --list                      - list running servers/rcon2irc bots
     --list-configs              - list server and rcon2irc configs
     --info <server(s)>          - show info about server(s)

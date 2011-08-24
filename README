@@ -82,7 +82,7 @@
                 If you use -r (-g) as argument for stop functios, xstools will only stop
                 'release' ('git') servers.
 
-        --update-git            Update Xonotic git and restart all servers.
+        --update-git            Update Xonotic git and restart git servers.
 
         --update-git -c         Same as --update-all, but with a countdown of 15min
                                 This countdown will be sent to players as a message.
