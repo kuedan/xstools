@@ -23,7 +23,7 @@
 # -----------------------------------------------------------------------------
 #
 # DO NOT EDIT THIS SCRIPT TO CONFIGURE!! 
-# Please use the configuration file: xstool.conf
+# Please use the configuration file: xstools.conf
 #
 #
 
@@ -754,6 +754,11 @@ elif [[ "$password_file" == "configs" ]]; then
 elif [[ -f $password_file ]]; then
         search_in_configs="false"
         single_rcon_password=$(awk '/^rcon_password/ {print $2}' $password_file)
+# check if arguments contain -c for seperating command from server names
+if ! echo "$@" | grep ' -c '; then
+	echo -e "$print_error Syntax is: --send <server(s)> -c <command>"
+	exit
+fi
 else 
     echo -e "$print_error Could not find rcon password(s)."
     echo -e "        Check xstools.conf."
@@ -1276,7 +1281,7 @@ EOF
 
 function rcon2irc_control() {
 if [[ ! -f "$rcon2irc_script" ]]; then
-    echo -e "$print_error could not find 'rcon2irc_script'."
+    echo -e "$print_error Could not find 'rcon2irc_script'."
     echo -e "        check xstools.conf"
     exit 1
 fi
