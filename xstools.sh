@@ -325,7 +325,6 @@ server_config_check_and_set $var
 done
 } # end of server_restart()
 
-# function to stop all servers
 # if optional parameter (-r,-g) is given only restart 'release'/'git' servers
 function server_restart_all() {
 version_server_check_and_set $1
@@ -763,6 +762,11 @@ else
     echo -e "        Check xstools.conf."
     exit
 fi
+function ps_spot_server() {
+ps aux | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $server_config" 2>/dev/null\
+ | grep -v /bin/sh |grep -v grep ||\
+ ps aux |grep "xonotic-linux.*dedicated .* +set serverconfig $server_config" 2>/dev/null |grep -v grep 
+} 
 # check if first argument is a valid config
 server_first_config_check $1
 # for each server we save a rcon password and port until 'command to send' begins
@@ -773,35 +777,37 @@ for var in "$@"; do
     fi
 	# kind of copy of server_config_check_and_set, but we need a shift statement in else
 	if [[ -f $userdir/configs/servers/$var.cfg  ]]; then
-		server_name="$1"
+		server_name="$var"
 		server_config="$server_name.cfg"
 		tmux_window="server-$server_name"
 	else
-		echo -e "$print_error No config file available for server '$1'"
+		echo -e "$print_error No config file available for server '$var'"
 		shift
 		continue
-fi
-server_config_check_and_set $var
-# we use servers config name, to save the port
-server_port=$(awk '/^port/ {print $2}' $userdir/configs/servers/$server_config)
-# test if we have found a port... simply grep for a field of digits :)
-if ! echo $server_port | grep -E '[0-9]{4,5}' >/dev/null 2>&1; then
-    echo -e "$print_error Could not find a port in $server_config"
-    echo -e "       No command has been sent to any server..." 
-    exit
-fi
-all_server_names="$all_server_names $server_name"
-all_server_ports="$all_server_ports $server_port"
-# if we have to search the rcon_password in every config file, then...
-if [[ $search_in_configs == "true" ]]; then
-    rcon_password=$(awk '/^rcon_password/ {print $2}' $userdir/configs/servers/$server_config)
-    # test if we have found a rcon_password.... simply test if rcon_password is NOT empty
-    if [[ $rcon_password == "" ]]; then
-        echo -e "$print_error Could not find a rcon password in $server_config"
-        echo -e "       No command has been sent to any server..."
-        exit    
-    fi
-    all_rcon_passwords="$all_rcon_passwords $rcon_password"
+	fi
+	# we use servers config name, to save the port
+	server_port=$(awk '/^port/ {print $2}' $userdir/configs/servers/$server_config)
+	# test if we have found a port... simply grep for a field of digits :)
+	if ! echo $server_port | grep -E '[0-9]{4,5}' >/dev/null 2>&1; then
+		echo -e "$print_error Could not find a port in $server_config"
+		echo -e "       No command has been sent to any server..." 
+		exit
+	elif ! [[ $(ps_spot_server) ]]; then
+		#statements
+	fi
+
+	all_server_names="$all_server_names $server_name"
+	all_server_ports="$all_server_ports $server_port"
+	# if we have to search the rcon_password in every config file, then...
+	if [[ $search_in_configs == "true" ]]; then
+		rcon_password=$(awk '/^rcon_password/ {print $2}' $userdir/configs/servers/$server_config)
+		# test if we have found a rcon_password.... simply test if rcon_password is NOT empty
+		if [[ $rcon_password == "" ]]; then
+			echo -e "$print_error Could not find a rcon password in $server_config"
+			echo -e "       No command has been sent to any server..."
+			exit    
+		fi
+		all_rcon_passwords="$all_rcon_passwords $rcon_password"
     else
         if [[ $single_rcon_password == "" ]]; then
             echo -e "$print_error Could not find a rcon password in your passwords file."
