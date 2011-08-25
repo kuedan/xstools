@@ -174,8 +174,7 @@ if [[ -f $userdir/configs/servers/$1.cfg  ]]; then
             logfile_dp_argument=""
         fi
 else
-    echo -e "$print_error '$1.cfg' is not placed in 'configs/servers/'."
-    echo -e "        Please move the file into this folder."
+	echo -e "$print_error No config file available for server '$1'"
     continue
 fi
 } # end of server_config_check_and_set()
@@ -772,6 +771,16 @@ for var in "$@"; do
         shift
         break
     fi
+	# kind of copy of server_config_check_and_set, but we need a shift statement in else
+	if [[ -f $userdir/configs/servers/$var.cfg  ]]; then
+		server_name="$1"
+		server_config="$server_name.cfg"
+		tmux_window="server-$server_name"
+	else
+		echo -e "$print_error No config file available for server '$1'"
+		shift
+		continue
+fi
 server_config_check_and_set $var
 # we use servers config name, to save the port
 server_port=$(awk '/^port/ {print $2}' $userdir/configs/servers/$server_config)
