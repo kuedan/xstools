@@ -753,7 +753,7 @@ elif [[ -f $password_file ]]; then
         search_in_configs="false"
         single_rcon_password=$(awk '/^rcon_password/ {print $2}' $password_file)
 # check if arguments contain -c for seperating command from server names
-if ! echo "$@" | grep ' -c '; then
+if ! echo "$@" | grep ' -c ' >/dev/null 2>&1; then
 	echo -e "$print_error Syntax is: --send <server(s)> -c <command>"
 	exit
 fi
@@ -793,9 +793,10 @@ for var in "$@"; do
 		echo -e "       No command has been sent to any server..." 
 		exit
 	elif ! [[ $(ps_spot_server) ]]; then
-		#statements
+        echo -e "$print_error Server '$server_name' is not running."
+		shift
+		continue
 	fi
-
 	all_server_names="$all_server_names $server_name"
 	all_server_ports="$all_server_ports $server_port"
 	# if we have to search the rcon_password in every config file, then...
