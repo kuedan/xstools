@@ -343,18 +343,12 @@ while getopts ":crg" options; do
             function ps_spot_server() {
             ps -Af |grep "xonotic-linux.*dedicated .* +set serverconfig $server_config" 2>/dev/null |grep -v grep
             }
-            # set variable to store information, which servers shall recieve countdown
-            # in this case: onlye 'release' servers
-            send_countdown_release_only=true
                 ;;
         g) 
         # redefine function to spot only release servers
             function ps_spot_server() {
             ps -Af | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $server_config" 2>/dev/null | grep -v /bin/sh |grep -v grep
             }
-            # set variable to store information, which servers shall recieve countdown
-            # in this case: onlye 'release' servers
-            send_countdown_git_only=true
                 ;;
     esac
 done
@@ -384,31 +378,14 @@ done
 
 # send countdown for servers that will be updated (git) or restarted
 function send_countdown() {
-# check which servers should recieve countdown
-if [[ "send_countdown_release_only=true" == "true" ]]; then
-    # we search for release servers
-    function ps_spot_server() {
-    ps -Af |grep "xonotic-linux.*dedicated .* +set serverconfig $server_config" 2>/dev/null |grep -v grep
-    }
-elif [[ "send_countdown_git_only=true" == "true" ]]; then
-    # we just search for git servers
-    function ps_spot_server() {
-    ps -Af | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $server_config" 2>/dev/null | grep -v /bin/sh |grep -v grep
-    }
-
-else     
-    # we search for both
-    function ps_spot_server() {
-    ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep
-    }
-fi
+# the functions to spot server are defined in server_update_git/server_restart_all
 typeset -a countdown_array
 ca_counter=0
 for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
     cfg_name=$(basename ${cfg%\.cfg})
+    server_config_check_and_set $cfg_name 
     # search for servers and save them in a field
     if [[ $(ps_spot_server) ]]; then
-        server_config_check_and_set $cfg_name 
         if [[ $(tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window") ]]; then
         countdown_array[$ca_counter]=$tmux_window
         ca_counter=$[$ca_counter+1]
@@ -473,6 +450,10 @@ elif [[ -z $git_update_date ]]; then
     echo -e "       date format: $(date +'%d.%m %H:%M %Z') will be used for this update" >&2
     git_update_date='%d.%m %H:%M %Z'
 fi
+# define function to spot git servers
+function ps_spot_server() {
+ps -Af | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $server_config" 2>/dev/null | grep -v /bin/sh |grep -v grep
+}
 # if we have -c as extra argument, then send countdown
 if [[ "$2" == "-c" ]]; then
 send_countdown_git_only=true
@@ -492,7 +473,7 @@ for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
     cfg_name=$(basename ${cfg%\.cfg})
     server_config_check_and_set $cfg_name 
     # in this case we are looking for git servers, no 'release' servers, therefore stronger pattern
-    if [[ $(ps -Af | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $server_config"  2>/dev/null |grep -v grep) ]]; then
+    if [[ $(ps_spot_server) ]]; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window" 2>/dev/null) ]]; then          
             echo -e "$print_info Stopping server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
