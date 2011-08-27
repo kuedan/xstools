@@ -71,9 +71,9 @@ elif [[ -z "$tmux_session" ]]; then
     echo -e "        check xstools.conf"
     exit 1
 elif [[ -f "$userdir/lock_update" ]]; then
-    echo "xstools is locked, because of an update"
-    echo "You can use xstools again, when update is done"
-    echo "To unlock manual: remove lock_update in your userdir"
+    echo "xstools is locked, because of a git update."
+    echo "You can use xstools again, when update is done."
+    echo "To unlock manual: remove lock_update in your userdir."
     exit 1
 fi
 } # end of basic_config_check()
@@ -162,19 +162,19 @@ if [[ -f $userdir/configs/servers/$1.cfg  ]]; then
     server_name="$1"
     server_config="$server_name.cfg"
     tmux_window="server-$server_name"
-    # define our logfile if enabled in config
-        if [[ "$set_logfiles" == "true" ]]; then
-            if [[ "$logfile_date" == "true" ]]; then
-                logfile_format="logs/$server_name.$(date +"%Y%m%d").log"
-                logfile_dp_argument="+set log_file $logfile_format"
+    # define our log file if enabled in config
+        if [[ "$set_logs" == "true" ]]; then
+            if [[ "$logs_date" == "true" ]]; then
+                log_format="logs/$server_name.$(date +"%Y%m%d").log"
+                log_dp_argument="+set log_file $log_format"
             else
-                logfile_dp_argument="+set log_file logs/${serverconfig}.log"
+                log_dp_argument="+set log_file logs/$server_name.log"
             fi
         else
-            logfile_dp_argument=""
+            log_dp_argument=""
         fi
 else
-	echo -e "$print_error No config file available for server '$1'"
+    echo -e "$print_error No config file available for server '$1'"
     continue
 fi
 } # end of server_config_check_and_set()
@@ -194,7 +194,7 @@ server_config_check_and_set $var
     # in this case: start a new tmux session with new window and start server
     if [[ ! $(tmux list-sessions 2>/dev/null| grep "$tmux_session:" ) ]]; then
         tmux new-session -d -n $tmux_window -s $tmux_session
-        tmux send -t $tmux_session:$tmux_window "$server_command $dp_default_arguments +set serverconfig $server_config $logfile_dp_argument" C-m 
+        tmux send -t $tmux_session:$tmux_window "$server_command $dp_default_arguments +set serverconfig $server_config $log_dp_argument" C-m 
         echo -e "$print_info Server '$server_name' has been started."
     # option 3: server is not running; tmux session exists, and window allready exists
     # in this case: print error and continue with for loop
@@ -206,7 +206,7 @@ server_config_check_and_set $var
     # option 4; server is not running, tmux session exists, window does not exists 
     # in this case: start a new window in tmux session and start server
         tmux new-window -d -n $tmux_window -t $tmux_session
-        tmux send -t $tmux_session:$tmux_window "$server_command $dp_default_arguments +set serverconfig $server_config $logfile_dp_argument" C-m 
+        tmux send -t $tmux_session:$tmux_window "$server_command $dp_default_arguments +set serverconfig $server_config $log_dp_argument" C-m 
         echo -e "$print_info Server '$server_name' has been started."
 fi
 done
@@ -520,7 +520,7 @@ while [ "$counter_restart" -lt "$counter_stop" ]; do
     server_config_check_and_set ${restart_server[$counter_restart]}
     # we are only restarting git servers here - instead of '!!' we use the full command
     # !! would work, too :)
-    tmux send -t $tmux_session:$tmux_window "./all run dedicated $dp_default_arguments +set serverconfig $server_config $logfile_dp_argument" C-m
+    tmux send -t $tmux_session:$tmux_window "./all run dedicated $dp_default_arguments +set serverconfig $server_config $log_dp_argument" C-m
     echo -e "$print_info Server '$server_name' has been restarted."
 done
 # unlock xstools 
@@ -571,7 +571,7 @@ if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
                 server_players=$(quakestat -nh -nexuizs localhost:$server_port | awk '{print " - "$2" - "}')
                 server_version=$(quakestat -R -nh -nexuizs localhost:$server_port | tail -1 | awk -F, '{print $6}' | awk -F= '{print $2}' | awk -F: '{print $2}')
                 fi
-			printf "%-30s%-s\n" "       - $server_name" "${server_players}${server_version}"
+            printf "%-30s%-s\n" "       - $server_name" "${server_players}${server_version}"
         else
             echo -e "       - $print_error window: '$tmux_window' has no running server"
             echo -e "                 Use '--view $server_name' to fix it."  
@@ -754,8 +754,8 @@ elif [[ -f $password_file ]]; then
         single_rcon_password=$(awk '/^rcon_password/ {print $2}' $password_file)
 # check if arguments contain -c for seperating command from server names
 if ! echo "$@" | grep ' -c ' >/dev/null 2>&1; then
-	echo -e "$print_error Syntax is: --send <server(s)> -c <command>"
-	exit
+    echo -e "$print_error Syntax is: --send <server(s)> -c <command>"
+    exit
 fi
 else 
     echo -e "$print_error Could not find rcon password(s)."
@@ -775,40 +775,40 @@ for var in "$@"; do
         shift
         break
     fi
-	# kind of copy of server_config_check_and_set, but we need a shift statement in else
-	if [[ -f $userdir/configs/servers/$var.cfg  ]]; then
-		server_name="$var"
-		server_config="$server_name.cfg"
-		tmux_window="server-$server_name"
-	else
-		echo -e "$print_error No config file available for server '$var'"
-		shift
-		continue
-	fi
-	# we use servers config name, to save the port
-	server_port=$(awk '/^port/ {print $2}' $userdir/configs/servers/$server_config)
-	# test if we have found a port... simply grep for a field of digits :)
-	if ! echo $server_port | grep -E '[0-9]{4,5}' >/dev/null 2>&1; then
-		echo -e "$print_error Could not find a port in $server_config"
-		echo -e "       No command has been sent to any server..." 
-		exit
-	elif ! [[ $(ps_spot_server) ]]; then
+    # kind of copy of server_config_check_and_set, but we need a shift statement in else
+    if [[ -f $userdir/configs/servers/$var.cfg  ]]; then
+        server_name="$var"
+        server_config="$server_name.cfg"
+        tmux_window="server-$server_name"
+    else
+        echo -e "$print_error No config file available for server '$var'"
+        shift
+        continue
+    fi
+    # we use servers config name, to save the port
+    server_port=$(awk '/^port/ {print $2}' $userdir/configs/servers/$server_config)
+    # test if we have found a port... simply grep for a field of digits :)
+    if ! echo $server_port | grep -E '[0-9]{4,5}' >/dev/null 2>&1; then
+        echo -e "$print_error Could not find a port in $server_config"
+        echo -e "       No command has been sent to any server..." 
+        exit
+    elif ! [[ $(ps_spot_server) ]]; then
         echo -e "$print_error Server '$server_name' is not running."
-		shift
-		continue
-	fi
-	all_server_names="$all_server_names $server_name"
-	all_server_ports="$all_server_ports $server_port"
-	# if we have to search the rcon_password in every config file, then...
-	if [[ $search_in_configs == "true" ]]; then
-		rcon_password=$(awk '/^rcon_password/ {print $2}' $userdir/configs/servers/$server_config)
-		# test if we have found a rcon_password.... simply test if rcon_password is NOT empty
-		if [[ $rcon_password == "" ]]; then
-			echo -e "$print_error Could not find a rcon password in $server_config"
-			echo -e "       No command has been sent to any server..."
-			exit    
-		fi
-		all_rcon_passwords="$all_rcon_passwords $rcon_password"
+        shift
+        continue
+    fi
+    all_server_names="$all_server_names $server_name"
+    all_server_ports="$all_server_ports $server_port"
+    # if we have to search the rcon_password in every config file, then...
+    if [[ $search_in_configs == "true" ]]; then
+        rcon_password=$(awk '/^rcon_password/ {print $2}' $userdir/configs/servers/$server_config)
+        # test if we have found a rcon_password.... simply test if rcon_password is NOT empty
+        if [[ $rcon_password == "" ]]; then
+            echo -e "$print_error Could not find a rcon password in $server_config"
+            echo -e "       No command has been sent to any server..."
+            exit    
+        fi
+        all_rcon_passwords="$all_rcon_passwords $rcon_password"
     else
         if [[ $single_rcon_password == "" ]]; then
             echo -e "$print_error Could not find a rcon password in your passwords file."
@@ -861,17 +861,17 @@ for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
 done
 } # end of server_time2console()
 
-# set a new logfile for all servers
-function server_set_logfile() {
-echo -e "$print_info New logfile set for server:"
+# set new log files for all servers
+function server_set_logs() {
+echo -e "$print_info New log file set for server:"
 log_date=$(date +"%Y%m%d")
 for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
     cfg_name=$(basename ${cfg%\.cfg})
     if [[ $(ps -Af | grep "+set serverconfig $cfg_name" 2>/dev/null |grep -v grep) ]]; then
         server_config_check_and_set $cfg_name 
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window" 2>/dev/null) ]]; then
-            logfile_format="logs/$server_name.$log_date.log"
-            tmux send -t $tmux_session:$tmux_window "log_file \"$logfile_format\"" C-m
+            log_format="logs/$server_name.$log_date.log"
+            tmux send -t $tmux_session:$tmux_window "log_file \"$log_format\"" C-m
             echo -e "       - $server_name"
         else
             echo -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
@@ -879,7 +879,29 @@ for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
         fi
     fi
 done
-}
+} # end of server_set_logs
+
+# delete old log files
+function server_del_logs() {
+if [[ $mdays == "" ]]; then
+    echo -e "$print_error You have not set a value for 'mdays'."
+    echo -e "        Check xstools.conf"
+    exit
+fi
+find $userdir/logs/*.log -type f -mtime +$mdays -exec rm -f {} \;
+echo -e "$print_info Log files older than $mdays days deleted."
+} # end of server_del_logs
+
+function server_logs() {
+case $1 in
+    "set") server_set_logs;;
+    "del") server_del_logs;;
+    ""|*)  
+        echo -e "$print_error Argument invalid or missing."
+        echo -e "        Use --send 'set' or 'del'."
+        exit
+esac
+} 
 
 # end of function for servers 
 # begin of functions for rcon2irc bots
@@ -1149,7 +1171,8 @@ xstools
     --rescan                    - rescan for new added packages
     --send <server(s)>  -c ...  - send a command to given server(s)
     --time2console              - print date/time to server console
-    --set-logfile               - set a new logfile for all servers
+    --logs 'set' or 'del'       - set a new log file for all servers
+                                - or delete log files older than given days
 
     --rcon2irc                  syntax: --rcon2irc command <bot(s)>
         start-all               - start all rcon2irc bots
@@ -1256,9 +1279,12 @@ Example: xstools --start -g server1
                         Instead of using this function (as part of your crontab)
                         you can use the cvars 'timestamps' and 'timeformat'.
 
---set-logfile           Change the logfile of all running servers to 
+--logs set              Change the log file of all running servers to 
                         'serverconfig.date.log', where 'serverconfig' is the
                         server name  and 'date' is 'YearMonthDay'. 
+
+--logs del              Delete older log files in 'logs/' than given time in
+                        days. 
 
 --rcon2irc              <syntax> --rcon2irc command <bot(s)>
                         command is one of the following options:
@@ -1339,9 +1365,9 @@ case $1 in
  --rescan|rescan)                    basic_config_check; server_send_rescan;;
  --send|send)                        basic_config_check; shift && server_send_command "$@";;
  --time2console|time2console)        basic_config_check; server_time2console;;
- --set-logfile|set-logfile)          basic_config_check; server_set_logfile;;
+ --logs|logs)                        basic_config_check; shift && server_logs "$@";;
  --rcon2irc|rcon2irc)                basic_config_check; shift && rcon2irc_control "$@";;
- --help|--usage|help|ụsage)          xstools_more_help;;
+ --help|--usage|help|usage)          xstools_more_help;;
  -h|h)                               xstools_help;;
  "")                                 echo "xstools needs an argument, check -h or --help";;
  *)                                  echo "This is not a valid argument! Check -h or --help";;

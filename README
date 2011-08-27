@@ -112,9 +112,12 @@
                                 Instead of using this function (as part of your crontab)
                                 you can use the cvars 'timestamps' and 'timeformat'.
 
-        --set-logfile           Change the logfile of all running servers to 
+        --logs set              Change the logfile of all running servers to 
                                 'serverconfig.date.log', where 'serverconfig' is the
                                 server name  and 'date' is 'YearMonthDay'. 
+
+        --logs del              Delete older log files in 'logs/' than given time in days.
+
 
         --rcon2irc              <syntax> --rcon2irc command <bot(s)>
                                 command is one of the following options:
