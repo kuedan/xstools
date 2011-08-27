@@ -571,7 +571,7 @@ if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
                 server_players=$(quakestat -nh -nexuizs localhost:$server_port | awk '{print " - "$2" - "}')
                 server_version=$(quakestat -R -nh -nexuizs localhost:$server_port | tail -1 | awk -F, '{print $6}' | awk -F= '{print $2}' | awk -F: '{print $2}')
                 fi
-            echo -e "       - $server_name	${server_players}${server_version}"
+			printf "%-30s%-s\n" "       - $server_name" "${server_players}${server_version}"
         else
             echo -e "       - $print_error window: '$tmux_window' has no running server"
             echo -e "                 Use '--view $server_name' to fix it."  
