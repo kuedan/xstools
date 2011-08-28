@@ -456,7 +456,6 @@ ps -Af | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $se
 }
 # if we have -c as extra argument, then send countdown
 if [[ "$2" == "-c" ]]; then
-send_countdown_git_only=true
 #set the reason for countdown function
 reason_restart=" (update)"
 send_countdown
