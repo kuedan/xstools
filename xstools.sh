@@ -398,17 +398,17 @@ for var in ${countdown_array[*]}; do
 tmux send -t  $tmux_session:$var "say ^4[^1ATTENTION^4] ^3Server will restart in ^115 minutes^3$reason_restart" C-m
 done
 sleep 5m
-echo -e "       10min until update..."
+echo -e "       10min..."
 for var in ${countdown_array[*]}; do 
 tmux send -t $tmux_session:$var "say ^4[^1ATTENTION^4] ^3Server will restart in ^110 minutes^3$reason_restart" C-m
 done
 sleep 5m
-echo -e "       5min until update..."
+echo -e "       5min..."
 for var in ${countdown_array[*]}; do 
 tmux send -t $tmux_session:$var "say ^4[^1ATTENTION^4] ^3Server will restart in ^15 minutess^3$reason_restart" C-m
 done
 sleep 4m
-echo -e "       1min until update..."
+echo -e "       1min..."
 for var in ${countdown_array[*]}; do 
 tmux send -t $tmux_session:$var "say ^4[^1ATTENTION^4] ^3Server will restart in ^11 minute^3$reason_restart" C-m 
 tmux send -t $tmux_session:$var "say ^4[^1ATTENTION^4] ^3This will force a disconnect" C-m 
