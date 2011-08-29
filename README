@@ -118,6 +118,10 @@
 
         --logs del              Delete older log files in 'logs/' than given time in days.
 
+        --maplist               Create a maplist for all gamtypes or use a regex.
+                                Examples:
+                                ctf,ca,tm    --maplist '(ctf|ca|tdm)'
+                                ctf,lms,dm   --maplist '(ctf|lms|\bdm)'
 
         --rcon2irc              <syntax> --rcon2irc command <bot(s)>
                                 command is one of the following options:
