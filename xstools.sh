@@ -345,7 +345,7 @@ while getopts ":crg" options; do
             }
                 ;;
         g) 
-        # redefine function to spot only release servers
+            # redefine function to spot only release servers
             function ps_spot_server() {
             ps -Af | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $server_config" 2>/dev/null | grep -v /bin/sh |grep -v grep
             }
@@ -1301,8 +1301,8 @@ EOF
 
 function rcon2irc_control() {
 if [[ ! -f "$rcon2irc_script" ]]; then
-    echo -e "$print_error Could not find 'rcon2irc_script'."
-    echo -e "        check xstools.conf"
+    echo -e "$print_error Could not find 'rcon2irc_script'." >&2
+    echo -e "        check xstools.conf" >&2
     exit 1
 fi
 case $1 in
@@ -1313,15 +1313,17 @@ case $1 in
  start-all)          rcon2irc_start_all;;
  restart-all)        rcon2irc_restart_all;;
  view)               shift && rcon2irc_view $@;;
- ""|*)             echo -e "$print_info Command is invalid or missing."
-                     echo "       Use --rcon2irc with one of this arguments:"
-                     echo "           start-all"
-                     echo "           start <bot(s)>"           
-                     echo "           stop-all"
-                     echo "           stop <bots>"
-                     echo "           restart-all"
-                     echo "           restart <bot(s)>"
-                     echo "           view <bot(s)>";;
+ ""|*)               {
+                     echo -e "$print_error Command is invalid or missing."
+                     echo "        Use --rcon2irc with one of this arguments:"
+                     echo "            start-all"
+                     echo "            start <bot(s)>"
+                     echo "            stop-all"
+                     echo "            stop <bots>"
+                     echo "            restart-all"
+                     echo "            restart <bot(s)>"
+                     echo "            view <bot(s)>"
+                     } >&2; exit 1;;
 esac
 }
 
@@ -1347,7 +1349,7 @@ case $1 in
  --rcon2irc|rcon2irc)                basic_config_check; shift && rcon2irc_control "$@";;
  --help|--usage|help|usage)          xstools_more_help;;
  -h|h)                               xstools_help;;
- "")                                 echo "xstools needs an argument, check -h or --help";;
- *)                                  echo "This is not a valid argument! Check -h or --help";;
+ "")                                 echo "xstools needs an argument, check -h or --help" >&2; exit 1;;
+ *)                                  echo "This is not a valid argument! Check -h or --help" >&2; exit 1;;
 esac    
 
