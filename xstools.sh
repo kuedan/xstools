@@ -174,7 +174,7 @@ if [[ -f $userdir/configs/servers/$1.cfg  ]]; then
             log_dp_argument=""
         fi
 else
-    echo -e "$print_error No config file available for server '$1'" >&2
+    echo -e "$print_error No config file available for '$1'" >&2
     continue
 fi
 } # end of server_config_check_and_set()
@@ -720,9 +720,8 @@ for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
 done
 } # end of server_send_rescan()
 
-# send commands to your server via rcon.pl and recieve its output
-function server_send_command() {
-# check if everything is fine ...
+# check files and config for sending commands to servers via rcon 
+function server_send_check() {
 if [[ ! -x $rcon_script ]]; then
     echo -e "$print_error Could not find rcon script." >&2
     echo -e "        Check xstools.conf. Also check flags, need +x" >&2
@@ -730,76 +729,53 @@ if [[ ! -x $rcon_script ]]; then
 elif [[ "$password_file" == "configs" ]]; then
     search_in_configs="true"
 elif [[ -f $password_file ]]; then
-        search_in_configs="false"
-        single_rcon_password=$(awk '/^rcon_password/ {print $2}' $password_file)
-# check if arguments contain -c for seperating command from server names
-if ! echo "$@" | grep ' -c ' >/dev/null 2>&1; then
-    echo -e "$print_error Syntax is: --send <server(s)> -c <command>" >&2
-    exit 1
-fi
+    search_in_configs="false"
+    single_rcon_password=$(awk '/^rcon_password/ {print $2}' $password_file)
 else 
     echo -e "$print_error Could not find rcon password(s)." >&2
     echo -e "        Check xstools.conf." >&2
     exit 1
 fi
-function ps_spot_server() {
-ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep 
-} 
-# check if first argument is a valid config
-server_first_config_check $1
-# for each server we save a rcon password and port until 'command to send' begins
-for var in "$@"; do
-    if [[ "$var" == "-c" ]]; then
-        shift
-        break
-    fi
-    # kind of copy of server_config_check_and_set, but we need a shift statement in else
-    if [[ -f $userdir/configs/servers/$var.cfg  ]]; then
-        server_name="$var"
-        server_config="$server_name.cfg"
-        tmux_window="server-$server_name"
-    else
-        echo -e "$print_error No config file available for server '$var'"
-        shift
-        continue
-    fi
-    # we use servers config name, to save the port
-    server_port=$(awk '/^port/ {print $2}' $userdir/configs/servers/$server_config)
-    # test if we have found a port... simply grep for a field of digits :)
-    if ! echo $server_port | grep -E '[0-9]{4,5}' >/dev/null 2>&1; then
-        echo -e "$print_error Could not find a port in $server_config" >&2
+} # end of server_send_check() 
+
+# set ports and passwords for every server and save them in a variable
+# used in for statements
+function server_send_set_ports_and_pws() {
+# we use servers config name, to save the port
+server_port=$(awk '/^port/ {print $2}' $userdir/configs/servers/$server_config)
+# test if we have found a port... simply grep for a field of digits :)
+if ! echo $server_port | grep -E '[0-9]{4,5}' >/dev/null 2>&1; then
+    echo -e "$print_error Could not find a port in $server_config" >&2
+    echo -e "       No command has been sent to any server..." >&2
+    exit 1
+elif ! [[ $(ps_spot_server) ]]; then
+    echo -e "$print_error Server '$server_name' is not running." >&2
+    continue
+fi
+all_server_names="$all_server_names $server_name"
+all_server_ports="$all_server_ports $server_port"
+# if we have to search the rcon_password in every config file, then...
+if [[ $search_in_configs == "true" ]]; then
+    rcon_password=$(awk '/^rcon_password/ {print $2}' $userdir/configs/servers/$server_config)
+    # test if we have found a rcon_password.... simply test if rcon_password is NOT empty
+    if [[ $rcon_password == "" ]]; then
+        echo -e "$print_error Could not find a rcon password in $server_config" >&2
         echo -e "       No command has been sent to any server..." >&2
         exit 1
-    elif ! [[ $(ps_spot_server) ]]; then
-        echo -e "$print_error Server '$server_name' is not running." >&2
-        shift
-        continue
     fi
-    all_server_names="$all_server_names $server_name"
-    all_server_ports="$all_server_ports $server_port"
-    # if we have to search the rcon_password in every config file, then...
-    if [[ $search_in_configs == "true" ]]; then
-        rcon_password=$(awk '/^rcon_password/ {print $2}' $userdir/configs/servers/$server_config)
-        # test if we have found a rcon_password.... simply test if rcon_password is NOT empty
-        if [[ $rcon_password == "" ]]; then
-            echo -e "$print_error Could not find a rcon password in $server_config" >&2
-            echo -e "       No command has been sent to any server..." >&2
-            exit 1
-        fi
-        all_rcon_passwords="$all_rcon_passwords $rcon_password"
-    else
-        if [[ $single_rcon_password == "" ]]; then
-            echo -e "$print_error Could not find a rcon password in your passwords file." >&2
-            echo -e "       No command has been sent to any server..." >&2
-            exit 1
-        fi
-    all_rcon_passwords="$all_rcon_passwords $single_rcon_password"
+    all_rcon_passwords="$all_rcon_passwords $rcon_password"
+else
+    if [[ $single_rcon_password == "" ]]; then
+        echo -e "$print_error Could not find a rcon password in your passwords file." >&2
+        echo -e "       No command has been sent to any server..." >&2
+        exit 1
     fi
-    # if server port is saved, drop it argument, which is the analyzed server
-    shift
-done
-# everything (also -c) is deleted from arguments, our 'command to send' is the rest
-my_command="$@"
+all_rcon_passwords="$all_rcon_passwords $single_rcon_password"
+fi
+} # end of server_send_set_ports_and_pws
+
+# send defined command to all given ports with passwords
+function server_send_command_now() {
 # now save server names, ports and passwords in an array
 a_name=( $all_server_names )
 a_port=( $all_server_ports )
@@ -812,7 +788,59 @@ while [ "$counter" -lt "${#a_name[@]}" ]; do
     echo 
     counter=$[$counter+1]
 done
+} # end of server_send_command_now()
+
+# send commands to server(s) via rcon.pl and recieve output
+function server_send_command() {
+# check if everything is fine ...
+server_send_check
+# check if arguments contain -c for seperating command from server names
+if ! echo "$@" | grep ' -c ' >/dev/null 2>&1; then
+    echo -e "$print_error Syntax is: --send <server(s)> -c <command>" >&2
+    exit 1
+fi
+function ps_spot_server() {
+ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep 
+} 
+# check if first argument is a valid config
+server_first_config_check $1
+# for each server we save a rcon password and port until 'command to send' begins
+for var in "$@"; do
+    if [[ "$var" == "-c" ]]; then
+        break
+    fi
+    server_config_check_and_set $var
+    server_send_set_ports_and_pws
+done
+my_command=$(echo "$@" | awk -F' -c ' '{print $2}')
+server_send_command_now
 } # end of server_send_command()
+
+# send commands to all servers via rcon.pl and recieve outputs
+function server_send_all_command() {
+# check if everything is fine ...
+server_send_check
+function ps_spot_server() {
+ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep 
+}
+for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
+    cfg_name=$(basename ${cfg%\.cfg})
+    server_config_check_and_set $cfg_name
+    if [[ $(ps_spot_server) ]]; then
+        if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window" 2>/dev/null) ]]; then
+        server_send_set_ports_and_pws
+        else
+            echo -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running." >&2
+            echo -e "        You have to fix this on your own, sorry." >&2
+        fi
+    fi
+done        
+if [[ $1 == '-c' ]]; then
+    shift
+fi
+my_command="$@"
+server_send_command_now
+} # end of server_send_all_command()
 
 # print date/time to server console
 # havent known that there is a cvar allready in xonotic :P - timestamps 1 
@@ -1461,6 +1489,7 @@ case $1 in
  --add-pk3|add-pk3)                  basic_config_check; shift && server_add_pk3 "$@";;
  --rescan|rescan)                    basic_config_check; server_send_rescan;;
  --send|send)                        basic_config_check; shift && server_send_command "$@";;
+ --send-all|send-all)                basic_config_check; shift && server_send_all_command "$@";;
  --time2console|time2console)        basic_config_check; server_time2console;;
  --logs|logs)                        basic_config_check; shift && server_logs "$@";;
  --maplist|maplist)                  basic_config_check; shift && server_maplist "$@";;
