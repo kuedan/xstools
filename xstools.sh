@@ -1286,6 +1286,7 @@ xstools
     --view <server(s)>          - view server console
     --add-pk3 <url(s)>          - add pk3 files from given urls
     --rescan                    - rescan for new added packages
+    --send-all <command>        - send a command to all servers
     --send <server(s)>  -c ...  - send a command to given server(s)
     --time2console              - print date/time to server console
     --logs 'set' or 'del'       - set a new log file for all servers
@@ -1385,7 +1386,9 @@ Example: xstools --start -g server1
                         for them at endmatch with every server.
 
 --rescan                Rescan for new added packages at endmatch with every 
-                        Server.
+                        server.
+
+--send-all <command>    Send a command to all servers and recieve output.
 
 --send <server(s)>      Send a command to given servers and recieve output.
       -c <command>      The beginning of command is defined by -c.                  

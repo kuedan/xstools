@@ -101,7 +101,9 @@
                                 for them at endmatch with every server.
 
         --rescan                Rescan for new added packages at endmatch with every 
-                                Server.
+                                server.
+
+        --send-all <command>    Send a command to all servers and recieve output.
 
         --send <server(s)>      Send a command to given servers and recieve output.
               -c <command>      The beginning of command is defined by -c.
