@@ -103,9 +103,9 @@
         --rescan                Rescan for new added packages at endmatch with every 
                                 server.
 
-        --send-all <command>    Send a command to all servers and recieve output.
+        --send-all <command>    Send a command to all servers and receive output.
 
-        --send <server(s)>      Send a command to given servers and recieve output.
+        --send <server(s)>      Send a command to given servers and receive output.
               -c <command>      The beginning of command is defined by -c.
 
         --time2console          Print date/time to server console. This gives a better 

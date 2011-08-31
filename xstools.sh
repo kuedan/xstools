@@ -795,7 +795,7 @@ while [ "$counter" -lt "${#a_name[@]}" ]; do
 done
 } # end of server_send_command_now()
 
-# send commands to server(s) via rcon.pl and recieve output
+# send commands to server(s) via rcon.pl and receive output
 function server_send_command() {
 # check if everything is fine ...
 server_send_check
@@ -822,7 +822,7 @@ my_command=$(echo "$@" | awk -F' -c ' '{print $2}')
 server_send_command_now
 } # end of server_send_command()
 
-# send commands to all servers via rcon.pl and recieve outputs
+# send commands to all servers via rcon.pl and receive outputs
 function server_send_all_command() {
 # check if everything is fine ...
 server_send_check
@@ -1583,9 +1583,9 @@ Example: xstools --start -g server1
 --rescan                Rescan for new added packages at endmatch with every 
                         server.
 
---send-all <command>    Send a command to all servers and recieve output.
+--send-all <command>    Send a command to all servers and receive output.
 
---send <server(s)>      Send a command to given servers and recieve output.
+--send <server(s)>      Send a command to given servers and receive output.
       -c <command>      The beginning of command is defined by -c.                  
                         
 
@@ -1678,6 +1678,7 @@ case $1 in
                      echo "            x|extract"
                      echo "            xa|extract-all"
                      echo "            d|diff"
+                     echo "            da|diff-all"
                      echo "            f|fix"
                      echo "            s|show"
                      } >&2; exit 1;;
