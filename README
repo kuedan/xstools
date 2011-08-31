@@ -125,7 +125,7 @@
                                 ctf          --maplist ctf
                                 ctf,lms,dm   --maplist '(ctf|lms|\bdm)'
 
-        --mapinfo               <syntax> --mapinfo command <pk3(s)>
+        --mapinfo               Syntax: --mapinfo command <pk3(s)>
                                 command is one of the following options:
         
             extract <pk3(s)>    Extract mapinfo files of given pk3 package(s)
@@ -148,14 +148,14 @@
             show <pk3(s)>       Show mapinfo file of given pk3 package and mapinfo file 
                                 in 'data/maps/'.
 
-        --rcon2irc              <syntax> --rcon2irc command <bot(s)>
+        --rcon2irc              Syntax: --rcon2irc command <bot(s)>
                                 command is one of the following options:
        
              start-all          Start all rcon2irc bots, whose configuration files
                                 are placed in 'configs/rcon2irc'. Those configuration 
-                                files are recognized by their extenstion .rcon2irc.conf
+                                files are recognized by their extenstion .rcon2irc.conf.
 
-             start <bot(s)>     same as --rcon-start-all, but you can specify bot(s)
+             start <bot(s)>     Same as --rcon-start-all, but you can specify bot(s).
 
              stop-all           Stop all currently running bots. Those servers must
                                 run in the defined tmux session. Otherwise xstools 
@@ -170,9 +170,9 @@
              view <bot(s)>      Attach a tmux window and show bot console of bot(s).
 
 
-        --help                  print this help
+        --help                  Print this help.
 
-        -h                      print a list of available functions
+        -h                      Print a list of available functions.
 
 ----- Installation:
       For installation please read the INSTALL file. 

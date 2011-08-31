@@ -1478,7 +1478,8 @@ xstools
     --logs 'set' or 'del'       - set a new log file for all servers
                                 - or delete log files older than given days
     --maplist                   - create maplist for all gametypes or use regex
-    --mapinfo 
+
+    --mapinfo                   syntax: --rcon2irc command <pk3(s)>
         extract                 - extract mapinfo files of given pk3 package
         extract-all             - extract all mapinfo files of pk3 packages
         diff                    - show difference between data/maps/*.mapinfo
@@ -1487,7 +1488,6 @@ xstools
         fix                     - fix server console warnings by mapinfo files
         show                    - show mapinfo files of given pk3 package
         
-
     --rcon2irc                  syntax: --rcon2irc command <bot(s)>
         start-all               - start all rcon2irc bots
         start <bot(s)>          - start rcon2irc bots
@@ -1607,7 +1607,7 @@ Example: xstools --start -g server1
                         ctf          --maplist ctf
                         ctf,lms,dm   --maplist '(ctf|lms|\bdm)'
 
---mapinfo               <syntax> --mapinfo command <pk3(s)>
+--mapinfo               Syntax: --mapinfo command <pk3(s)>
                         command is one of the following options:
         
         extract <pk3(s)>    Extract mapinfo files of given pk3 package(s)
@@ -1620,7 +1620,7 @@ Example: xstools --start -g server1
                         and mapinfo file in 'data/maps/'.
 
         diff-all        Same as 'diff' but for all pk3 packages in 'packages' 
-                        and its subdirs. No output if comparing was not possible.
+                        and its subdirs. No output if comparing was not possible
                         No output if mapinfo files are the same.
     
         fix             Fix server console warnings by mapinfo files:
@@ -1630,8 +1630,9 @@ Example: xstools --start -g server1
         show <pk3(s)>   Show mapinfo file of given pk3 package and mapinfo file 
                         in 'data/maps/'
 
---rcon2irc              
-       
+--rcon2irc              Syntax: --rcon2irc command <bot(s)>
+                        command is one of the following options:
+
       start-all         Start all rcon2irc bots, whose configuration files
                         are placed in 'configs/rcon2irc'. Those configuration 
                         files are recognized by their extenstion .rcon2irc.conf
