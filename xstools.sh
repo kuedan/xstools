@@ -3,7 +3,6 @@
 # Xonotic Server Tools
 #
 # Version: 0.99 beta          
-# Release date: 19. August 2011
 # Created by: It'sMe
 #
 # Required Software: tmux
@@ -20,6 +19,12 @@
 # Xonotic Server Tools by It'sMe is released under the following License:
 # Attribution-NonCommercial-ShareAlike 3.0 Unported (CC BY-NC-SA 3.0)
 # http://creativecommons.org/licenses/by-nc-sa/3.0/
+#
+# THIS SOFTWARE IS DISTRIBUTED IN THE HOPE THAT IT WILL BE USEFUL, BUT WITHOUT 
+# ANY WARRANTY. IT IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+# EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE ENTIRE RISK 
+# AS TO THE QUALITY AND PERFORMANCE OF THIS SOFTWARE IS WITH YOU.
 # -----------------------------------------------------------------------------
 #
 # DO NOT EDIT THIS SCRIPT TO CONFIGURE!! 
@@ -149,7 +154,7 @@ esac
 # check if a server name is given, otherwise abort
 function server_first_config_check() {
 if [[ "$1" == "" ]]; then
-    echo "Server name missing. Check -h or --help" >&2
+    echo "$print_error Server name missing. Check -h or --help" >&2
     exit 1
 fi
 } # end server_first_config_check()
@@ -799,6 +804,7 @@ if ! echo "$@" | grep ' -c ' >/dev/null 2>&1; then
     echo -e "$print_error Syntax is: --send <server(s)> -c <command>" >&2
     exit 1
 fi
+
 function ps_spot_server() {
 ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep 
 } 
@@ -919,7 +925,8 @@ which uniq >/dev/null 2>&1 || {
     echo -e "$print_error Couldn't find uniq, which is required." >&2
     exit 1
 }
-function check_git_mapinfos() {
+
+function server_maplist_git() {
 echo -e "$print_info Checking git mapinfos."
 for map_info_location in $basedir_git/data/xonotic-maps.pk3dir/maps/*.mapinfo; do
     map_info=$(basename $map_info_location)
@@ -935,7 +942,7 @@ for map_info_location in $basedir_git/data/xonotic-maps.pk3dir/maps/*.mapinfo; d
 done
 }
 
-function check_release_mapinfos() {
+function server_maplist_release() {
 echo -e "$print_info Checking release mapinfos."
 map_infos=$(unzip -l $basedir_release/data/xonotic-*-maps.pk3 |grep -Eo '[A-Za-z0-9_.+-]+.mapinfo' |tr "\n" " ")
 for map_info in $map_infos; do
@@ -955,12 +962,12 @@ case $default_version in
     git) 
     # we have default option 'git'
     version_git_check_and_set
-    check_git_mapinfos "$@"
+    server_maplist_git "$@"
         ;;   
     release)
     # we have default option 'release'
     version_release_check_and_set
-    check_release_mapinfos "$@"
+    server_maplist_release "$@"
         ;;   
 esac
 echo -e "$print_info Checking user added .pk3 packages."
@@ -1019,6 +1026,185 @@ else
     echo
 fi
 } # end of server_maplist()
+
+# check of first argument is given and a pk3 name
+function server_mapinfo_check_first() {
+if [[ "$1" == "" ]]; then
+    echo -e "$print_error pk3 file missing. Check -h or --help" >&2
+    exit 1
+elif ! echo "$1" | grep ".pk3" >/dev/null 2>&1; then
+    echo -e "$print_error Argument must be a pk3 file." >&2
+    exit 1
+fi
+} # end of server_mapinfo_check_first()
+
+# check if argument is a pk3 package and if file exists
+# (used in for statements)
+function server_mapinfo_check() {
+if ! echo "$map_pk3" | grep ".pk3" >/dev/null 2>&1; then
+    echo -e "$print_error $(basename $map_pk3) is not a a pk3 file." >&2
+    continue
+elif [[ ! -f $map_pk3 ]]; then
+    echo -e "$print_error Could not find $(basename $map_pk3)." >&2
+    continue        
+fi
+} # end of server_mapinfo_check()
+
+# extract mapinfo files of given pk3 into data/maps
+function server_mapinfo_extract() {
+server_mapinfo_check_first $1
+echo -e "$print_info Extract all mapinfo files of given pk3 files."
+echo -e "       No mapinfo file will be overwritten."
+zip_option="-n"
+
+#if [ "$@" -gt "4" ]; then
+#   PS3="Choose an option: "
+#   option1="never overwrite existing files"
+#   option2="overwrite files WITHOUT prompting"
+#   option3="decide for each file"
+#   select answer in "$option1" "$option2" "$option3"; do
+#       case "$answer" in
+#           "$option1") zip_option="-n"; echo -e "$print_info Script will not overwrite existing files..." ; break;; 
+#           "$option2") zip_option="-o"; echo -e "$print_info Script will overwrite existing files..." ; break;; 
+#           "$option3") break;; 
+#       esac
+#   done
+#fi
+
+for map_pk3 in "$@"; do
+    server_mapinfo_check $map_pk3
+    echo $map_pk3 | grep '.pk3' >/dev/null 2>&1 || echo -e "$print_error $(basename $map_pk3) is not a pk3 file." >&2
+    map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9_.+-]+.mapinfo' |tr "\n" " ")
+    if [[ -z $map_infos ]]; then
+        echo -e "$print_attention $(basename $map_pk3) does not contain a mapinfo file."
+        continue
+    fi
+    for map_info in $map_infos; do
+        if [[ -f $userdir/data/maps/$map_info ]]; then
+            echo -e "$print_info data/maps/$map_info allready exists."
+        else
+            echo -e "$print_info Extract $map_info of $(basename $map_pk3)."
+            unzip $zip_option -q -d $userdir/data $map_pk3 maps/$map_info
+        fi
+    done
+done
+} # end of server_mapinfo_extract()
+
+# extract all mapinfo files from pk3 packages
+function server_mapinfo_extract_all() {
+echo -e "$print_info Extract all mapinfo files of pk3 files in 'packages'."
+echo -e "       No mapinfo file will be overwritten."
+package_folders=$(find $userdir/packages -type d)
+for folder in $package_folders; do
+    for map_pk3 in $folder/*.pk3; do
+        map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9_.+-]+.mapinfo' |tr "\n" " ")
+        if [[ -z $map_infos ]]; then
+            continue
+        fi
+        for map_info in $map_infos; do
+            unzip -q -n -d $userdir/data $map_pk3 maps/$map_info
+        done
+    done
+done
+} # end of server_mapinfo_extract_all()
+
+# show the difference of a mapinfo file in pk3 package and in data/maps 
+function server_mapinfo_diff() {
+server_mapinfo_check_first $1
+for map_pk3 in "$@"; do
+    server_mapinfo_check $map_pk3
+    echo $map_pk3 | grep '.pk3' >/dev/null 2>&1 || echo -e "$print_error $(basename $map_pk3) is not a pk3 file." >&2
+    map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9_.+-]+.mapinfo' |tr "\n" " ")
+    if [[ -z $map_infos ]]; then
+        echo -e "$print_attention $(basename $map_pk3) does not contain a mapinfo file."
+        echo -e "            Cannot compare..."
+        continue
+    fi
+    for map_info in $map_infos; do
+        if [[ -f $userdir/data/maps/$map_info ]]; then
+            echo -e "$print_info Difference of data/maps/$map_info and $map_pk3:"
+            diff $userdir/data/maps/$map_info <(unzip -p -q $map_pk3 maps/$map_info) &&
+            echo "       No Difference..."
+        else
+            echo -e "$print_attention Cannot compare files, $userdir/data/maps/$map_info does not exist"
+        fi
+    done
+done
+} # end of server_mapinfo_diff()
+
+# show the difference of all mapinfo files in pk3 package and in data/maps 
+function server_mapinfo_diff_all() {
+package_folders=$(find $userdir/packages -type d)
+for folder in $package_folders; do
+    for map_pk3 in $folder/*.pk3; do
+        echo $map_pk3 | grep '.pk3' >/dev/null 2>&1 || echo -e "$print_error $(basename $map_pk3) is not a pk3 file." >&2
+        map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9_.+-]+.mapinfo' |tr "\n" " ")
+        if [[ -z $map_infos ]]; then
+            continue
+        fi
+        for map_info in $map_infos; do
+            if [[ -f $userdir/data/maps/$map_info ]]; then
+                if ! diff $userdir/data/maps/$map_info <(unzip -p -q $map_pk3 maps/$map_info) >/dev/null 2>&1; then
+                    echo -e "$print_info Difference of data/maps/$map_info and $map_pk3:"
+                    diff $userdir/data/maps/$map_info <(unzip -p -q $map_pk3 maps/$map_info) 
+                fi
+            fi
+        done
+    done
+done
+} # end of server_mapinfo_diff_all()
+
+# show mapinfo files of pk3 packages and if exists in data/maps
+function server_mapinfo_show() {
+server_mapinfo_check_first $1
+for map_pk3 in "$@"; do
+    server_mapinfo_check $map_pk3
+    echo $map_pk3 | grep '.pk3' >/dev/null 2>&1 || echo -e "$print_error $(basename $map_pk3) is not a pk3 file." >&2
+    map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9_.+-]+.mapinfo' |tr "\n" " ")
+    if [[ -z $map_infos ]]; then
+        echo -e "$print_attention $(basename $map_pk3) does not contain a mapinfo."
+        continue
+    fi
+    for map_info in $map_infos; do
+        if [[ -f $userdir/data/maps/$map_info ]]; then
+            echo -e "$print_info data/maps/$map_info:"
+            cat "$userdir/data/maps/$map_info"
+        else
+            echo -e "$print_info data/maps/$map_info does not exists."
+        fi
+        echo -e "$print_info $(basename $map_pk3) - $map_info:"
+        unzip -p -q $map_pk3 maps/$map_info
+    done
+done
+} # end of server_mapinfo_show()
+
+# reduce server console errors messages 
+# replace type 'type' with 'gametype', copy autogenerated mapinfo files
+function server_mapinfo_fix() {
+echo -e "$print_info Fixing 'type' in data/maps..."
+for map_info_l in $userdir/data/maps/*.mapinfo; do
+    sed -i 's/^type /gametype /g' $map_info_l >/dev/null 2>&1
+done
+echo -e "$print_info Scanning pk3 packages for 'type' and fix it.."
+package_folders=$(find $userdir/packages -type d)
+for folder in $package_folders; do
+    for map_pk3 in $folder/*.pk3; do
+        map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9_.+-]+.mapinfo' |tr "\n" " ")
+        if [[ -z $map_infos ]]; then
+            continue
+        fi
+        for map_info in $map_infos; do
+            if [[ -f $userdir/data/maps/$map_info ]]; then
+                continue
+            elif unzip -q -p $map_pk3 maps/$map_info | grep '^type ' >/dev/null 2>&1; then
+                unzip -q -p $map_pk3 maps/$map_info | sed 's/^type /gametype /g' > $userdir/data/maps/$map_info
+            fi
+        done
+    done
+done
+echo -e "$print_info Copying autogenerated maps into data/maps..."
+cp -f $userdir/data/data/maps/autogenerated/*.mapinfo $userdir/data/maps/
+} # end of server_mapinfo_fix()
     
 # end of function for servers 
 # begin of functions for rcon2irc bots
@@ -1292,6 +1478,15 @@ xstools
     --logs 'set' or 'del'       - set a new log file for all servers
                                 - or delete log files older than given days
     --maplist                   - create maplist for all gametypes or use regex
+    --mapinfo 
+        extract                 - extract mapinfo files of given pk3 package
+        extract-all             - extract all mapinfo files of pk3 packages
+        diff                    - show difference between data/maps/*.mapinfo
+                                  and mapinfo file in pk3 package.
+        diff-all                - show the difference of all mapinfo files
+        fix                     - fix server console warnings by mapinfo files
+        show                    - show mapinfo files of given pk3 package
+        
 
     --rcon2irc                  syntax: --rcon2irc command <bot(s)>
         start-all               - start all rcon2irc bots
@@ -1409,11 +1604,33 @@ Example: xstools --start -g server1
 
 --maplist               Create a maplist for all gamtypes or use a regex.
                         Examples:
-                        ctf,ca,tm    --maplist '(ctf|ca|tdm)'
+                        ctf          --maplist ctf
                         ctf,lms,dm   --maplist '(ctf|lms|\bdm)'
 
---rcon2irc              <syntax> --rcon2irc command <bot(s)>
+--mapinfo               <syntax> --mapinfo command <pk3(s)>
                         command is one of the following options:
+        
+        extract <pk3(s)>    Extract mapinfo files of given pk3 package(s)
+                            to 'data/maps/'.
+
+        extract-all     Extract all mapinfo files of pk3 packages in 'packages/'
+                        and its subfolders to 'data/maps/'.
+    
+        diff <pk3(s)>   Show difference between pk3 package mapinfo
+                        and mapinfo file in 'data/maps/'.
+
+        diff-all        Same as 'diff' but for all pk3 packages in 'packages' 
+                        and its subdirs. No output if comparing was not possible.
+                        No output if mapinfo files are the same.
+    
+        fix             Fix server console warnings by mapinfo files:
+                        Replace 'type' with 'gametype' and copy autogenerated
+                        mapinfo files to 'data/maps/'.
+    
+        show <pk3(s)>   Show mapinfo file of given pk3 package and mapinfo file 
+                        in 'data/maps/'
+
+--rcon2irc              
        
       start-all         Start all rcon2irc bots, whose configuration files
                         are placed in 'configs/rcon2irc'. Those configuration 
@@ -1447,6 +1664,26 @@ For any questions and help join #xstools, quakenet (IRC)
 EOF
 }
 
+function server_mapinfo_control() {
+case $1 in
+    -x|x|--extract|extract)                 shift && server_mapinfo_extract "$@";;
+    -xa|xa|--extract-all|extract-all)       server_mapinfo_extract_all "$@";;
+    -d|d|--diff|diff)                       shift && server_mapinfo_diff "$@";;
+    -da|da|--diff-all|diff-all)             server_mapinfo_diff_all;;
+    -f|f|--fix|fix)                         server_mapinfo_fix "$@";;
+    -s|s|--show|show)                       shift && server_mapinfo_show "$@";; 
+    ""|*)            {    
+                     echo -e "$print_error Command is invalid or missing."
+                     echo "        Use --mapinfo with one of this arguments:"
+                     echo "            x|extract"
+                     echo "            xa|extract-all"
+                     echo "            d|diff"
+                     echo "            f|fix"
+                     echo "            s|show"
+                     } >&2; exit 1;;
+esac
+}
+
 function rcon2irc_control() {
 if [[ ! -f "$rcon2irc_script" ]]; then
     echo -e "$print_error Could not find 'rcon2irc_script'." >&2
@@ -1454,13 +1691,13 @@ if [[ ! -f "$rcon2irc_script" ]]; then
     exit 1
 fi
 case $1 in
- start)              shift && rcon2irc_start $@;;
- stop)               shift && rcon2irc_stop $@;;
- restart)            shift && rcon2irc_restart $@;;
- stop-all)           rcon2irc_stop_all;;
- start-all)          rcon2irc_start_all;;
- restart-all)        rcon2irc_restart_all;;
- view)               shift && rcon2irc_view $@;;
+ --start|start)                 shift && rcon2irc_start $@;;
+ --stop|stop)                   shift && rcon2irc_stop $@;;
+ --restart|restart)             shift && rcon2irc_restart $@;;
+ --stop-all|stop-all)           rcon2irc_stop_all;;
+ --start-all|start-all)         rcon2irc_start_all;;
+ --restart-all|restart-all)     rcon2irc_restart_all;;
+ --view|view)                   shift && rcon2irc_view $@;;
  ""|*)               {
                      echo -e "$print_error Command is invalid or missing."
                      echo "        Use --rcon2irc with one of this arguments:"
@@ -1496,6 +1733,7 @@ case $1 in
  --time2console|time2console)        basic_config_check; server_time2console;;
  --logs|logs)                        basic_config_check; shift && server_logs "$@";;
  --maplist|maplist)                  basic_config_check; shift && server_maplist "$@";;
+ --mapinfo|mapinfo)                  basic_config_check; shift && server_mapinfo_control "$@";;
  --rcon2irc|rcon2irc)                basic_config_check; shift && rcon2irc_control "$@";;
  --help|--usage|help|usage)          xstools_more_help;;
  -h|h)                               xstools_help;;
