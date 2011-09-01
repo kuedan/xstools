@@ -688,10 +688,15 @@ for var in $@; do
 }
 done
 # download all files
-for var in $@; do 
+for var in $@; do
+    pk3file_name=$(basename $var)
+    # do not download allready existing pk3 packages
+    if [[ -f $userdir/packages/$pk3file_name ]]; then 
+        echo -e "$print_info $pk3file_name allready exists."
+        continue
+    fi 
     wget --directory-prefix=$userdir/packages -N $var
     # create copy/symlink/hardlink for http server       
-    pk3file_name=$(basename $var)
     if [[ "$http_server" == "true" ]]; then
         case $http_server_option in
             copy)
