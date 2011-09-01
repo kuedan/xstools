@@ -503,9 +503,7 @@ counter_restart=0
 while [ "$counter_restart" -lt "$counter_stop" ]; do
     counter_restart=$[$counter_restart+1]
     server_config_check_and_set ${restart_server[$counter_restart]}
-    # we are only restarting git servers here - instead of '!!' we use the full command
-    # !! would work, too :)
-    tmux send -t $tmux_session:$tmux_window "./all run dedicated $dp_default_arguments +set serverconfig $server_config $log_dp_argument" C-m
+    tmux send -t $tmux_session:$tmux_window "!!" C-m
     echo -e "$print_info Server '$server_name' has been restarted."
 done
 # unlock xstools 
