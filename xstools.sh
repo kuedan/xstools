@@ -316,9 +316,18 @@ server_config_check_and_set $var
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window" 2>/dev/null) ]]; then
             echo -e "$print_info Restarting server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
-            sleep 2
-            # just run the last used command, so we do not need to know if we started a git or release server before
-            tmux send -t $tmux_session:$tmux_window "!!" C-m
+            sleep 1
+            if [[ "$logs_date" == "true" ]]; then
+                restart_command_raw_file="$userdir/restart_command_raw"
+                tmux send -t $tmux_session:$tmux_window "echo \"!!\" > $restart_command_raw_file 2>/dev/null" C-m
+                sleep 0.5
+                last_command=$(cat $restart_command_raw_file)
+                rm -f $restart_command_raw_file
+                run_command=$(echo $last_command | awk -F'+set log_file' -v log_dp_argument="$log_dp_argument" '{print $1 log_dp_argument}')
+                tmux send -t $tmux_session:$tmux_window "$run_command" C-m
+            else
+                tmux send -t $tmux_session:$tmux_window "!!" C-m
+            fi
             echo -e "       Server '$server_name' has been restarted."
         else
             echo -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running." >&2
@@ -369,9 +378,18 @@ for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window" 2>/dev/null) ]]; then
             echo -e "$print_info Restarting server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
-            sleep 2
-            # just run the last used command, so we do not need to know if we start a git or release server
-            tmux send -t $tmux_session:$tmux_window "!!" C-m
+            sleep 1
+            if [[ "$logs_date" == "true" ]]; then
+                restart_command_raw_file="$userdir/restart_command_raw"
+                tmux send -t $tmux_session:$tmux_window "echo \"!!\" > $restart_command_raw_file 2>/dev/null" C-m
+                sleep 0.5
+                last_command=$(cat $restart_command_raw_file)
+                rm -f $restart_command_raw_file
+                run_command=$(echo $last_command | awk -F'+set log_file' -v log_dp_argument="$log_dp_argument" '{print $1 log_dp_argument}')
+                tmux send -t $tmux_session:$tmux_window "$run_command" C-m
+            else
+                tmux send -t $tmux_session:$tmux_window "!!" C-m
+            fi
             echo -e "       Server '$server_name' has been restarted."
         else
             echo -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running." >&2
@@ -503,7 +521,17 @@ counter_restart=0
 while [ "$counter_restart" -lt "$counter_stop" ]; do
     counter_restart=$[$counter_restart+1]
     server_config_check_and_set ${restart_server[$counter_restart]}
-    tmux send -t $tmux_session:$tmux_window "!!" C-m
+    if [[ "$logs_date" == "true" ]]; then
+        restart_command_raw_file="$userdir/restart_command_raw"
+        tmux send -t $tmux_session:$tmux_window "echo \"!!\" > $restart_command_raw_file 2>/dev/null" C-m
+        sleep 0.5
+        last_command=$(cat $restart_command_raw_file)
+        rm -f $restart_command_raw_file
+        run_command=$(echo $last_command | awk -F'+set log_file' -v log_dp_argument="$log_dp_argument" '{print $1 log_dp_argument}')
+        tmux send -t $tmux_session:$tmux_window "$run_command" C-m
+    else
+        tmux send -t $tmux_session:$tmux_window "!!" C-m
+    fi
     echo -e "$print_info Server '$server_name' has been restarted."
 done
 # unlock xstools 

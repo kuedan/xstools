@@ -3,7 +3,7 @@
 # You can move this file to any location you want
 # and run 'Xonotic Server Tools' with this script.
 #
-# And you need to fix the path.
-# fix 'please-fix-me' to the real location 
+# You need to fix the path.
+# Fix 'please-fix-me' to the real location of xstools.sh.
 
 bash /please-fix-me/xstools.sh $@
