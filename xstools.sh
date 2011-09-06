@@ -320,9 +320,8 @@ server_config_check_and_set $var
             if [[ "$logs_date" == "true" ]]; then
                 restart_command_raw_file="$userdir/restart_command_raw"
                 tmux send -t $tmux_session:$tmux_window "echo \"!!\" > $restart_command_raw_file 2>/dev/null" C-m
-                sleep 0.5
+                sleep 0.8
                 last_command=$(cat $restart_command_raw_file)
-                sleep 0.2
                 rm -f $restart_command_raw_file
                 run_command=$(echo $last_command | awk -F'+set log_file' -v log_dp_argument="$log_dp_argument" '{print $1 log_dp_argument}')
                 tmux send -t $tmux_session:$tmux_window "$run_command" C-m
@@ -383,9 +382,8 @@ for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
             if [[ "$logs_date" == "true" ]]; then
                 restart_command_raw_file="$userdir/restart_command_raw"
                 tmux send -t $tmux_session:$tmux_window "echo \"!!\" > $restart_command_raw_file 2>/dev/null" C-m
-                sleep 0.5
+                sleep 0.8
                 last_command=$(cat $restart_command_raw_file)
-                sleep 0.2
                 rm -f $restart_command_raw_file
                 run_command=$(echo $last_command | awk -F'+set log_file' -v log_dp_argument="$log_dp_argument" '{print $1 log_dp_argument}')
                 tmux send -t $tmux_session:$tmux_window "$run_command" C-m
@@ -526,9 +524,8 @@ while [ "$counter_restart" -lt "$counter_stop" ]; do
     if [[ "$logs_date" == "true" ]]; then
         restart_command_raw_file="$userdir/restart_command_raw"
         tmux send -t $tmux_session:$tmux_window "echo \"!!\" > $restart_command_raw_file 2>/dev/null" C-m
-        sleep 0.5
+        sleep 0.8
         last_command=$(cat $restart_command_raw_file)
-        sleep 0.2
         rm -f $restart_command_raw_file
         run_command=$(echo $last_command | awk -F'+set log_file' -v log_dp_argument="$log_dp_argument" '{print $1 log_dp_argument}')
         tmux send -t $tmux_session:$tmux_window "$run_command" C-m
