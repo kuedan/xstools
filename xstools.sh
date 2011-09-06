@@ -249,7 +249,7 @@ server_config_check_and_set $var
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window" 2>/dev/null) ]]; then
             echo -e "$print_info Stopping server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
-            sleep 2
+            sleep 1
             tmux send -t $tmux_session:$tmux_window "exit" C-m
             echo -e "       Server '$server_name' has been stopped."
         else
@@ -292,7 +292,7 @@ for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
          if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window" 2>/dev/null) ]]; then
             echo -e "$print_info Stopping server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
-            sleep 2
+            sleep 1
             tmux send -t $tmux_session:$tmux_window "exit" C-m
             echo -e "       Server '$server_name' has been stopped."
         else
@@ -322,6 +322,7 @@ server_config_check_and_set $var
                 tmux send -t $tmux_session:$tmux_window "echo \"!!\" > $restart_command_raw_file 2>/dev/null" C-m
                 sleep 0.5
                 last_command=$(cat $restart_command_raw_file)
+                sleep 0.2
                 rm -f $restart_command_raw_file
                 run_command=$(echo $last_command | awk -F'+set log_file' -v log_dp_argument="$log_dp_argument" '{print $1 log_dp_argument}')
                 tmux send -t $tmux_session:$tmux_window "$run_command" C-m
@@ -384,6 +385,7 @@ for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
                 tmux send -t $tmux_session:$tmux_window "echo \"!!\" > $restart_command_raw_file 2>/dev/null" C-m
                 sleep 0.5
                 last_command=$(cat $restart_command_raw_file)
+                sleep 0.2
                 rm -f $restart_command_raw_file
                 run_command=$(echo $last_command | awk -F'+set log_file' -v log_dp_argument="$log_dp_argument" '{print $1 log_dp_argument}')
                 tmux send -t $tmux_session:$tmux_window "$run_command" C-m
@@ -526,6 +528,7 @@ while [ "$counter_restart" -lt "$counter_stop" ]; do
         tmux send -t $tmux_session:$tmux_window "echo \"!!\" > $restart_command_raw_file 2>/dev/null" C-m
         sleep 0.5
         last_command=$(cat $restart_command_raw_file)
+        sleep 0.2
         rm -f $restart_command_raw_file
         run_command=$(echo $last_command | awk -F'+set log_file' -v log_dp_argument="$log_dp_argument" '{print $1 log_dp_argument}')
         tmux send -t $tmux_session:$tmux_window "$run_command" C-m
