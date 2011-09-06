@@ -316,7 +316,7 @@ server_config_check_and_set $var
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window" 2>/dev/null) ]]; then
             echo -e "$print_info Restarting server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
-            sleep 1
+            sleep 2
             if [[ "$logs_date" == "true" ]]; then
                 restart_command_raw_file="$userdir/restart_command_raw"
                 tmux send -t $tmux_session:$tmux_window "echo \"!!\" > $restart_command_raw_file 2>/dev/null" C-m
@@ -378,7 +378,7 @@ for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window" 2>/dev/null) ]]; then
             echo -e "$print_info Restarting server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
-            sleep 1
+            sleep 2
             if [[ "$logs_date" == "true" ]]; then
                 restart_command_raw_file="$userdir/restart_command_raw"
                 tmux send -t $tmux_session:$tmux_window "echo \"!!\" > $restart_command_raw_file 2>/dev/null" C-m
