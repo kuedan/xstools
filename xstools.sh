@@ -189,10 +189,10 @@ function server_start() {
 for var in $@; do
 # check if $var exists and set our variables:
 server_config_check_and_set $var
-    # option 1: server is allready running
+    # option 1: server is already running
     # in this case: print error and continue with for loop
     if [[ $(ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep ) ]]; then
-        echo -e "$print_attention Server '$server_name' is allready running."
+        echo -e "$print_attention Server '$server_name' is already running."
         continue
     fi
     # option 2: server is not running, tmux session does not exist
@@ -201,7 +201,7 @@ server_config_check_and_set $var
         tmux new-session -d -n $tmux_window -s $tmux_session
         tmux send -t $tmux_session:$tmux_window "$server_command $dp_default_arguments +set serverconfig $server_config $log_dp_argument" C-m 
         echo -e "$print_info Server '$server_name' has been started."
-    # option 3: server is not running; tmux session exists, and window allready exists
+    # option 3: server is not running; tmux session exists, and window already exists
     # in this case: print error and continue with for loop
     elif [[ $(tmux list-windows -t $tmux_session 2>/dev/null | grep "$tmux_window" ) ]]; then
         echo -e "$print_error Server '$server_name' does not run, but tmux window '$tmux_window' exists."  >&2
@@ -716,9 +716,9 @@ done
 # download all files
 for var in $@; do
     pk3file_name=$(basename $var)
-    # do not download allready existing pk3 packages
+    # do not download already existing pk3 packages
     if [[ -f $userdir/packages/$pk3file_name ]]; then 
-        echo -e "$print_info $pk3file_name allready exists."
+        echo -e "$print_info $pk3file_name already exists."
         continue
     fi 
     wget --directory-prefix=$userdir/packages -N $var
@@ -880,7 +880,7 @@ server_send_command_now
 } # end of server_send_all_command()
 
 # print date/time to server console
-# havent known that there is a cvar allready in xonotic :P - timestamps 1 
+# havent known that there is a cvar already in xonotic :P - timestamps 1 
 function server_time2console() {
 if [[ -z $date_to_console ]]; then
     echo -e "$print_error 'date_to_console' is empty." >&2
@@ -1112,7 +1112,7 @@ for map_pk3 in "$@"; do
     fi
     for map_info in $map_infos; do
         if [[ -f $userdir/data/maps/$map_info ]]; then
-            echo -e "$print_info data/maps/$map_info allready exists."
+            echo -e "$print_info data/maps/$map_info already exists."
         else
             echo -e "$print_info Extract $map_info of $(basename $map_pk3)."
             unzip $zip_option -q -d $userdir/data $map_pk3 maps/$map_info
@@ -1279,10 +1279,10 @@ rcon2irc_first_config_check $1
 for var in $@; do
 # check if $var exists and set our variables:
 rcon2irc_config_check_and_set $var
-    # option 1: rcon2irc is allready running
+    # option 1: rcon2irc is already running
     # in this case: print error and continue with for loop
     if [[ $(ps -Af | grep "perl $rcon2irc_script $rcon2irc_config" 2>/dev/null |grep -v grep ) ]]; then
-        echo -e "$print_attention rcon2irc '$rcon2irc_name' is allready running."
+        echo -e "$print_attention rcon2irc '$rcon2irc_name' is already running."
         continue
     fi
     # option 2: rcon2irc is not running, tmux session does not exist
@@ -1291,7 +1291,7 @@ rcon2irc_config_check_and_set $var
         tmux new-session -d -n $tmux_window -s $tmux_session
         tmux send -t $tmux_session:$tmux_window "cd $rcon2irc_config_folder && perl $rcon2irc_script $rcon2irc_config" C-m 
         rcon2irc_check_start 
-    # option 3: rcon2irc is not running; tmux session exists, and window allready exists
+    # option 3: rcon2irc is not running; tmux session exists, and window already exists
     # in this case: print error and continue with for loop
     elif [[ $(tmux list-windows -t $tmux_session 2>/dev/null | grep "$tmux_window" ) ]]; then
         echo -e "$print_error rcon2irc '$rcon2irc_name' does not run, but tmux window '$tmux_window' exists." >&2
