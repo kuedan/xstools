@@ -715,7 +715,7 @@ for var in $@; do
 done
 # download all files
 for var in $@; do
-    pk3file_name=$(basename $var)
+    pk3file_name=$(basename $var |sed 's/%23/#/g' )
     # do not download already existing pk3 packages
     if [[ -f $userdir/packages/$pk3file_name ]]; then 
         echo -e "$print_info $pk3file_name already exists."
@@ -946,17 +946,6 @@ case $1 in
 esac
 } 
 
-# create maplists for one or more gametypes
-function server_maplist() {
-which unzip >/dev/null 2>&1 || {
-    echo -e "$print_error Couldn't find unzip, which is required." >&2
-    exit 1
-}
-which uniq >/dev/null 2>&1 || {
-    echo -e "$print_error Couldn't find uniq, which is required." >&2
-    exit 1
-}
-
 function server_maplist_git() {
 echo -e "$print_info Checking git mapinfos."
 for map_info_location in $basedir_git/data/xonotic-maps.pk3dir/maps/*.mapinfo; do
@@ -975,7 +964,7 @@ done
 
 function server_maplist_release() {
 echo -e "$print_info Checking release mapinfos."
-map_infos=$(unzip -l $basedir_release/data/xonotic-*-maps.pk3 |grep -Eo '[A-Za-z0-9_.+-]+.mapinfo' |tr "\n" " ")
+map_infos=$(unzip -l $basedir_release/data/xonotic-*-maps.pk3 |grep -Eo '[A-Za-z0-9_+-]+.mapinfo' |tr "\n" " ")
 for map_info in $map_infos; do
     map_name=${map_info%\.mapinfo}
     if [[ -f $userdir/data/maps/$map_info ]]; then
@@ -987,6 +976,17 @@ for map_info in $map_infos; do
     unzip -p $basedir_release/data/xonotic-*-maps.pk3 maps/$map_info | grep -Eo "^(gametype|type) $@" >/dev/null &&
     maplist="$map_name $maplist"
 done
+}
+
+# create maplists for one or more gametypes
+function server_maplist() {
+which unzip >/dev/null 2>&1 || {
+    echo -e "$print_error Couldn't find unzip, which is required." >&2
+    exit 1
+}
+which uniq >/dev/null 2>&1 || {
+    echo -e "$print_error Couldn't find uniq, which is required." >&2
+    exit 1
 }
 
 case $default_version in
@@ -1006,10 +1006,12 @@ echo -e "$print_info Checking user added .pk3 packages."
 # users may add sublevel folders to packages
 package_folders=$(find $userdir/packages -type d)
 for folder in $package_folders; do
+    # no mapinfo in this directory.. then continue with next one
+    ls $folder/*.pk3 >/dev/null 2>&1 || continue
     for map_pk3 in $folder/*.pk3; do
         # pk3 packages can contain several bsp files
         # save all of them in a simple variable
-        map_bsps=$(unzip -l $map_pk3 |grep -Eo '[A-Za-z0-9_.+-]+.bsp' |tr "\n" " ")
+        map_bsps=$(unzip -l $map_pk3 |grep -Eo '[A-Za-z0-9#_+-]+.bsp' |tr "\n" " ")
         # check if pk3 package contains a bsp, if not continue with for loop
         if [[ -z $map_bsps ]]; then
             continue
@@ -1105,7 +1107,7 @@ zip_option="-n"
 for map_pk3 in "$@"; do
     server_mapinfo_check $map_pk3
     echo $map_pk3 | grep '.pk3' >/dev/null 2>&1 || echo -e "$print_error $(basename $map_pk3) is not a pk3 file." >&2
-    map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9_.+-]+.mapinfo' |tr "\n" " ")
+    map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9#_+-]+.mapinfo' |tr "\n" " ")
     if [[ -z $map_infos ]]; then
         echo -e "$print_attention $(basename $map_pk3) does not contain a mapinfo file."
         continue
@@ -1127,8 +1129,10 @@ echo -e "$print_info Extract all mapinfo files of pk3 files in 'packages'."
 echo -e "       No mapinfo file will be overwritten."
 package_folders=$(find $userdir/packages -type d)
 for folder in $package_folders; do
+    # no mapinfo in this directory.. then continue with next one
+    ls $folder/*.pk3 >/dev/null 2>&1 || continue
     for map_pk3 in $folder/*.pk3; do
-        map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9_.+-]+.mapinfo' |tr "\n" " ")
+        map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9#_.+-]+.mapinfo' |tr "\n" " ")
         if [[ -z $map_infos ]]; then
             continue
         fi
@@ -1145,7 +1149,7 @@ server_mapinfo_check_first $1
 for map_pk3 in "$@"; do
     server_mapinfo_check $map_pk3
     echo $map_pk3 | grep '.pk3' >/dev/null 2>&1 || echo -e "$print_error $(basename $map_pk3) is not a pk3 file." >&2
-    map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9_.+-]+.mapinfo' |tr "\n" " ")
+    map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9#_+-]+.mapinfo' |tr "\n" " ")
     if [[ -z $map_infos ]]; then
         echo -e "$print_attention $(basename $map_pk3) does not contain a mapinfo file."
         echo -e "            Cannot compare..."
@@ -1167,9 +1171,11 @@ done
 function server_mapinfo_diff_all() {
 package_folders=$(find $userdir/packages -type d)
 for folder in $package_folders; do
+    # no mapinfo in this directory.. then continue with next one
+    ls $folder/*.pk3 >/dev/null 2>&1 || continue
     for map_pk3 in $folder/*.pk3; do
         echo $map_pk3 | grep '.pk3' >/dev/null 2>&1 || echo -e "$print_error $(basename $map_pk3) is not a pk3 file." >&2
-        map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9_.+-]+.mapinfo' |tr "\n" " ")
+        map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9#_+-]+.mapinfo' |tr "\n" " ")
         if [[ -z $map_infos ]]; then
             continue
         fi
@@ -1191,7 +1197,7 @@ server_mapinfo_check_first $1
 for map_pk3 in "$@"; do
     server_mapinfo_check $map_pk3
     echo $map_pk3 | grep '.pk3' >/dev/null 2>&1 || echo -e "$print_error $(basename $map_pk3) is not a pk3 file." >&2
-    map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9_.+-]+.mapinfo' |tr "\n" " ")
+    map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9#_+-]+.mapinfo' |tr "\n" " ")
     if [[ -z $map_infos ]]; then
         echo -e "$print_attention $(basename $map_pk3) does not contain a mapinfo."
         continue
@@ -1219,8 +1225,10 @@ done
 echo -e "$print_info Scanning pk3 packages for 'type' and fix it.."
 package_folders=$(find $userdir/packages -type d)
 for folder in $package_folders; do
+    # no mapinfo in this directory.. then continue with next one
+    ls $folder/*.pk3 >/dev/null 2>&1 || continue
     for map_pk3 in $folder/*.pk3; do
-        map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9_.+-]+.mapinfo' |tr "\n" " ")
+        map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9#_+-]+.mapinfo' |tr "\n" " ")
         if [[ -z $map_infos ]]; then
             continue
         fi
