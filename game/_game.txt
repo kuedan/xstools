@@ -1,2 +1,0 @@
-Folder for your Xonotic release and Xonotic git. 
-You have to set their locations in xstools.conf.

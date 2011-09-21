@@ -1,1 +1,0 @@
-If needed put your .mapinfo files into this folder 'data/maps'
