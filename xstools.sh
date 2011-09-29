@@ -571,8 +571,8 @@ ps -Af | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $se
 if [[ "$2" == "-c" ]]; then
     message_countdown1='say Server will recieve updates in 15min.'
     message_countdown2='say Server will recieve updates in 10min.'
-    message_countdown3='say Server will recieve updates in 5min.; say Updating takes less than 5min.'
-    message_countdown4='say Server will recieve updates in 1min.; say Updating takes less tha 5min and will force a disconnect.'
+    message_countdown3='say Server will recieve updates in 5min.; say Updating takes less than 2min.'
+    message_countdown4='say Server will recieve updates in 1min.; say Updating takes less than 2min and will force a disconnect.'
     message_countdown5='say Server will recieve updates now.'
     send_countdown all_servers
 fi
