@@ -242,7 +242,22 @@ done
 # stop one or more servers
 function server_stop() {
 # 'version_server_check_and_set' not needed for stopping servers
+if [[ $1 == -c ]]; then
+    send_countdown_=true
+    shift
+fi
+function ps_spot_server() {
+ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep
+}
 server_first_config_check $1
+if [[ "$send_countdown_" == "true" ]]; then
+    message_countdown1='say Server will shut down in 15min.'
+    message_countdown2='say Server will shut down in 10min.'
+    message_countdown3='say Server will shut down in 5min.'
+    message_countdown4='say Server will shut down in 1min.'
+    message_countdown5='say Server will shut down now.'
+    send_countdown defined_servers $@
+fi
 for var in $@; do
 server_config_check_and_set $var
     if [[ $(ps -Af | grep "+set serverconfig $server_config"  2>/dev/null |grep -v grep ) ]]; then
@@ -263,25 +278,44 @@ done
 } # end of server_stop()
 
 # function to stop all servers
-# if optional parameter (-r,-g) is given only stop 'release'/'git' servers
 function server_stop_all() {
 version_server_check_and_set $1
-# check which servers shall be stopped
-if [[ "$1" == "-r" ]]; then
-    # we search for release servers
+# define function to spot running servers 
+while getopts ":crg" options; do
+    case $options in
+        c) send_countdown_=true ;;
+        r) ps_spot_server_release=true ;;
+        g) ps_spot_server_git=true ;; 
+    esac
+done
+if [[ $ps_spot_server_release == true && $ps_spot_server_git == true ]]; then
+    # we search for release and git
     function ps_spot_server() {
-    ps -Af |grep "xonotic-linux.*dedicated .* +set serverconfig $server_config" 2>/dev/null |grep -v grep
+    ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep
+    } 
+elif [[ $ps_spot_server_release ]]; then
+    # we search for release servers only
+    function ps_spot_server() {
+    ps -Af |grep "xonotic-linux.*dedicated .* +set serverconfig $server_config" 2>/dev/null |grep -v grep 
     }
-elif [[ "$1" == "-g" ]]; then
-    # we search for git servers
+elif [[ $ps_spot_server_git == true ]]; then
+    # we serch for git servers only
     function ps_spot_server() {
     ps -Af | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $server_config" 2>/dev/null | grep -v /bin/sh |grep -v grep
     }
-else     
-    # we search for both (release and git)
+else
+    # we search for release and git
     function ps_spot_server() {
     ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep
-    }
+    } 
+fi
+if [[ "$send_countdown_" == "true" ]]; then
+    message_countdown1='say Server will shut down in 15min.'
+    message_countdown2='say Server will shut down in 10min.'
+    message_countdown3='say Server will shut down in 5min.'
+    message_countdown4='say Server will shut down in 1min.'
+    message_countdown5='say Server will shut down now.'
+    send_countdown all_servers
 fi
 # we can only stop running servers and only those which are in our tmux session
 for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
@@ -308,11 +342,26 @@ done
 # restart one or more servers
 function server_restart() {
 # 'version_server_check_and_set' not needed for restarting servers
+if [[ $1 == -c ]]; then
+    send_countdown_=true
+    shift
+fi
 server_first_config_check $1
+function ps_spot_server() {
+ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep
+}
+if [[ "$send_countdown_" == "true" ]]; then
+    message_countdown1='say Server will restart in 15min.'
+    message_countdown2='say Server will restart in 10min.'
+    message_countdown3='say Server will restart in 5min.'
+    message_countdown4='say Server will restart in 1min.; say This will force a disconnect.'
+    message_countdown5='say Server will restart now.; say This will force a disconnect.'
+    send_countdown defined_servers $@
+fi
 for var in $@; do
 server_config_check_and_set $var
     # we can only restart a server if server is running and tmux window exists
-    if [[ $(ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep) ]]; then
+    if [[ $(ps_spot_server) ]]; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window" 2>/dev/null) ]]; then
             echo -e "$print_info Restarting server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
@@ -339,35 +388,45 @@ server_config_check_and_set $var
 done
 } # end of server_restart()
 
-# if optional parameter (-r,-g) is given only restart 'release'/'git' servers
+# function to restart all servers
 function server_restart_all() {
 version_server_check_and_set $1
 # define function to spot running servers 
-function ps_spot_server() {
-ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep
-} 
-# we need getopts to check arguments
-# -c for sending countdown before restarting
-# -r/-g 'release'/'git' servers
 while getopts ":crg" options; do
     case $options in
         c) send_countdown_=true ;;
-        r) 
-            # redefine function to spot only release servers
-            function ps_spot_server() {
-            ps -Af |grep "xonotic-linux.*dedicated .* +set serverconfig $server_config" 2>/dev/null |grep -v grep
-            }
-                ;;
-        g) 
-            # redefine function to spot only release servers
-            function ps_spot_server() {
-            ps -Af | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $server_config" 2>/dev/null | grep -v /bin/sh |grep -v grep
-            }
-                ;;
+        r) ps_spot_server_release=true ;;
+        g) ps_spot_server_git=true ;; 
     esac
 done
+if [[ $ps_spot_server_release == true && $ps_spot_server_git == true ]]; then
+    # we search for release and git
+    function ps_spot_server() {
+    ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep
+    } 
+elif [[ $ps_spot_server_release ]]; then
+    # we search for release servers only
+    function ps_spot_server() {
+    ps -Af |grep "xonotic-linux.*dedicated .* +set serverconfig $server_config" 2>/dev/null |grep -v grep 
+    }
+elif [[ $ps_spot_server_git == true ]]; then
+    # we serch for git servers only
+    function ps_spot_server() {
+    ps -Af | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $server_config" 2>/dev/null | grep -v /bin/sh |grep -v grep
+    }
+else
+    # we search for release and git
+    function ps_spot_server() {
+    ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep
+    } 
+fi
 if [[ "$send_countdown_" == "true" ]]; then
-    send_countdown
+    message_countdown1='say Server will restart in 15min.'
+    message_countdown2='say Server will restart in 10min.'
+    message_countdown3='say Server will restart in 5min.'
+    message_countdown4='say Server will restart in 1min.; say This will force a disconnect.'
+    message_countdown5='say Server will restart now.; say This will force a disconnect.'
+    send_countdown all_servers
 fi
 # server_restart_all is based on server_stop_all and server_restart
 # we can only restart running servers and only those which are in our tmux session
@@ -402,44 +461,75 @@ done
 # send countdown for servers that will be updated (git) or restarted
 function send_countdown() {
 # the functions to spot server are defined in server_update_git/server_restart_all
-typeset -a countdown_array
-ca_counter=0
-for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
-    cfg_name=$(basename ${cfg%\.cfg})
-    server_config_check_and_set $cfg_name 
-    # search for servers and save them in a field
-    if [[ $(ps_spot_server) ]]; then
-        if [[ $(tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window") ]]; then
-        countdown_array[$ca_counter]=$tmux_window
-        ca_counter=$[$ca_counter+1]
+send_countdown_to=
+case $1 in
+    all_servers) 
+        for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
+        cfg_name=$(basename ${cfg%\.cfg})
+        server_config_check_and_set $cfg_name 
+        # search for servers and save them in a field
+        if [[ $(ps_spot_server) ]]; then
+            if [[ $(tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window") ]]; then
+                send_countdown_to="$send_countdown_to $tmux_window"
+            fi
         fi
-    fi
-done
+        done
+        ;;
+    defined_servers)
+        shift
+        for var in $@; do
+            server_config_check_and_set $var
+            if [[ $(ps_spot_server) ]]; then
+                if [[ $(tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window") ]]; then
+                    send_countdown_to="$send_countdown_to $tmux_window"
+                fi
+            fi
+        done
+            ;;
+esac
 # send countdown to servers
 echo -e "$print_info Sending countdown of 15min..."
-for var in ${countdown_array[*]}; do
-tmux send -t  $tmux_session:$var "say ^4[^1ATTENTION^4] ^3Server will restart in ^115 minutes^3$reason_restart" C-m
+for var in ${send_countdown_to}; do
+tmux send -t $tmux_session:$var "
+set sv_adminnick_bak \"\${sv_adminnick}\";
+set sv_adminnick \"^1attention^3\";
+$message_countdown1;
+wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
 done
 sleep 5m
 echo -e "       10min..."
-for var in ${countdown_array[*]}; do 
-tmux send -t $tmux_session:$var "say ^4[^1ATTENTION^4] ^3Server will restart in ^110 minutes^3$reason_restart" C-m
+for var in ${send_countdown_to}; do 
+tmux send -t $tmux_session:$var "
+set sv_adminnick_bak \"\${sv_adminnick}\";
+set sv_adminnick \"^1attention^3\";
+$message_countdown2;
+wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
 done
 sleep 5m
 echo -e "       5min..."
-for var in ${countdown_array[*]}; do 
-tmux send -t $tmux_session:$var "say ^4[^1ATTENTION^4] ^3Server will restart in ^15 minutess^3$reason_restart" C-m
+for var in ${send_countdown_to}; do 
+tmux send -t $tmux_session:$var "
+set sv_adminnick_bak \"\${sv_adminnick}\";
+set sv_adminnick \"^1attention^3\";
+$message_countdown3;
+wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
 done
 sleep 4m
 echo -e "       1min..."
-for var in ${countdown_array[*]}; do 
-tmux send -t $tmux_session:$var "say ^4[^1ATTENTION^4] ^3Server will restart in ^11 minute^3$reason_restart" C-m 
-tmux send -t $tmux_session:$var "say ^4[^1ATTENTION^4] ^3This will force a disconnect" C-m 
+for var in ${send_countdown_to}; do 
+tmux send -t $tmux_session:$var "
+set sv_adminnick_bak \"\${sv_adminnick}\";
+set sv_adminnick \"^1attention^3\";
+$message_countdown4;
+wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
 done
 sleep 55
-for var in ${countdown_array[*]}; do 
-tmux send -t $tmux_session:$var "say ^4[^1ATTENTION^4] ^3Server will restart in ^15s^3$reason_restart" C-m 
-tmux send -t $tmux_session:$var "say ^4[^1ATTENTION^4] ^3This will force a disconnect" C-m 
+for var in ${send_countdown_to}; do 
+tmux send -t $tmux_session:$var "
+set sv_adminnick_bak \"\${sv_adminnick}\";
+set sv_adminnick \"^1attention^3\";
+$message_countdown5;
+wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
 done
 sleep 5
 } # end of send_countdown()
@@ -479,9 +569,12 @@ ps -Af | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $se
 }
 # if we have -c as extra argument, then send countdown
 if [[ "$2" == "-c" ]]; then
-#set the reason for countdown function
-reason_restart=" (update)"
-send_countdown
+    message_countdown1='say Server will recieve updates in 15min.'
+    message_countdown2='say Server will recieve updates in 10min.'
+    message_countdown3='say Server will recieve updates in 5min.; say Updating takes less than 5min.'
+    message_countdown4='say Server will recieve updates in 1min.; say Updating takes less tha 5min and will force a disconnect.'
+    message_countdown5='say Server will recieve updates now.'
+    send_countdown all_servers
 fi
 # close all servers
 # this part is baesed on servers_close_all
@@ -1490,17 +1583,19 @@ function xstools_help() {
 cat << EOF
 -- Commands --
 xstools
-    --install-git               - download xonotic git into basedir 
+    --install-git               - download xonotic git into basedir
+
     --start-all                 - start all servers
     --start <server(s)>         - start servers
     --stop-all                  - stop all servers
     --stop <server(s)>          - stop servers
     --restart-all               - restart all servers
-                                  optional argument '-c' to send countdown
     --restart <server(s)>       - restart-servers
     
      start-all/start/stop-all/restart-all support an optional argument
-     '-r' or '-g'
+     -r or -g to specify release or git servers
+     stop-all/stop/restart-all/restart support optional argument -c to send a
+     countdown
 
     --update-git                - update git and restart git servers
                                   optional argument '-c' to send countdown   
@@ -1570,35 +1665,33 @@ Exampe: Congiguration file: my-bot.rcon.cfg
                         folder. Check xtools.conf to adjust this.
 
 --start-all             Start all servers whose configuration files are placed
-                        in 'configs/servers'. Those configuration files are 
-                        recognized by their extension .cfg.
+                        in 'configs/servers'.
 
---start <server(s)>     Same as --start-all, but you can specify server(s).
+--start <server(s)>     Start specific server(s).
 
---stop-all              Stop all currently running servers. Those servers must
-                        run in the defined tmux session. Otherwise xstools 
-                        cannot stop them.
+--stop-all              Stop all running servers..
 
 --stop <server(s)>      Stop specific server(s).
 
 --restart-all           Restart all running server(s).
 
---restart-all -c        Same as --restart-all, but with a countdown of 15min.
-                        This countdown will be sent to players as a message.
-
 --restart <server(s)>   Restart specific server(s).
 
-start-all/start/stop-all/restart-all support an optional argument '-r' or '-g'.
-If you use -r (-g) as argument for start functions, xstools will start
+--start-all/--start/--stop-all/--stop/--restart-all/--restart support -r and -g
+as optional argument.
+If you use -r (-g) as argument for --start-all or --start , xstools will start
 'release' ('git') servers. Otherwise default will be used (check xstools.conf).
 Example: xstools --start -g server1 
           (start server1 as git server)
           xstools --start-all -r 
-          (start all servers, which are not running, as 'release' server)
- If you use -r (-g) as argument for --restart-all, xstools will only 
- restart 'release' ('git') servers.
- If you use -r (-g) as argument for --stop-all, xstools will only stop
- 'release' ('git') servers.
+          (start all servers, which are not running, as 'release' servers)
+If you use -r (-g) as argument for --restart-all or --restart, xstools will 
+restart 'release' ('git') servers only.
+If you use -r (-g) as argument for --stop-all or stop, xstools will stop
+'release' ('git') servers only.
+
+stop-all/stop/restart-all/restart support -c as optional argument to send a
+countdown of 15min before servers are stopped or restarted.
 
 --update-git            Update Xonotic git and restart all servers.
 
