@@ -1855,7 +1855,7 @@ case $1 in
  --restart-all|restart-all)          basic_config_check; shift && server_restart_all "$@";;
  --restart|restart)                  basic_config_check; shift && server_restart "$@";;
  --update-git|update-git)            basic_config_check; server_update_git "$@";;
- --list|list)                        basic_config_check; xstools_list_all;;
+ --list|list|ls)                        basic_config_check; xstools_list_all;;
  --list-configs|list-configs)        basic_config_check; xstools_list_configs;;
  --info|info)                        basic_config_check; shift && server_info $@;;
  --info-all|info-all)                basic_config_check; server_info_all "$@";;
