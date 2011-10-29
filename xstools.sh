@@ -154,7 +154,7 @@ esac
 # check if a server name is given, otherwise abort
 function server_first_config_check() {
 if [[ "$1" == "" ]]; then
-    echo "$print_error Server name missing. Check -h or --help" >&2
+    echo -e "$print_error Server name missing. Check -h or --help" >&2
     exit 1
 fi
 } # end server_first_config_check()
