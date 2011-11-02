@@ -167,6 +167,9 @@ if [[ -f $userdir/configs/servers/$1.cfg  ]]; then
     server_name="$1"
     server_config="$server_name.cfg"
     tmux_window="server-$server_name"
+	if [[ "$sessionid_per_config" == "true" ]]; then
+		dp_default_arguments="$dp_default_arguments -sessionid $server_name"
+	fi
     # define our log file if enabled in config
         if [[ "$set_logs" == "true" ]]; then
             if [[ "$logs_date" == "true" ]]; then
