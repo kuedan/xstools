@@ -1680,17 +1680,17 @@ Exampe: Congiguration file: my-bot.rcon.cfg
 
 --restart <server(s)>   Restart specific server(s).
 
---start-all/--start/--stop-all/--stop/--restart-all/--restart support -r and -g
-as optional argument.
+--start-all/--start/--stop-all/--restart-all support -r and -g as optional
+argument.
 If you use -r (-g) as argument for --start-all or --start , xstools will start
 'release' ('git') servers. Otherwise default will be used (check xstools.conf).
 Example: xstools --start -g server1 
           (start server1 as git server)
           xstools --start-all -r 
           (start all servers, which are not running, as 'release' servers)
-If you use -r (-g) as argument for --restart-all or --restart, xstools will 
+If you use -r (-g) as argument for --restart-all, xstools will 
 restart 'release' ('git') servers only.
-If you use -r (-g) as argument for --stop-all or stop, xstools will stop
+If you use -r (-g) as argument for --stop-all, xstools will stop
 'release' ('git') servers only.
 
 stop-all/stop/restart-all/restart support -c as optional argument to send a
