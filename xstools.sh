@@ -168,6 +168,14 @@ if [[ -f $userdir/configs/servers/$1.cfg  ]]; then
     server_config="$server_name.cfg"
     tmux_window="server-$server_name"
 	if [[ "$sessionid_per_config" == "true" ]]; then
+		if [[ $sessionid_warning == true ]] && [[ ! -f $userdir/key_0.d0si.$server_name ]]; then
+			echo -e "$print_attention Key key_0.d0si.$serner_name does not exist."
+			read -p '            Do you want to go on? (y) ' answer_key
+			if [[ $answer_key != y ]]; then
+				echo '            Abort'
+				exit 1
+			fi
+		fi
 		dp_default_arguments="$dp_default_arguments -sessionid $server_name"
 	fi
     # define our log file if enabled in config
