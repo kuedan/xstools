@@ -79,6 +79,10 @@
         If you use -r (-g) as argument for --stop-all, xstools will stop
         'release' ('git') servers only.
 
+        start-all/start support the option -i to disable or enable a unique session id 
+        per config. The argument of -i must be 'true' to enable a session id per config,
+        or 'false' to disable.
+
         stop-all/stop/restart-all/restart support -c as optional argument to send a
         countdown of 15min before servers are stopped or restarted.
 
