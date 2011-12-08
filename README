@@ -45,60 +45,135 @@
       files then use for Xonotic servers .cfg and for rcon2irc .rcon2irc.conf as file 
       extension.
         
--- Commands --
-    xstools
-        --install-git                - download xonotic git into basedir
+----- General Usage:
+      xstools
+        --install-git           Download Xonotic Git and save it in the given 'basedir' 
+                                folder. Check xtools.conf to adjust this.
 
-        --start-all <-rgi>           - start all servers
-        --start <-rgi> <server(s)>   - start servers
-        --stop-all <-c>              - stop all servers
-        --stop <-rgc> <server(s)>    - stop servers
-        --restart-all <-rgc>         - restart all servers
-        --restart <-rgc> <server(s)> - restart-servers
+        --start-all             Start all servers whose configuration files are placed
+                                in 'configs/servers'. Those configuration files are 
+                                recognized by their extension .cfg.
 
-        start-all/start/stop-all/restart-all support the options
-        -r or -g to specify release or git servers
-        start-all/start support the option -i to disable or enable a 
-        unique session id per config
-        stop-all/stop/restart-all/restart support the option -c to send a
-        countdown
+        --start <server(s)>     Same as --start-all, but you can specify server(s).
 
-        --update-git                - update git and restart git servers
-                                      use option '-c' to send countdown   
-        --list                      - list running servers/rcon2irc bots
-        --list-configs              - list server and rcon2irc configs
-        --info <server(s)>          - show info about server(s)
-        --info-all                  - show info about all server(s)    
-        --view <server(s)>          - view server console
-        --add-pk3 <url(s)>          - add pk3 files from given urls
-        --rescan                    - rescan for new added packages
-        --send-all <command>        - send a command to all servers
-        --send <server(s)>  -c ...  - send a command to given server(s)
-        --time2console              - print date/time to server console
-        --logs 'set' or 'del'       - set a new log file for all servers
-                                    - or delete log files older than given days
-        --maplist                   - create maplist for all gametypes or use regex
+        --stop-all              Stop all currently running servers. Those servers must
+                                run in the defined tmux session. Otherwise xstools 
+                                cannot stop them.
 
-        --mapinfo                   syntax: --rcon2irc command <pk3(s)>
-            extract                 - extract mapinfo files of given pk3 package
-            extract-all             - extract all mapinfo files of pk3 packages
-            diff                    - show difference between data/maps/*.mapinfo
-                                  and mapinfo file in pk3 package.
-            diff-all                - show the difference of all mapinfo files
-            fix                     - fix server console warnings by mapinfo files
-            show                    - show mapinfo files of given pk3 package
+        --stop <server(s)>      Stop specific server(s).
+
+        --restart-all           Restart all running server(s).
+
+        --restart <server(s)>   Restart specific server(s).
+
+        --start-all/--start/--stop-all/--restart-all support -r and -g as optional
+        argument.
+        If you use -r (-g) as argument for --start-all or --start , xstools will start
+        'release' ('git') servers. Otherwise default will be used (check xstools.conf).
+        Example: xstools --start -g server1 
+                  (start server1 as git server)
+                  xstools --start-all -r 
+                  (start all servers, which are not running, as 'release' servers)
+        If you use -r (-g) as argument for --restart-all, xstools will restart
+        'release' ('git') servers only.
+        If you use -r (-g) as argument for --stop-all, xstools will stop
+        'release' ('git') servers only.
+
+        stop-all/stop/restart-all/restart support -c as optional argument to send a
+        countdown of 15min before servers are stopped or restarted.
+
+        --update-git            Update Xonotic git and restart git servers.
+
+        --update-git -c         Same as --update-all, but with a countdown of 15min
+                                This countdown will be sent to players as a message.
+
+        --list                  List all running servers and bots.
+
+        --list-configs          List all server and rcon2irc configuration files.
+
+        --info <server(s)>      Show informations like hostname, port.... of server(s).
+                                If qstat is enabled you will get more informations.
+
+        --info-all              Same as --info, but this lists info for all servers.
+
+        --view <server(s)>      Attach a tmux window and show server console of server(s).
+
+        --add-pk3 <url(s)>      Add .pk3 files to 'packages' from given urls and rescan 
+                                for them at endmatch with every server.
+
+        --rescan                Rescan for new added packages at endmatch with every 
+                                server.
+
+        --send-all <command>    Send a command to all servers and receive output.
+
+        --send <server(s)>      Send a command to given servers and receive output.
+              -c <command>      The beginning of command is defined by -c.
+
+        --time2console          Print date/time to server console. This gives a better 
+                                overview, when parsing output or logs. Very usefull as 
+                                part of crontab.
+                                Instead of using this function (as part of your crontab)
+                                you can use the cvars 'timestamps' and 'timeformat'.
+
+        --logs set              Change the logfile of all running servers to 
+                                'serverconfig.date.log', where 'serverconfig' is the
+                                server name  and 'date' is 'YearMonthDay'. 
+
+        --logs del              Delete older log files in 'logs/' than given time in days.
+
+        --maplist               Create a maplist for all gamtypes or use a regex.
+                                Examples:
+                                ctf          --maplist ctf
+                                ctf,lms,dm   --maplist '(ctf|lms|\bdm)'
+
+        --mapinfo               Syntax: --mapinfo command <pk3(s)>
+                                command is one of the following options:
         
-        --rcon2irc                  syntax: --rcon2irc command <bot(s)>
-            start-all               - start all rcon2irc bots
-            start <bot(s)>          - start rcon2irc bots
-            stop-all                - stop all rcon2irc bots
-            stop <bot(s)>           - stop rcon2irc bots
-            restart-all             - restart all rcon2irc bots
-            restart <bot(s)>        - restart rcon2irc bots
-            view <bot(s)>           - view rcon2irc console
+            extract <pk3(s)>    Extract mapinfo files of given pk3 package(s)
+                                to 'data/maps/'.
 
-        --help                      - print full help
-        -h                          - print this help
+            extract-all         Extract all mapinfo files of pk3 packages in 'packages/'
+                                and its subfolders to 'data/maps/'.
+    
+            diff <pk3(s)>       Show difference between pk3 package mapinfo
+                                and mapinfo file in 'data/maps/'.
+    
+            diff-all            Same as 'diff' but for all pk3 packages in 'packages' 
+                                and its subdirs. No output if comparing was not possible.
+                                No output if mapinfo files are the same.
+
+            fix                 Fix server console warnings by mapinfo files:
+                                Replace 'type' with 'gametype' and copy autogenerated
+                                mapinfo files to 'data/maps/'.
+    
+            show <pk3(s)>       Show mapinfo file of given pk3 package and mapinfo file 
+                                in 'data/maps/'.
+
+        --rcon2irc              Syntax: --rcon2irc command <bot(s)>
+                                command is one of the following options:
+       
+             start-all          Start all rcon2irc bots, whose configuration files
+                                are placed in 'configs/rcon2irc'. Those configuration 
+                                files are recognized by their extenstion .rcon2irc.conf.
+
+             start <bot(s)>     Same as --rcon-start-all, but you can specify bot(s).
+
+             stop-all           Stop all currently running bots. Those servers must
+                                run in the defined tmux session. Otherwise xstools 
+                                cannot stop them.
+
+             stop <bot(s)>      Stop specific bot(s).
+
+             restart-all        Restart all running bot(s).
+
+             restart <bot(s)>   Restart rcon2irc specific bot(s).
+
+             view <bot(s)>      Attach a tmux window and show bot console of bot(s).
+
+
+        --help                  Print this help.
+
+        -h                      Print a list of available functions.
 
 ----- Installation:
       For installation please read the INSTALL file. 
