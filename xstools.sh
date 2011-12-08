@@ -118,39 +118,6 @@ function version_git_check_and_set() {
     server_command="cd $basedir_git && ./all run dedicated"
 } # end of version_git_check_and_set()
 
-# analyse given arguments and set 'git' 'release' or 'default' servers for other functions
-function version_server_check_and_set() {
-case $1 in
-    -g)  
-    # we have 'git'
-    version_git_check_and_set
-    # set this variable for other functions
-    # we have to reassign the positional parameters to have server names as first argument
-    need_shift=yes
-        ;;   
-    -r)  
-    # we have 'release'
-    version_release_check_and_set
-    # set this variable for other functions
-    # we have to reassign the positional parameters to have server names as first argument
-    need_shift=yes
-        ;;   
-    *)  
-    # we choose default, which is defined in xstools.conf
-    case $default_version in
-        git)
-        # we have default option 'git'
-        version_git_check_and_set
-            ;;
-        release)
-        # we have default option 'release'
-        version_release_check_and_set
-            ;;
-    esac
-        ;;
-esac
-} # end of version_server_check_and_set()
-
 # check if a server name is given, otherwise abort
 function server_first_config_check() {
 if [[ "$1" == "" ]]; then
@@ -167,17 +134,17 @@ if [[ -f $userdir/configs/servers/$1.cfg  ]]; then
     server_name="$1"
     server_config="$server_name.cfg"
     tmux_window="server-$server_name"
-	if [[ "$sessionid_per_config" == "true" ]]; then
-		if [[ $sessionid_warning == true ]] && [[ ! -f $userdir/key_0.d0si.$server_name ]]; then
-			echo -e "$print_attention Key key_0.d0si.$serner_name does not exist."
-			read -p '            Do you want to go on? (y) ' answer_key
-			if [[ $answer_key != y ]]; then
-				echo '            Abort'
-				exit 1
-			fi
-		fi
-		dp_default_arguments="$dp_default_arguments -sessionid $server_name"
-	fi
+    if [[ "$sessionid_per_config" == "true" ]]; then
+        if [[ $sessionid_warning == true ]] && [[ ! -f $userdir/key_0.d0si.$server_name ]]; then
+            echo -e "$print_attention Key key_0.d0si.$serner_name does not exist."
+            read -p '            Do you want to go on? (y) ' answer_key
+            if [[ $answer_key != y ]]; then
+                echo '            Abort'
+                exit 1
+            fi
+        fi
+        dp_default_arguments="$dp_default_arguments -sessionid $server_name"
+    fi
     # define our log file if enabled in config
         if [[ "$set_logs" == "true" ]]; then
             if [[ "$logs_date" == "true" ]]; then
@@ -230,9 +197,25 @@ done
 
 # start one or more servers 
 function server_start_one() {
-version_server_check_and_set $1
-if [[ "$need_shift" = "yes" ]]; then
-    shift
+version_has_been_set=false
+while getopts ":rgi:" opt                                                     
+do
+    case $opt in
+        g) version_git_check_and_set && version_has_been_set=true;;
+        r) version_release_check_and_set && version_has_been_set=true;;
+        i) ( [ $OPTARG == true ] || [ $OPTARG == false ] ) && sessionid_per_config="$OPTARG" ||\
+            { echo -e "$print_error Option -i needs 'true' or 'false' as argument." >&2
+            exit 1; };;
+
+    esac
+done
+shift $((OPTIND-1))
+if [[ version_has_been_set == false ]]; then
+    case $default_version in
+        git) version_git_check_and_set && version_has_been_set=true;;
+        release) version_release_check_and_set && version_has_been_set=true;;
+        *)  echo -e "$print_error Invalid version: $default_version." >&2 && echo -e "        Please fix xstools.conf." >&2; exit 1;;
+    esac
 fi
 server_first_config_check $1
 server_start "$@"
@@ -242,7 +225,24 @@ server_start "$@"
 # if optional parameter (-r,-g) is given start them as 'release'/'git' servers
 # otherwise use default
 function server_start_all() {
-version_server_check_and_set $1
+while getopts ":rgi:" opt                                                     
+do
+    case $opt in
+        g) version_git_check_and_set && version_has_been_set=true;;
+        r) version_release_check_and_set && version_has_been_set=true;;
+        i) ( [ $OPTARG == true ] || [ $OPTARG == false ] ) && sessionid_per_config="$OPTARG" ||\
+            { echo -e "$print_error Option -i needs 'true' or 'false' as argument." >&2
+            exit 1; };;
+    esac
+done
+shift $((OPTIND-1))
+if [[ version_has_been_set == false ]]; then
+    case $default_version in
+        git) version_git_check_and_set && version_has_been_set=true;;
+        release) version_release_check_and_set && version_has_been_set=true;;
+        *)  echo -e "$print_error Invalid version: $default_version." >&2 && echo -e "        Please fix xstools.conf." >&2; exit 1;;
+    esac
+fi
 # (we do not have to reassign parameters, because function uses server config files
 for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
 cfg_name=$(basename ${cfg%\.cfg})
@@ -252,6 +252,8 @@ done
 
 # stop one or more servers
 function server_stop() {
+# do not check sessionid
+sessionid_warning=false
 # 'version_server_check_and_set' not needed for stopping servers
 if [[ $1 == -c ]]; then
     send_countdown_=true
@@ -290,7 +292,8 @@ done
 
 # function to stop all servers
 function server_stop_all() {
-version_server_check_and_set $1
+# do not check sessionid
+sessionid_warning=false
 # define function to spot running servers 
 while getopts ":crg" options; do
     case $options in
@@ -352,6 +355,8 @@ done
 
 # restart one or more servers
 function server_restart() {
+# do not check sessionid
+sessionid_warning=false
 # 'version_server_check_and_set' not needed for restarting servers
 if [[ $1 == -c ]]; then
     send_countdown_=true
@@ -401,7 +406,8 @@ done
 
 # function to restart all servers
 function server_restart_all() {
-version_server_check_and_set $1
+# do not check sessionid
+sessionid_warning=false
 # define function to spot running servers 
 while getopts ":crg" options; do
     case $options in
@@ -556,6 +562,10 @@ set builddate-git \"$(date +"$git_update_date")\"" > $userdir/configs/servers/co
 
 # function to update xonotic git
 function server_update_git() {
+# do not check sessionid
+sessionid_warning=false
+# git version...
+version_git_check_and_set
 # first check if git is available and if variables are set
 which git >/dev/null 2>&1 || {
     echo -e "$print_error Couldn't find git, which is required." >&2
@@ -1596,20 +1606,22 @@ cat << EOF
 xstools
     --install-git               - download xonotic git into basedir
 
-    --start-all                 - start all servers
-    --start <server(s)>         - start servers
-    --stop-all                  - stop all servers
-    --stop <server(s)>          - stop servers
-    --restart-all               - restart all servers
-    --restart <server(s)>       - restart-servers
-    
-     start-all/start/stop-all/restart-all support an optional argument
+    --start-all <-rgi>           - start all servers
+    --start <-rgi> <server(s)>   - start servers
+    --stop-all <-c>              - stop all servers
+    --stop <-rgc> <server(s)>    - stop servers
+    --restart-all <-rgc>         - restart all servers
+    --restart <-rgc> <server(s)> - restart-servers
+
+     start-all/start/stop-all/restart-all support the options
      -r or -g to specify release or git servers
-     stop-all/stop/restart-all/restart support optional argument -c to send a
+     start-all/start support the option -i to disable or enable a 
+     unique session id per config
+     stop-all/stop/restart-all/restart support the option -c to send a
      countdown
 
     --update-git                - update git and restart git servers
-                                  optional argument '-c' to send countdown   
+                                  use option '-c' to send countdown   
     --list                      - list running servers/rcon2irc bots
     --list-configs              - list server and rcon2irc configs
     --info <server(s)>          - show info about server(s)
@@ -1688,20 +1700,23 @@ Exampe: Congiguration file: my-bot.rcon.cfg
 
 --restart <server(s)>   Restart specific server(s).
 
---start-all/--start/--stop-all/--restart-all support -r and -g as optional
-argument.
-If you use -r (-g) as argument for --start-all or --start , xstools will start
+--start-all/--start/--stop-all/--restart-all support -r and -g as option.
+If you use -r (-g) as option for --start-all or --start , xstools will start
 'release' ('git') servers. Otherwise default will be used (check xstools.conf).
 Example: xstools --start -g server1 
           (start server1 as git server)
           xstools --start-all -r 
           (start all servers, which are not running, as 'release' servers)
-If you use -r (-g) as argument for --restart-all, xstools will 
+If you use -r (-g) as option for --restart-all, xstools will 
 restart 'release' ('git') servers only.
-If you use -r (-g) as argument for --stop-all, xstools will stop
+If you use -r (-g) as option for --stop-all, xstools will stop
 'release' ('git') servers only.
 
-stop-all/stop/restart-all/restart support -c as optional argument to send a
+start-all/start support the option -i to disable or enable a 
+unique session id per config. The argument of -i must be
+'true' to enable a session id per config, or 'false' to disable.
+
+stop-all/stop/restart-all/restart support -c as option to send a
 countdown of 15min before servers are stopped or restarted.
 
 --update-git            Update Xonotic git and restart all servers.
@@ -1866,7 +1881,7 @@ case $1 in
  --restart-all|restart-all)          basic_config_check; shift && server_restart_all "$@";;
  --restart|restart)                  basic_config_check; shift && server_restart "$@";;
  --update-git|update-git)            basic_config_check; server_update_git "$@";;
- --list|list|ls)                        basic_config_check; xstools_list_all;;
+ --list|list|ls)                     basic_config_check; xstools_list_all;;
  --list-configs|list-configs)        basic_config_check; xstools_list_configs;;
  --info|info)                        basic_config_check; shift && server_info $@;;
  --info-all|info-all)                basic_config_check; server_info_all "$@";;
