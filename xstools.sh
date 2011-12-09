@@ -210,7 +210,7 @@ do
     esac
 done
 shift $((OPTIND-1))
-if [[ version_has_been_set == false ]]; then
+if [[ $version_has_been_set == false ]]; then
     case $default_version in
         git) version_git_check_and_set && version_has_been_set=true;;
         release) version_release_check_and_set && version_has_been_set=true;;
@@ -236,7 +236,7 @@ do
     esac
 done
 shift $((OPTIND-1))
-if [[ version_has_been_set == false ]]; then
+if [[ $version_has_been_set == false ]]; then
     case $default_version in
         git) version_git_check_and_set && version_has_been_set=true;;
         release) version_release_check_and_set && version_has_been_set=true;;
