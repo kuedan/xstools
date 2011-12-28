@@ -856,8 +856,9 @@ function server_send_rescan() {
 echo -e "$print_info Servers will scan for new packages at endmatch."
 echo -e "$print_info 'rescan_pending 1' has been sent to server..."
 for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
-    cfg_name=$(basename ${cfg%\.cfg})
-    if [[ $(ps -Af | grep "+set serverconfig $cfg_name" 2>/dev/null |grep -v grep) ]]; then
+    cfg_file=$(basename ${cfg})
+    if [[ $(ps -Af | grep "+set serverconfig $cfg_file" 2>/dev/null |grep -v grep) ]]; then
+        cfg_name=${cfg_file%\.cfg}
         server_config_check_and_set $cfg_name
         if [[ $(tmux list-windows -t $tmux_session| grep -E "$tmux_window" 2>/dev/null) ]]; then
             tmux send -t $tmux_session:$tmux_window "rescan_pending 1" C-m
