@@ -1,4 +1,4 @@
- 
+``` 
                       __  __                 _   _      
                       \ \/ /___  _ __   ___ | |_(_) ___ 
                        \  // _ \| '_ \ / _ \| __| |/ __|
@@ -196,4 +196,4 @@
       If you are loading extra plugins in your .rcon2irc.conf configuration file
       ... then use the full path '/home/user/..../plugin.pl' 
       ... or put them into 'configs/rcon2irc' folder.
-      
+```
