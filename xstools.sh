@@ -655,8 +655,8 @@ rm -f "$userdir/lock_update"
 # function to attach user to tmux window of give server
 function server_view() {
 server_first_config_check $1
-echo -e "$print_info You will be attached to a server window."
 if [[ "$tmux_help" == "true" ]]; then
+    echo -e "$print_info You will be attached to a server window."
     echo
     echo -e "$print_attention To get out of tmux..."
     echo -e "            hold ctrl, then press b, release them, then press d."
