@@ -681,6 +681,7 @@ done
 
 # list all running servers
 function xstools_list_all() {
+sessionid_warning=false
 if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
     activ_server_windows=$(tmux list-windows -t $tmux_session |awk -F\  '$1 ~ /[0-9]+\:/ && $2 ~ /server-.*/ {print $2}' | cut -f2- -d-)
     if [[ -z $activ_server_windows ]]; then
@@ -738,6 +739,7 @@ done
 
 # basic function to print info for running servers
 function xstools_print_info() {
+sessionid_warning=false
 server_port=$(awk '/^port/ {print $2}'  $userdir/configs/servers/$server_config)
 server_system_info=$( (ps aux |grep "xonotic-linux.*dedicated .* +set serverconfig $server_config" |grep -v 'grep' ||\
 ps aux | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $server_config" |grep -v 'grep' |grep -v '/bin/sh') |\
