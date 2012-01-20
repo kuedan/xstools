@@ -225,6 +225,7 @@ server_start "$@"
 # if optional parameter (-r,-g) is given start them as 'release'/'git' servers
 # otherwise use default
 function server_start_all() {
+version_has_been_set=false
 while getopts ":rgi:" opt                                                     
 do
     case $opt in
