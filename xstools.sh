@@ -136,7 +136,7 @@ if [[ -f $userdir/configs/servers/$1.cfg  ]]; then
     tmux_window="server-$server_name"
     if [[ "$sessionid_per_config" == "true" ]]; then
         if [[ $sessionid_warning == true ]] && [[ ! -f $userdir/key_0.d0si.$server_name ]]; then
-            echo -e "$print_attention Key key_0.d0si.$serner_name does not exist."
+            echo -e "$print_attention Key key_0.d0si.$server_name does not exist."
             read -p '            Do you want to go on? (y) ' answer_key
             if [[ $answer_key != y ]]; then
                 echo '            Abort'
