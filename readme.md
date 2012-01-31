@@ -113,12 +113,6 @@
         --send <server(s)>      Send a command to given servers and receive output.
               -c <command>      The beginning of command is defined by -c.
 
-        --time2console          Print date/time to server console. This gives a better 
-                                overview, when parsing output or logs. Very usefull as 
-                                part of crontab.
-                                Instead of using this function (as part of your crontab)
-                                you can use the cvars 'timestamps' and 'timeformat'.
-
         --logs set              Change the logfile of all running servers to 
                                 'serverconfig.date.log', where 'serverconfig' is the
                                 server name  and 'date' is 'YearMonthDay'. 
