@@ -997,31 +997,6 @@ my_command="$@"
 server_send_command_now
 } # end of server_send_all_command()
 
-# print date/time to server console
-# havent known that there is a cvar already in xonotic :P - timestamps 1 
-function server_time2console() {
-if [[ -z $date_to_console ]]; then
-    echo -e "$print_error 'date_to_console' is empty." >&2
-    echo -e "        'date_to_console' is set to '$(date +'%Y%m%d %H:%M %Z')' for this run." >&2
-    date_to_console='%Y%m%d %H:%M %Z'
-    echo
-fi
-echo -e "$print_info Printing date and time to server output/logs.\n"
-for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
-    cfg_name=$(basename ${cfg%\.cfg})
-    if [[ $(ps -Af | grep "+set serverconfig $cfg_name" 2>/dev/null |grep -v grep) ]]; then
-        server_config_check_and_set $cfg_name 
-        if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
-            tmux send -t $tmux_session:$tmux_window "echo ====== $(date +"$date_to_console") ======" C-m
-            echo -e "$print_info 'time/date for server console/logs' has been sent to server '$server_name'"
-        else
-            echo -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running." >&2
-            echo -e "        You have to fix this on your own, sorry." >&2
-        fi
-    fi
-done
-} # end of server_time2console()
-
 # set new log files for all servers
 function server_set_logs() {
 echo -e "$print_info New log file set for server:"
@@ -1636,7 +1611,6 @@ xstools
     --rescan                    - rescan for new added packages
     --send-all <command>        - send a command to all servers
     --send <server(s)>  -c ...  - send a command to given server(s)
-    --time2console              - print date/time to server console
     --logs 'set' or 'del'       - set a new log file for all servers
                                 - or delete log files older than given days
     --maplist                   - create maplist for all gametypes or use regex
@@ -1751,13 +1725,6 @@ countdown of 15min before servers are stopped or restarted.
 --send <server(s)>      Send a command to given servers and receive output.
       -c <command>      The beginning of command is defined by -c.                  
                         
-
---time2console          Print date/time to server console. This gives a better 
-                        overview, when parsing output or logs. Very usefull as 
-                        part of crontab.
-                        Instead of using this function (as part of your crontab)
-                        you can use the cvars 'timestamps' and 'timeformat'.
-
 --logs set              Change the log file of all running servers to 
                         'serverconfig.date.log', where 'serverconfig' is the
                         server name  and 'date' is 'YearMonthDay'. 
@@ -1895,7 +1862,6 @@ case $1 in
  --rescan|rescan)                    basic_config_check; server_send_rescan;;
  --send|send)                        basic_config_check; shift && server_send_command "$@";;
  --send-all|send-all)                basic_config_check; shift && server_send_all_command "$@";;
- --time2console|time2console)        basic_config_check; server_time2console;;
  --logs|logs)                        basic_config_check; shift && server_logs "$@";;
  --maplist|maplist)                  basic_config_check; shift && server_maplist "$@";;
  --mapinfo|mapinfo)                  basic_config_check; shift && server_mapinfo_control "$@";;
