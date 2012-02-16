@@ -1200,7 +1200,7 @@ zip_option="-n"
 for map_pk3 in "$@"; do
     server_mapinfo_check $map_pk3
     echo $map_pk3 | grep '.pk3' >/dev/null 2>&1 || echo -e "$print_error $(basename $map_pk3) is not a pk3 file." >&2
-    map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9#._+-]+\..mapinfo' |tr "\n" " ")
+    map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9#._+-]+\.mapinfo' |tr "\n" " ")
     if [[ -z $map_infos ]]; then
         echo -e "$print_attention $(basename $map_pk3) does not contain a mapinfo file."
         continue
