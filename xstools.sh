@@ -393,7 +393,7 @@ if [[ "$send_countdown_" == "true" ]]; then
     send_countdown all_servers
 fi
 # we can only stop running servers and only those which are in our tmux session
-for cfg in $(ls "$userdir/configs/servers/*.cfg 2>/dev/null"); do
+for cfg in $(ls "$userdir/configs/servers/*.cfg" 2>/dev/null); do
     cfg_name=$(basename ${cfg%.cfg})
     server_config_check_and_set $cfg_name
     if [[ $ps_spot_server ]]; then
@@ -445,7 +445,7 @@ server_config_check_and_set $var
             if [[ "$logs_date" == "true" ]]; then
                 tmux send -t $tmux_session:$tmux_window 'last_command="!!"' C-m
                 tmux send -t $tmux_session:$tmux_window "log_dp_argument=\"$log_dp_argument\"" C-m
-                tmux send -t 4:1 'echo "$last_command" | awk -F"+set log_file" -v log_dp_argument="$log_dp_argument" "{print \$1 log_dp_argument}"' C-m
+                tmux send -t $tmux_session:$tmux_window 'eval $(echo "$last_command" | awk -F"+set log_file" -v log_dp_argument="$log_dp_argument" "{print \$1 log_dp_argument}")' C-m
             else
                 tmux send -t $tmux_session:$tmux_window '!!' C-m
             fi
@@ -494,7 +494,7 @@ fi
 for cfg in $(ls "$userdir/configs/servers/*.cfg" 2>/dev/null); do
     cfg_name=$(basename ${cfg%.cfg})
     server_config_check_and_set $cfg_name 
-    if [[ $(ps_spot_server) ]]; then
+    if [[ $ps_spot_server ]]; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             echo -e "$print_info Restarting server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
@@ -502,7 +502,7 @@ for cfg in $(ls "$userdir/configs/servers/*.cfg" 2>/dev/null); do
             if [[ "$logs_date" == "true" ]]; then
                 tmux send -t $tmux_session:$tmux_window 'last_command="!!"' C-m
                 tmux send -t $tmux_session:$tmux_window "log_dp_argument=\"$log_dp_argument\"" C-m
-                tmux send -t 4:1 'echo "$last_command" | awk -F"+set log_file" -v log_dp_argument="$log_dp_argument" "{print \$1 log_dp_argument}"' C-m
+                tmux send -t $tmux_session:$tmux_window 'eval $(echo "$last_command" | awk -F"+set log_file" -v log_dp_argument="$log_dp_argument" "{print \$1 log_dp_argument}")' C-m
             else
                 tmux send -t $tmux_session:$tmux_window '!!' C-m
             fi
@@ -650,12 +650,12 @@ done
 # simply update
 update_git
 # start all servers
-for cfg_name in $restart_servers
+for cfg_name in $restart_servers; do
     server_config_check_and_set $cfg_name
     if [[ "$logs_date" == "true" ]]; then
         tmux send -t $tmux_session:$tmux_window 'last_command="!!"' C-m
         tmux send -t $tmux_session:$tmux_window "log_dp_argument=\"$log_dp_argument\"" C-m
-        tmux send -t 4:1 'echo "$last_command" | awk -F"+set log_file" -v log_dp_argument="$log_dp_argument" "{print \$1 log_dp_argument}"' C-m
+        tmux send -t $tmux_session:$tmux_window 'eval $(echo "$last_command" | awk -F"+set log_file" -v log_dp_argument="$log_dp_argument" "{print \$1 log_dp_argument}")' C-m
     else
         tmux send -t $tmux_session:$tmux_window '!!' C-m
     fi
@@ -854,7 +854,7 @@ if ! echo $server_port | grep -E '[0-9]{4,5}' >/dev/null 2>&1; then
     echo -e "$print_error Could not find a port in $server_config" >&2
     echo -e "       No command has been sent to any server..." >&2
     exit 1
-elif ! [[ $(ps_spot_server) ]]; then
+elif ! [[ $ps_spot_server ]]; then
     echo -e "$print_error Server '$server_name' is not running." >&2
     continue
 fi
@@ -906,9 +906,6 @@ if ! echo "$@" | grep ' -c ' >/dev/null 2>&1; then
     exit 1
 fi
 
-function ps_spot_server() {
-ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep 
-} 
 # check if first argument is a valid config
 server_first_config_check $1
 # for each server we save a rcon password and port until 'command to send' begins
@@ -927,13 +924,10 @@ server_send_command_now
 function server_send_all_command() {
 # check if everything is fine ...
 server_send_check
-function ps_spot_server() {
-ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep 
-}
 for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
     cfg_name=$(basename ${cfg%.cfg})
     server_config_check_and_set $cfg_name
-    if [[ $(ps_spot_server) ]]; then
+    if [[ $ps_spot_server ]]; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
         server_send_set_ports_and_pws
         else
