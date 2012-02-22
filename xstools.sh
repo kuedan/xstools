@@ -41,8 +41,9 @@ else
     exit 1
 fi
 
-### basic functions
+### --- basic functions
 # {{{
+
 function basic_config_check() {
 if [[ "$colored_text" == "true" ]]; then
     print_error="\e[0;33m[\e[1;31mERROR\e[0;33m]\e[0m"
@@ -115,10 +116,65 @@ function version_git_check_and_set() {
     fi
     server_command="cd \"$basedir_git\" && ./all run dedicated"
 } # end of version_git_check_and_set()
+
 # }}}
 
-### server functions
+### --- install/update functions 
 # {{{
+
+function update_git() {
+cd "$basedir_git"
+./all update $git_update_options && ./all compile $git_compile_options
+echo "// this file defines the last update date of your Xonotic git 
+// everytime you run an update the date of the builddate-git variable changes
+// you can define the date format in configs/xstools.conf
+set builddate-git \"$(date +"$git_update_date")\"" > "$userdir/configs/servers/common/builddate-git.cfg"
+} # end of update_git()
+
+function install_git() {
+which git &>/dev/null || {
+    echo >&2 -e "$print_error Couldn't find git, which is required."
+    exit 1
+}
+    echo "Xonotic git install process started."
+    sleep 1
+    echo "Xonotic git will be installed into $basedir_git"
+    echo "To choose another folder, edit 'configs/xstools.conf.'"
+    sleep 1
+    read -p 'Do you wish to continue? Type "yes": ' answer_install
+    if [[ "$answer_install" == "yes" ]]; then
+        echo "Installing process takes some time..."
+        echo 'Get a cup of coffee :)'
+        echo
+        echo
+        sleep 2
+        git clone git://git.xonotic.org/xonotic/xonotic.git $basedir_git
+        update_git
+        echo
+        echo
+        echo 'Download and compile complete.'
+        exit
+    else
+        echo >&2 "Abort."
+        exit 1 
+    fi
+}
+
+function install_release() {
+    echo "Please download and extract Xonotic on your own."
+    echo "Go to: http://www.xonotic.org/download/"
+    echo "Then edit 'basedir_release' in xstools.conf."
+
+}
+
+# }}}
+
+### --- server functions
+# {{{
+
+### config functions
+# {{{
+
 # check if config is given
 function server_first_config_check() {
 if [[ "$1" == "" ]]; then
@@ -161,6 +217,11 @@ else
     continue
 fi
 } # end of server_config_check_and_set()
+
+# }}}
+
+### start functions
+# {{{
 
 # basic function to start servers
 function server_start() {
@@ -206,7 +267,6 @@ do
         i) ( [ $OPTARG == true ] || [ $OPTARG == false ] ) && sessionid_per_config="$OPTARG" ||\
             { echo -e "$print_error Option -i needs 'true' or 'false' as argument." >&2
             exit 1; };;
-
     esac
 done
 shift $((OPTIND-1))
@@ -247,6 +307,8 @@ for cfg in $(ls "$userdir/configs/servers/*.cfg" 2>/dev/null); do
 done
 } # end of server_start_all()
 
+# }}}
+
 ### functions to find running release and/or git servers
 # release and git servers
 function ps_spot_server_common() {
@@ -260,6 +322,9 @@ ps -af |grep "xonotic-linux.*dedicated .* +set serverconfig $server_config" 2>/d
 function ps_spot_server_git() {
 ps -af | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $server_config" 2>/dev/null | grep -v /bin/sh |grep -v grep
 }
+
+### stop functions
+# {{{
 
 # stop one or more servers
 function server_stop_specific() {
@@ -345,6 +410,11 @@ for cfg in $(ls "$userdir/configs/servers/*.cfg 2>/dev/null"); do
     fi
 done        
 } # end of server_stop_all()
+
+# }}}
+
+### restart functions
+# {{{
 
 # restart one or more servers
 function server_restart_specific() {
@@ -445,6 +515,11 @@ for cfg in $(ls "$userdir/configs/servers/*.cfg" 2>/dev/null); do
 done        
 } # end of server_restart_all()
 
+# }}}
+
+### function to send countdown
+# {{{
+
 function send_countdown() {
 send_countdown_to=
 case $1 in
@@ -519,16 +594,11 @@ done
 sleep 5
 } # end of send_countdown()
 
-function update_git() {
-cd "$basedir_git"
-./all update $git_update_options && ./all compile $git_compile_options
-echo "// this file defines the last update date of your Xonotic git 
-// everytime you run an update the date of the builddate-git variable changes
-// you can define the date format in configs/xstools.conf
-set builddate-git \"$(date +"$git_update_date")\"" > "$userdir/configs/servers/common/builddate-git.cfg"
-} # end of update_git()
+# }}}
 
-# function to update xonotic git
+### function to update git servers
+# {{{
+
 function server_update_git() {
 # do not check sessionid
 sessionid_warning=false
@@ -594,9 +664,12 @@ done
 # unlock xstools 
 rm -f "$userdir/lock_update"
 } # end of server_update_git()
+
 # }}}
 
-### additional server functions
+# }}}
+
+### --- additional server functions
 # {{{
 # function to attach user to tmux window of give server
 function server_view() {
@@ -985,7 +1058,7 @@ esac
 } 
 # }}}
 
-### maplist functions
+### --- maplist functions
 # {{{
 function server_maplist_git() {
 echo -e "$print_info Checking git mapinfos."
@@ -1102,7 +1175,7 @@ fi
 } # end of server_maplist()
 # }}}
 
-### mapinfo functions
+### --- mapinfo functions
 # {{{
 # check of first argument is given and a pk3 name
 function server_mapinfo_check_first() {
@@ -1291,7 +1364,7 @@ cp -f $userdir/data/data/maps/autogenerated/*.mapinfo $userdir/data/maps/
 } # end of server_mapinfo_fix()
 # }}}
 
-### rcon2irc funtions
+### --- rcon2irc funtions
 # {{{
 function rcon2irc_first_config_check() {
 if [[ "$1" == "" ]]; then
@@ -1493,45 +1566,8 @@ done
 } # end of rcon2irc_view
 # }}}
 
-### install functions 
-# {{{
-function install_git() {
-which git >/dev/null 2>&1 || {
-    echo -e "$print_error Couldn't find git, which is required." >&2
-    exit 1
-}
-    echo "Xonotic git install process started."
-    sleep 1
-    echo "Xonotic git will be installed into $basedir_git"
-    echo "To choose another folder, edit 'configs/xstools.conf.'"
-    sleep 1
-    read -p 'Do you wish to continue? Type "yes": ' answer_install
-    if [[ "$answer_install" == "yes" ]]; then
-        echo "Installing process takes some time..."
-        echo 'Get a cup of coffee :)'
-        echo
-        echo
-        sleep 2
-        git clone git://git.xonotic.org/xonotic/xonotic.git $basedir_git
-        update_git
-        echo
-        echo
-        echo 'Download and compile complete.'
-        exit
-    else
-        echo "Abort." >&2
-        exit 1      
-    fi
-}
-function install_release() {
-    echo "Please download and extract Xonotic on your own."
-    echo "Go to: http://www.xonotic.org/download/"
-    echo "Then edit 'basedir_release' in xstools.conf."
 
-}
-# }}}
-
-### help functions
+### --- help functions
 # {{{
 function xstools_help() {
 cat << EOF
@@ -1749,7 +1785,7 @@ EOF
 }
 # }}}
 
-### argument handlers
+### --- argument handlers
 # {{{
 function server_mapinfo_control() {
 case $1 in
