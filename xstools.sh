@@ -29,20 +29,20 @@
 #
 # DO NOT EDIT THIS SCRIPT TO CONFIGURE!! 
 # Please use the configuration file: xstools.conf
-#
-#
+# -----------------------------------------------------------------------------
 
 xstool_dir="$( cd "$( dirname "$0" )" && pwd )"
 
-# check if our configuration is in the right place
+# check if config is available
 if [[ -f "$xstool_dir/configs/xstools.conf" ]]; then
-    source $xstool_dir/configs/xstools.conf
+    source "$xstool_dir/configs/xstools.conf"
 else 
-    echo -e "xstools.conf not found." >&2
+    echo >&2 "xstools.conf not found."
     exit 1
 fi
 
-# check some essential variables
+### basic functions
+# {{{
 function basic_config_check() {
 if [[ "$colored_text" == "true" ]]; then
     print_error="\e[0;33m[\e[1;31mERROR\e[0;33m]\e[0m"
@@ -54,140 +54,139 @@ else
     print_info="[INFO]"
 fi
 
-which tmux >/dev/null 2>&1 || {
-    echo -e "$print_error Couln't find tmux, which is required." >&2
+which tmux &>/dev/null || {
+    echo >&2 -e "$print_error Couln't find tmux, which is required."
     exit 1
 }
 
 if [[ "$enable_quakestat" == "true" ]]; then
-    which quakestat >/dev/null 2>&1 || {
-    echo -e "$print_error Couldn't find quakestat, which is required."  >&2
-    echo -e "        Please install 'qstat' or disable it in xstools.conf"  >&2
+    which quakestat &>/dev/null || {
+    echo >&2 -e "$print_error Couldn't find quakestat, which is required."
+    echo >&2 -e "        Please install 'qstat' or disable it in xstools.conf"
     exit 1
 }
 fi
 
-if [[ -z $userdir ]]; then
-    echo -e "$print_error 'userdir' is empty" >&2
-    echo -e "        check xstools.conf" >&2
+if [[ -z "$userdir" ]]; then
+    echo >&2 -e "$print_error 'userdir' is empty"
+    echo >&2 -e "        check xstools.conf"
     exit 1
 elif [[ -z "$tmux_session" ]]; then
-    echo -e "$print_error 'tmux_session' is empty" >&2
-    echo -e "        check xstools.conf" >&2
+    echo >&2 -e "$print_error 'tmux_session' is empty"
+    echo >&2 -e "        check xstools.conf"
     exit 1
 elif [[ -f "$userdir/lock_update" ]]; then
-    echo "xstools is locked, because of a git update." >&2
-    echo "You can use xstools again, when update is done." >&2
-    echo "To unlock manual: remove lock_update in your userdir." >&2
+    echo >&2 "xstools is locked, because of a git update."
+    echo >&2 "You can use xstools again, when update is done."
+    echo >&2 "To unlock manual: remove lock_update in your userdir."
     exit 1
 fi
 } # end of basic_config_check()
 
-# define the commands to start a 'release' server
-# also check if basedir exists and files are executable
+# check and set xonotic release stuff
 function version_release_check_and_set() {
-    if [[ ! -d $basedir_release ]]; then
-        echo -e "$print_error Xonotic release basedir not found." >&2
-        echo -e "        check xstools.conf" >&2
+    if [[ ! -d "$basedir_release" ]]; then
+        echo >&2 -e "$print_error Xonotic release basedir not found."
+        echo >&2 -e "        Check xstools.conf"
         exit 1
     fi
     case "$(uname -m)" in
-    x86_64)   executable="xonotic-linux64-dedicated" ;;
-    *)        executable="xonotic-linux32-dedicated" ;;
+    x86_64)   executable="xonotic-linux64-dedicated";;
+    *)        executable="xonotic-linux32-dedicated";;
     esac
     if [[ ! -x "$basedir_release/$executable" ]]; then
-        echo -e "$print_error $executable is not marked as executable." >&2
-        echo -e "        Please fix this." >&2
+        echo >&2 -e "$print_error $executable is not marked as executable."
+        echo >&2 -e "        Please fix this."
         exit 1
     fi
-    server_command="cd $basedir_release && ./$executable"
+    server_command="cd \"$basedir_release\" && ./$executable"
 } # end of version_release_check_and_set()
 
-# define the commands to start a 'git' server
-# also check if basedir exists and files are executable
+# check and set xonotic git stuff
 function version_git_check_and_set() {
-    if [[ ! -d $basedir_git ]]; then
-        echo -e "$print_error Xonotic git basedir not found." >&2
-        echo -e "        check xstools.conf" >&2
+    if [[ ! -d "$basedir_git" ]]; then
+        echo >&2 -e "$print_error Xonotic git basedir not found."
+        echo >&2 -e "        Check xstools.conf"
         exit 1
     elif [[ ! -x $basedir_git/all ]]; then
-        echo -e "$print_error Xonotic 'all' script is not marked as executable." >&2
-        echo -e "        Please fix this." >&2
+        echo >&2 -e "$print_error Xonotic 'all' script is not marked as executable."
+        echo >&2 -e "        Please fix this."
         exit 1
     fi
-    server_command="cd $basedir_git && ./all run dedicated"
+    server_command="cd \"$basedir_git\" && ./all run dedicated"
 } # end of version_git_check_and_set()
+# }}}
 
-# check if a server name is given, otherwise abort
+### server functions
+# {{{
+# check if config is given
 function server_first_config_check() {
 if [[ "$1" == "" ]]; then
-    echo -e "$print_error Server name missing. Check -h or --help" >&2
+    echo >&2 -e "$print_error Server name missing. Check -h or --help"
     exit 1
 fi
 } # end server_first_config_check()
 
-# check if config file of given server name exists
-# and set common used variables
-# (use this function only as part of for: for var in $@ blabla)
+# check given config, set session id and logfile
+# (function is used as part of for loop)
 function server_config_check_and_set() {
-if [[ -f $userdir/configs/servers/$1.cfg  ]]; then
+if [[ -f "$userdir/configs/servers/$1.cfg"  ]]; then
     server_name="$1"
     server_config="$server_name.cfg"
     tmux_window="server-$server_name"
     if [[ "$sessionid_per_config" == "true" ]]; then
-        if [[ $sessionid_warning == true ]] && [[ ! -f $userdir/key_0.d0si.$server_name ]]; then
+        if [[ $sessionid_warning == true && ! -f "$userdir/key_0.d0si.$server_name" ]]; then
             echo -e "$print_attention Key key_0.d0si.$server_name does not exist."
             read -p '            Do you want to go on? (y) ' answer_key
             if [[ $answer_key != y ]]; then
-                echo '            Abort'
+                echo >&2 '            Abort'
                 exit 1
             fi
         fi
         dp_default_arguments="$dp_default_arguments -sessionid $server_name"
     fi
-    # define our log file if enabled in config
-        if [[ "$set_logs" == "true" ]]; then
-            if [[ "$logs_date" == "true" ]]; then
-                log_format="logs/$server_name.$(date +"%Y%m%d").log"
-                log_dp_argument="+set log_file $log_format"
-            else
-                log_dp_argument="+set log_file logs/$server_name.log"
-            fi
+    # log file settings
+    if [[ "$set_logs" == "true" ]]; then
+        if [[ "$logs_date" == "true" ]]; then
+            log_format="logs/$server_name.$(date +"%Y%m%d").log"
+            log_dp_argument="+set log_file $log_format"
         else
-            log_dp_argument=""
+            log_dp_argument="+set log_file logs/$server_name.log"
         fi
+    else
+        log_dp_argument=""
+    fi
 else
-    echo -e "$print_error No config file available for '$1'" >&2
+    echo >&2 -e "$print_error No config file available for '$1'"
     continue
 fi
 } # end of server_config_check_and_set()
 
 # basic function to start servers
 function server_start() {
-for var in $@; do
-# check if $var exists and set our variables:
-server_config_check_and_set $var
+for cfg_name in $@; do
+server_config_check_and_set $cfg_name
     # option 1: server is already running
-    # in this case: print error and continue with for loop
-    if [[ $(ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep ) ]]; then
+    # -> print error and continue with for loop
+    if [[ $(ps -af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep ) ]]; then
         echo -e "$print_attention Server '$server_name' is already running."
         continue
     fi
     # option 2: server is not running, tmux session does not exist
-    # in this case: start a new tmux session with new window and start server
+    # -> start a new tmux session with new window and start server
     if [[ ! $(tmux list-sessions 2>/dev/null| grep "$tmux_session:" ) ]]; then
         tmux new-session -d -n $tmux_window -s $tmux_session
         tmux send -t $tmux_session:$tmux_window "$server_command $dp_default_arguments +set serverconfig $server_config $log_dp_argument" C-m 
         echo -e "$print_info Server '$server_name' has been started."
     # option 3: server is not running; tmux session exists, and window already exists
-    # in this case: print error and continue with for loop
+    # -> print error and continue with for loop
     elif [[ $(tmux list-windows -t $tmux_session 2>/dev/null | grep "$tmux_window " ) ]]; then
-        echo -e "$print_error Server '$server_name' does not run, but tmux window '$tmux_window' exists."  >&2
-        echo -e "          Use '--view $server_name' to check window status."  >&2
+        echo &>2 -e "$print_error Server '$server_name' does not run, but tmux window '$tmux_window' exists."
+        echo &>2 -e "          Use '--view $server_name' to check window status."
         continue
     else
     # option 4; server is not running, tmux session exists, window does not exists 
-    # in this case: start a new window in tmux session and start server
+    # -> start a new window in tmux session and start server
         tmux new-window -d -n $tmux_window -t $tmux_session
         tmux send -t $tmux_session:$tmux_window "$server_command $dp_default_arguments +set serverconfig $server_config $log_dp_argument" C-m 
         echo -e "$print_info Server '$server_name' has been started."
@@ -196,7 +195,8 @@ done
 } # end of server_start()
 
 # start one or more servers 
-function server_start_one() {
+function server_start_specific() {
+server_first_config_check $1
 version_has_been_set=false
 while getopts ":rgi:" opt                                                     
 do
@@ -214,19 +214,16 @@ if [[ $version_has_been_set == false ]]; then
     case $default_version in
         git) version_git_check_and_set && version_has_been_set=true;;
         release) version_release_check_and_set && version_has_been_set=true;;
-        *)  echo -e "$print_error Invalid version: $default_version." >&2 && echo -e "        Please fix xstools.conf." >&2; exit 1;;
+        *)  echo >&2 -e "$print_error Invalid version: $default_version." && echo >&2 -e "        Please fix xstools.conf."; exit 1;;
     esac
 fi
-server_first_config_check $1
 server_start "$@"
-} # end of server_start_one()
+} # end of server_start_specific()
 
-# start all servers by searching for configuration files 
-# if optional parameter (-r,-g) is given start them as 'release'/'git' servers
-# otherwise use default
+# start all servers 
 function server_start_all() {
 version_has_been_set=false
-while getopts ":rgi:" opt                                                     
+while getopts ":rgi:" opt
 do
     case $opt in
         g) version_git_check_and_set && version_has_been_set=true;;
@@ -241,40 +238,50 @@ if [[ $version_has_been_set == false ]]; then
     case $default_version in
         git) version_git_check_and_set && version_has_been_set=true;;
         release) version_release_check_and_set && version_has_been_set=true;;
-        *)  echo -e "$print_error Invalid version: $default_version." >&2 && echo -e "        Please fix xstools.conf." >&2; exit 1;;
+        *)  echo >&2 -e "$print_error Invalid version: $default_version." && echo >&2 -e "        Please fix xstools.conf."; exit 1;;
     esac
 fi
-# (we do not have to reassign parameters, because function uses server config files
-for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
-cfg_name=$(basename ${cfg%\.cfg})
-server_start $cfg_name
+for cfg in $(ls "$userdir/configs/servers/*.cfg" 2>/dev/null); do
+    cfg_name=$(basename ${cfg%.cfg})
+    server_start $cfg_name
 done
 } # end of server_start_all()
 
+### functions to find running release and/or git servers
+# release and git servers
+function ps_spot_server_common() {
+ps -af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep
+} 
+# release servers only
+function ps_spot_server_release() {
+ps -af |grep "xonotic-linux.*dedicated .* +set serverconfig $server_config" 2>/dev/null |grep -v grep 
+}
+# git servers only
+function ps_spot_server_git() {
+ps -af | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $server_config" 2>/dev/null | grep -v /bin/sh |grep -v grep
+}
+
 # stop one or more servers
-function server_stop() {
+function server_stop_specific() {
+server_first_config_check $1
 # do not check sessionid
 sessionid_warning=false
-# 'version_server_check_and_set' not needed for stopping servers
+# version check not needed to stop servers ...
 if [[ $1 == -c ]]; then
     send_countdown_=true
     shift
 fi
-function ps_spot_server() {
-ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep
-}
-server_first_config_check $1
 if [[ "$send_countdown_" == "true" ]]; then
     message_countdown1='say Server will shut down in 15min.'
     message_countdown2='say Server will shut down in 10min.'
     message_countdown3='say Server will shut down in 5min.'
     message_countdown4='say Server will shut down in 1min.'
     message_countdown5='say Server will shut down now.'
-    send_countdown defined_servers $@
+    send_countdown specific_servers $@
 fi
 for var in $@; do
 server_config_check_and_set $var
-    if [[ $(ps -Af | grep "+set serverconfig $server_config"  2>/dev/null |grep -v grep ) ]]; then
+    if [[ $( ps_spot_server_common ) ]]; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             echo -e "$print_info Stopping server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
@@ -282,20 +289,19 @@ server_config_check_and_set $var
             tmux send -t $tmux_session:$tmux_window "exit" C-m
             echo -e "       Server '$server_name' has been stopped."
         else
-            echo -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running." >&2
-            echo -e "        You have to fix this on your own, sorry." >&2
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+            echo >&2 -e "        You have to fix this on your own."
         fi
     else
-        echo -e "$print_error Server '$server_name' is not running, cannot stop."  >&2
+        echo >&2 -e "$print_error Server '$server_name' is not running, cannot stop."
     fi
 done
-} # end of server_stop()
+} # end of server_stop_specific()
 
 # function to stop all servers
 function server_stop_all() {
 # do not check sessionid
 sessionid_warning=false
-# define function to spot running servers 
 while getopts ":crg" options; do
     case $options in
         c) send_countdown_=true ;;
@@ -303,26 +309,15 @@ while getopts ":crg" options; do
         g) ps_spot_server_git=true ;; 
     esac
 done
+# set function to spot running servers 
 if [[ $ps_spot_server_release == true && $ps_spot_server_git == true ]]; then
-    # we search for release and git
-    function ps_spot_server() {
-    ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep
-    } 
-elif [[ $ps_spot_server_release ]]; then
-    # we search for release servers only
-    function ps_spot_server() {
-    ps -Af |grep "xonotic-linux.*dedicated .* +set serverconfig $server_config" 2>/dev/null |grep -v grep 
-    }
+    ps_spot_server=ps_spot_server_common
+elif [[ $ps_spot_server_release == true ]]; then
+    ps_spot_server=ps_spot_server_release
 elif [[ $ps_spot_server_git == true ]]; then
-    # we serch for git servers only
-    function ps_spot_server() {
-    ps -Af | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $server_config" 2>/dev/null | grep -v /bin/sh |grep -v grep
-    }
+    ps_spot_server=ps_spot_server_git
 else
-    # we search for release and git
-    function ps_spot_server() {
-    ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep
-    } 
+    ps_spot_server=ps_spot_server_common
 fi
 if [[ "$send_countdown_" == "true" ]]; then
     message_countdown1='say Server will shut down in 15min.'
@@ -333,11 +328,10 @@ if [[ "$send_countdown_" == "true" ]]; then
     send_countdown all_servers
 fi
 # we can only stop running servers and only those which are in our tmux session
-for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
-    cfg_name=$(basename ${cfg%\.cfg})
+for cfg in $(ls "$userdir/configs/servers/*.cfg 2>/dev/null"); do
+    cfg_name=$(basename ${cfg%.cfg})
     server_config_check_and_set $cfg_name
-    # nearly the same if statement like server_stop():
-    if [[ $(ps_spot_server) ]]; then
+    if [[ $ps_spot_server ]]; then
          if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             echo -e "$print_info Stopping server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
@@ -345,28 +339,23 @@ for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
             tmux send -t $tmux_session:$tmux_window "exit" C-m
             echo -e "       Server '$server_name' has been stopped."
         else
-            echo -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running." >&2
-            echo -e "        You have to fix this on your own, sorry." >&2
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+            echo >&2 -e "        You have to fix this on your own, sorry."
         fi
-    # else
-    #   echo -e "$print_error Server '$server_name' is not running, cannot stop."
     fi
 done        
 } # end of server_stop_all()
 
 # restart one or more servers
-function server_restart() {
+function server_restart_specific() {
+server_first_config_check $1
 # do not check sessionid
 sessionid_warning=false
-# 'version_server_check_and_set' not needed for restarting servers
+# version check not needed to restart servers ...
 if [[ $1 == -c ]]; then
     send_countdown_=true
     shift
 fi
-server_first_config_check $1
-function ps_spot_server() {
-ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep
-}
 if [[ "$send_countdown_" == "true" ]]; then
     message_countdown1='say Server will restart in 15min.'
     message_countdown2='say Server will restart in 10min.'
@@ -378,32 +367,28 @@ fi
 for var in $@; do
 server_config_check_and_set $var
     # we can only restart a server if server is running and tmux window exists
-    if [[ $(ps_spot_server) ]]; then
+    if [[ $( ps_spot_server_common ) ]]; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             echo -e "$print_info Restarting server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
             sleep 2
             if [[ "$logs_date" == "true" ]]; then
-                restart_command_raw_file="$userdir/restart_command_raw"
-                tmux send -t $tmux_session:$tmux_window "echo \"!!\" > $restart_command_raw_file 2>/dev/null" C-m
-                sleep 0.8
-                last_command=$(cat $restart_command_raw_file)
-                rm -f $restart_command_raw_file
-                run_command=$(echo $last_command | awk -F'+set log_file' -v log_dp_argument="$log_dp_argument" '{print $1 log_dp_argument}')
-                tmux send -t $tmux_session:$tmux_window "$run_command" C-m
+                tmux send -t $tmux_session:$tmux_window 'last_command="!!"' C-m
+                tmux send -t $tmux_session:$tmux_window "log_dp_argument=\"$log_dp_argument\"" C-m
+                tmux send -t 4:1 'echo "$last_command" | awk -F"+set log_file" -v log_dp_argument="$log_dp_argument" "{print \$1 log_dp_argument}"' C-m
             else
-                tmux send -t $tmux_session:$tmux_window "!!" C-m
+                tmux send -t $tmux_session:$tmux_window '!!' C-m
             fi
             echo -e "       Server '$server_name' has been restarted."
         else
-            echo -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running." >&2
-            echo -e "        You have to fix this on your own, sorry." >&2
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+            echo >&2 -e "        You have to fix this on your own, sorry."
         fi
     else
-    echo -e "$print_error Server '$server_name' is not running, cannot restart." >&2
+    echo >&2 -e "$print_error Server '$server_name' is not running, cannot restart."
     fi
 done
-} # end of server_restart()
+} # end of server_restart_specific()
 
 # function to restart all servers
 function server_restart_all() {
@@ -417,26 +402,15 @@ while getopts ":crg" options; do
         g) ps_spot_server_git=true ;; 
     esac
 done
+# set function to spot running servers 
 if [[ $ps_spot_server_release == true && $ps_spot_server_git == true ]]; then
-    # we search for release and git
-    function ps_spot_server() {
-    ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep
-    } 
-elif [[ $ps_spot_server_release ]]; then
-    # we search for release servers only
-    function ps_spot_server() {
-    ps -Af |grep "xonotic-linux.*dedicated .* +set serverconfig $server_config" 2>/dev/null |grep -v grep 
-    }
+    ps_spot_server=ps_spot_server_common
+elif [[ $ps_spot_server_release == true ]]; then
+    ps_spot_server=ps_spot_server_release
 elif [[ $ps_spot_server_git == true ]]; then
-    # we serch for git servers only
-    function ps_spot_server() {
-    ps -Af | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $server_config" 2>/dev/null | grep -v /bin/sh |grep -v grep
-    }
+    ps_spot_server=ps_spot_server_git
 else
-    # we search for release and git
-    function ps_spot_server() {
-    ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep
-    } 
+    ps_spot_server=ps_spot_server_common
 fi
 if [[ "$send_countdown_" == "true" ]]; then
     message_countdown1='say Server will restart in 15min.'
@@ -446,10 +420,9 @@ if [[ "$send_countdown_" == "true" ]]; then
     message_countdown5='say Server will restart now.; say This will force a disconnect.'
     send_countdown all_servers
 fi
-# server_restart_all is based on server_stop_all and server_restart
 # we can only restart running servers and only those which are in our tmux session
-for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
-    cfg_name=$(basename ${cfg%\.cfg})
+for cfg in $(ls "$userdir/configs/servers/*.cfg" 2>/dev/null); do
+    cfg_name=$(basename ${cfg%.cfg})
     server_config_check_and_set $cfg_name 
     if [[ $(ps_spot_server) ]]; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
@@ -457,36 +430,30 @@ for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
             tmux send -t $tmux_session:$tmux_window "quit" C-m
             sleep 2
             if [[ "$logs_date" == "true" ]]; then
-                restart_command_raw_file="$userdir/restart_command_raw"
-                tmux send -t $tmux_session:$tmux_window "echo \"!!\" > $restart_command_raw_file 2>/dev/null" C-m
-                sleep 0.8
-                last_command=$(cat $restart_command_raw_file)
-                rm -f $restart_command_raw_file
-                run_command=$(echo $last_command | awk -F'+set log_file' -v log_dp_argument="$log_dp_argument" '{print $1 log_dp_argument}')
-                tmux send -t $tmux_session:$tmux_window "$run_command" C-m
+                tmux send -t $tmux_session:$tmux_window 'last_command="!!"' C-m
+                tmux send -t $tmux_session:$tmux_window "log_dp_argument=\"$log_dp_argument\"" C-m
+                tmux send -t 4:1 'echo "$last_command" | awk -F"+set log_file" -v log_dp_argument="$log_dp_argument" "{print \$1 log_dp_argument}"' C-m
             else
-                tmux send -t $tmux_session:$tmux_window "!!" C-m
+                tmux send -t $tmux_session:$tmux_window '!!' C-m
             fi
             echo -e "       Server '$server_name' has been restarted."
         else
-            echo -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running." >&2
-            echo -e "        You have to fix this on your own, sorry." >&2
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+            echo >&2 -e "        You have to fix this on your own, sorry."
         fi
     fi
 done        
 } # end of server_restart_all()
 
-# send countdown for servers that will be updated (git) or restarted
 function send_countdown() {
-# the functions to spot server are defined in server_update_git/server_restart_all
 send_countdown_to=
 case $1 in
     all_servers) 
-        for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
-        cfg_name=$(basename ${cfg%\.cfg})
+        for cfg in $("ls $userdir/configs/servers/*.cfg 2>/dev/null"); do
+        cfg_name=$(basename ${cfg%.cfg})
         server_config_check_and_set $cfg_name 
         # search for servers and save them in a field
-        if [[ $(ps_spot_server) ]]; then
+        if [[ $ps_spot_server ]]; then
             if [[ $(tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window ") ]]; then
                 send_countdown_to="$send_countdown_to $tmux_window"
             fi
@@ -497,7 +464,7 @@ case $1 in
         shift
         for var in $@; do
             server_config_check_and_set $var
-            if [[ $(ps_spot_server) ]]; then
+            if [[ $ps_spot_server ]]; then
                 if [[ $(tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window ") ]]; then
                     send_countdown_to="$send_countdown_to $tmux_window"
                 fi
@@ -510,7 +477,7 @@ echo -e "$print_info Sending countdown of 15min..."
 for var in ${send_countdown_to}; do
 tmux send -t $tmux_session:$var "
 set sv_adminnick_bak \"\${sv_adminnick}\";
-set sv_adminnick \"^1attention^3\";
+set sv_adminnick \"^1Info System^3\";
 $message_countdown1;
 wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
 done
@@ -519,7 +486,7 @@ echo -e "       10min..."
 for var in ${send_countdown_to}; do 
 tmux send -t $tmux_session:$var "
 set sv_adminnick_bak \"\${sv_adminnick}\";
-set sv_adminnick \"^1attention^3\";
+set sv_adminnick \"^1Info System^3\";
 $message_countdown2;
 wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
 done
@@ -528,7 +495,7 @@ echo -e "       5min..."
 for var in ${send_countdown_to}; do 
 tmux send -t $tmux_session:$var "
 set sv_adminnick_bak \"\${sv_adminnick}\";
-set sv_adminnick \"^1attention^3\";
+set sv_adminnick \"^1Info System^3\";
 $message_countdown3;
 wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
 done
@@ -537,7 +504,7 @@ echo -e "       1min..."
 for var in ${send_countdown_to}; do 
 tmux send -t $tmux_session:$var "
 set sv_adminnick_bak \"\${sv_adminnick}\";
-set sv_adminnick \"^1attention^3\";
+set sv_adminnick \"^1Info System^3\";
 $message_countdown4;
 wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
 done
@@ -545,7 +512,7 @@ sleep 55
 for var in ${send_countdown_to}; do 
 tmux send -t $tmux_session:$var "
 set sv_adminnick_bak \"\${sv_adminnick}\";
-set sv_adminnick \"^1attention^3\";
+set sv_adminnick \"^1Info System^3\";
 $message_countdown5;
 wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
 done
@@ -553,12 +520,12 @@ sleep 5
 } # end of send_countdown()
 
 function update_git() {
-cd $basedir_git
+cd "$basedir_git"
 ./all update $git_update_options && ./all compile $git_compile_options
 echo "// this file defines the last update date of your Xonotic git 
 // everytime you run an update the date of the builddate-git variable changes
 // you can define the date format in configs/xstools.conf
-set builddate-git \"$(date +"$git_update_date")\"" > $userdir/configs/servers/common/builddate-git.cfg
+set builddate-git \"$(date +"$git_update_date")\"" > "$userdir/configs/servers/common/builddate-git.cfg"
 } # end of update_git()
 
 # function to update xonotic git
@@ -567,28 +534,22 @@ function server_update_git() {
 sessionid_warning=false
 # git version...
 version_git_check_and_set
-# first check if git is available and if variables are set
-which git >/dev/null 2>&1 || {
-    echo -e "$print_error Couldn't find git, which is required." >&2
-    exit 1
-}
+# check options
 if [[ -z $git_compile_options ]]; then
-    echo -e "$print_error 'git_compile_options' is empty" >&2
-    echo -e "       'dedicated' will be used for this update" >&2
+    echo >&2 -e "$print_error 'git_compile_options' is empty"
+    echo >&2 -e "       'dedicated' will be used for this update"
     git_compile_options='dedicated'
 elif [[ -z $git_update_options ]]; then
-    echo -e "$print_error 'git_update_options' is empty" >&2
-    echo -e "       '-l best' will be used for this update" >&2
+    echo >&2 -e "$print_error 'git_update_options' is empty"
+    echo >&2 -e "       '-l best' will be used for this update"
     git_update_options='-l best'
 elif [[ -z $git_update_date ]]; then
-    echo -e "$print_error 'git_update_options' is empty" >&2
-    echo -e "       date format: $(date +'%d.%m %H:%M %Z') will be used for this update" >&2
-    git_update_date='%d.%m %H:%M %Z'
+    echo >&2 -e "$print_error 'git_update_options' is empty"
+    echo >&2 -e "       date format: $(date +'%d %b %H:%M %Z') will be used for this update"
+    git_update_date='%d %b %H:%M %Z'
 fi
-# define function to spot git servers
-function ps_spot_server() {
-ps -Af | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $server_config" 2>/dev/null | grep -v /bin/sh |grep -v grep
-}
+# spot git servers only
+ps_spot_server=ps_spot_server_git
 # if we have -c as extra argument, then send countdown
 if [[ "$2" == "-c" ]]; then
     message_countdown1='say Server will be updated in 15min.'
@@ -599,60 +560,44 @@ if [[ "$2" == "-c" ]]; then
     send_countdown all_servers
 fi
 # close all servers
-# this part is baesed on servers_close_all
-# we can only stop running servers and only those which are in our tmux session
-# counter is used to save all closed servers in a field for restarting later
-typeset -a restart_server
-counter_stop=0
 # lock xstools, when update started 
 touch "$userdir/lock_update"
-for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
-    cfg_name=$(basename ${cfg%\.cfg})
+for cfg in $(ls "$userdir/configs/servers/*.cfg" 2>/dev/null); do
+    cfg_name=$(basename ${cfg%.cfg})
     server_config_check_and_set $cfg_name 
-    # in this case we are looking for git servers, no 'release' servers, therefore stronger pattern
-    if [[ $(ps_spot_server) ]]; then
+    if [[ $ps_spot_server ]]; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then          
             echo -e "$print_info Stopping server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
-            # we do not need to close our windows, because we will restart
-            #sleep 2 
-            #tmux send -t $tmux_session:$tmux_window "exit" C-m
             echo -e "       Server '$server_name' has been stopped."
-            # remeber this server
-            counter_stop=$[$counter_stop+1]
-            restart_server[$counter_stop]=$server_name
+            restart_servers="$restart_servers $cfg_name"
         else
-            echo -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running." >&2
-            echo -e "        You have to fix this on your own, sorry." >&2
-        fi
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+            echo >&2 -e "        You have to fix this on your own, sorry."
+            fi
     fi
 done        
 # simply update
 update_git
-# start all servers in our restart_server field
-# counter_stop is the number of the last closed server
-# we want to restart our first closed server
-counter_restart=0
-while [ "$counter_restart" -lt "$counter_stop" ]; do
-    counter_restart=$[$counter_restart+1]
-    server_config_check_and_set ${restart_server[$counter_restart]}
+# start all servers
+for cfg_name in $restart_servers
+    server_config_check_and_set $cfg_name
     if [[ "$logs_date" == "true" ]]; then
-        restart_command_raw_file="$userdir/restart_command_raw"
-        tmux send -t $tmux_session:$tmux_window "echo \"!!\" > $restart_command_raw_file 2>/dev/null" C-m
-        sleep 0.8
-        last_command=$(cat $restart_command_raw_file)
-        rm -f $restart_command_raw_file
-        run_command=$(echo $last_command | awk -F'+set log_file' -v log_dp_argument="$log_dp_argument" '{print $1 log_dp_argument}')
-        tmux send -t $tmux_session:$tmux_window "$run_command" C-m
+        tmux send -t $tmux_session:$tmux_window 'last_command="!!"' C-m
+        tmux send -t $tmux_session:$tmux_window "log_dp_argument=\"$log_dp_argument\"" C-m
+        tmux send -t 4:1 'echo "$last_command" | awk -F"+set log_file" -v log_dp_argument="$log_dp_argument" "{print \$1 log_dp_argument}"' C-m
     else
-        tmux send -t $tmux_session:$tmux_window "!!" C-m
+        tmux send -t $tmux_session:$tmux_window '!!' C-m
     fi
     echo -e "$print_info Server '$server_name' has been restarted."
 done
 # unlock xstools 
 rm -f "$userdir/lock_update"
 } # end of server_update_git()
+# }}}
 
+### additional server functions
+# {{{
 # function to attach user to tmux window of give server
 function server_view() {
 server_first_config_check $1
@@ -979,7 +924,7 @@ function ps_spot_server() {
 ps -Af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep 
 }
 for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
-    cfg_name=$(basename ${cfg%\.cfg})
+    cfg_name=$(basename ${cfg%.cfg})
     server_config_check_and_set $cfg_name
     if [[ $(ps_spot_server) ]]; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
@@ -1002,7 +947,7 @@ function server_set_logs() {
 echo -e "$print_info New log file set for server:"
 log_date=$(date +"%Y%m%d")
 for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
-    cfg_name=$(basename ${cfg%\.cfg})
+    cfg_name=$(basename ${cfg%.cfg})
     if [[ $(ps -Af | grep "+set serverconfig $cfg_name" 2>/dev/null |grep -v grep) ]]; then
         server_config_check_and_set $cfg_name 
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
@@ -1038,7 +983,10 @@ case $1 in
         exit 1
 esac
 } 
+# }}}
 
+### maplist functions
+# {{{
 function server_maplist_git() {
 echo -e "$print_info Checking git mapinfos."
 for map_info_location in $basedir_git/data/xonotic-maps.pk3dir/maps/*.mapinfo; do
@@ -1152,7 +1100,10 @@ else
     echo
 fi
 } # end of server_maplist()
+# }}}
 
+### mapinfo functions
+# {{{
 # check of first argument is given and a pk3 name
 function server_mapinfo_check_first() {
 if [[ "$1" == "" ]]; then
@@ -1338,11 +1289,10 @@ done
 echo -e "$print_info Copying autogenerated maps into data/maps..."
 cp -f $userdir/data/data/maps/autogenerated/*.mapinfo $userdir/data/maps/
 } # end of server_mapinfo_fix()
-    
-# end of function for servers 
-# begin of functions for rcon2irc bots
-# rcon2irc funtion have a similiar syntax like server functions
+# }}}
 
+### rcon2irc funtions
+# {{{
 function rcon2irc_first_config_check() {
 if [[ "$1" == "" ]]; then
     echo "Bot name missing. Check -h or --help" >&2
@@ -1541,18 +1491,19 @@ rcon2irc_config_check_and_set $var
     fi
 done
 } # end of rcon2irc_view
+# }}}
 
-# end of rcon2irc functions
-
+### install functions 
+# {{{
 function install_git() {
 which git >/dev/null 2>&1 || {
     echo -e "$print_error Couldn't find git, which is required." >&2
     exit 1
 }
-    echo "Xonotic git install process started"
+    echo "Xonotic git install process started."
     sleep 1
     echo "Xonotic git will be installed into $basedir_git"
-    echo "To choose another folder, edit 'configs/xstools.conf'"
+    echo "To choose another folder, edit 'configs/xstools.conf.'"
     sleep 1
     read -p 'Do you wish to continue? Type "yes": ' answer_install
     if [[ "$answer_install" == "yes" ]]; then
@@ -1565,21 +1516,23 @@ which git >/dev/null 2>&1 || {
         update_git
         echo
         echo
-        echo 'Download complete.'
+        echo 'Download and compile complete.'
         exit
     else
         echo "Abort." >&2
         exit 1      
     fi
 }
-
 function install_release() {
     echo "Please download and extract Xonotic on your own."
-    echo "Then fix 'basedir_release' in xstools.conf"
+    echo "Go to: http://www.xonotic.org/download/"
+    echo "Then edit 'basedir_release' in xstools.conf."
+
 }
+# }}}
 
-# help functions:
-
+### help functions
+# {{{
 function xstools_help() {
 cat << EOF
 -- Commands --
@@ -1794,7 +1747,10 @@ For any questions and help join #xstools, quakenet (IRC)
 
 EOF
 }
+# }}}
 
+### argument handlers
+# {{{
 function server_mapinfo_control() {
 case $1 in
     -x|x|--extract|extract)                 shift && server_mapinfo_extract "$@";;
@@ -1847,11 +1803,11 @@ esac
 case $1 in
  --install-git|install-git)          basic_config_check; install_git;;
  --start-all|start-all)              basic_config_check; shift && server_start_all "$@";;
- --start|start)                      basic_config_check; shift && server_start_one "$@";;
+ --start|start)                      basic_config_check; shift && server_start_specific "$@";;
  --stop-all|stop-all)                basic_config_check; shift && server_stop_all "$@";;
- --stop|stop)                        basic_config_check; shift && server_stop "$@";;
+ --stop|stop)                        basic_config_check; shift && server_stop_specific "$@";;
  --restart-all|restart-all)          basic_config_check; shift && server_restart_all "$@";;
- --restart|restart)                  basic_config_check; shift && server_restart "$@";;
+ --restart|restart)                  basic_config_check; shift && server_restart_specific "$@";;
  --update-git|update-git)            basic_config_check; server_update_git "$@";;
  --list|list|ls)                     basic_config_check; xstools_list_all;;
  --list-configs|list-configs)        basic_config_check; xstools_list_configs;;
@@ -1868,7 +1824,9 @@ case $1 in
  --rcon2irc|rcon2irc)                basic_config_check; shift && rcon2irc_control "$@";;
  --help|--usage|help|usage)          xstools_more_help;;
  -h|h)                               xstools_help;;
- "")                                 echo "xstools needs an argument, check -h or --help" >&2; exit 1;;
- *)                                  echo "This is not a valid argument! Check -h or --help" >&2; exit 1;;
+ "")                                 echo >&2 "xstools needs an argument, check -h or --help"; exit 1;;
+ *)                                  echo >&2 "This is not a valid argument! Check -h or --help"; exit 1;;
 esac    
+# }}}
 
+# vim: foldmethod=marker:foldmarker={{{,}}}:foldlevel=0
