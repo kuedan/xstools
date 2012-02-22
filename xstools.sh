@@ -696,6 +696,9 @@ if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
                 if [[ "$enable_quakestat" == "true" ]]; then
                 server_port=$(awk '/^port/ {print $2}'  $userdir/configs/servers/$server_config)
                 server_players=$(quakestat -nh -nexuizs localhost:$server_port | awk '{print " - "$2" - "}')
+                if (echo "$server_players" | grep -Eo '[0-9]{1,}/ ') &>/dev/null ; then
+                    server_players=$(quakestat -nh -nexuizs localhost:$server_port | awk '{print " - "$2$3"  - "}')
+                fi
                 server_version=$(quakestat -R -nh -nexuizs localhost:$server_port | tail -1 | awk -F, '{print $6}' | awk -F= '{print $2}' | awk -F: '{print $2}')
                 fi
             printf "%-30s%-s\n" "       - $server_name" "${server_players}${server_version}"
