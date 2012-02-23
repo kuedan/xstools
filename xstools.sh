@@ -243,7 +243,7 @@ for cfg_name in $@; do
 server_config_check_and_set $cfg_name
     # option 1: server is already running
     # -> print error and continue with for loop
-    if [[ $(ps -af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep ) ]]; then
+    if grep_server &>/dev/null; then
         echo -e "$print_attention Server '$server_name' is already running."
         continue
     fi
@@ -701,7 +701,7 @@ if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
     fi
     for var in $activ_server_windows; do
         server_config_check_and_set $var
-        if [[ $(ps -af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep ) ]]; then
+        if grep_server &>/dev/null; then
         # if you list your servers it could be very nice to check player numbers and server version :) ... so I added it
                 if [[ "$enable_quakestat" == "true" ]]; then
                 server_port=$(awk '/^port/ {print $2}'  $userdir/configs/servers/$server_config)
@@ -803,10 +803,9 @@ function server_send_rescan() {
 echo -e "$print_info Servers will scan for new packages at endmatch."
 echo -e "$print_info 'rescan_pending 1' has been sent to server..."
 for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
-    cfg_file=$(basename ${cfg})
-    if [[ $(ps -Af | grep "+set serverconfig $cfg_file" 2>/dev/null |grep -v grep) ]]; then
-        cfg_name=${cfg_file%\.cfg}
-        server_config_check_and_set $cfg_name
+    cfg_name=$(basename ${cfg%.cfg})
+    server_config_check_and_set $cfg_name
+    if grep_server &>/dev/null; then
         if [[ $(tmux list-windows -t $tmux_session| grep -E "$tmux_window" 2>/dev/null) ]]; then
             tmux send -t $tmux_session:$tmux_window "rescan_pending 1" C-m
             echo -e "       - '$server_name'"
@@ -941,7 +940,7 @@ echo -e "$print_info New log file set for server:"
 log_date=$(date +"%Y%m%d")
 for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
     cfg_name=$(basename ${cfg%.cfg})
-    if [[ $(ps -Af | grep "+set serverconfig $cfg_name" 2>/dev/null |grep -v grep) ]]; then
+    if grep_server &>/dev/null; then
         server_config_check_and_set $cfg_name 
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             log_format="logs/$server_name.$log_date.log"
