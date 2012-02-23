@@ -315,7 +315,7 @@ if [[ $version_has_been_set == false ]]; then
         *)  echo >&2 -e "$print_error Invalid version: $default_version." && echo >&2 -e "        Please fix xstools.conf."; exit 1;;
     esac
 fi
-for cfg in $(ls "$userdir/configs/servers/*.cfg" 2>/dev/null); do
+for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     cfg_name=$(basename ${cfg%.cfg})
     server_start $cfg_name
 done
@@ -376,9 +376,9 @@ while getopts ":crg" options; do
 done
 # overwrite command if release or git only 
 if [[ $grep_release == true && $grep_git != true ]]; then
-    alias pgrep_server=pgrep_server_release
+    pgrep_suffix=_release
 elif [[ $grep_release != true && $grep_git == true ]]; then
-    alias pgrep_server=pgrep_server_git
+    pgrep_suffix=_git
 fi
 if [[ "$send_countdown_" == "true" ]]; then
     message_countdown1='say Server will shut down in 15min.'
@@ -389,10 +389,10 @@ if [[ "$send_countdown_" == "true" ]]; then
     send_countdown all_servers
 fi
 # we can only stop running servers and only those which are in our tmux session
-for cfg in $(ls "$userdir/configs/servers/*.cfg" 2>/dev/null); do
+for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     cfg_name=$(basename ${cfg%.cfg})
     server_config_check_and_set $cfg_name
-    if pgrep_server &>/dev/null; then
+    if pgrep_server$pgrep_suffix &>/dev/null; then
          if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             echo -e "$print_info Stopping server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
@@ -464,15 +464,17 @@ sessionid_warning=false
 while getopts ":crg" options; do
     case $options in
         c) send_countdown_=true ;;
-        r) grep_release_only=true ;;
-        g) grep_git_only=true ;; 
+        r) grep_release=true ;;
+        g) grep_git=true ;; 
     esac
 done
 # overwrite command if release or git only 
 if [[ $grep_release == true && $grep_git != true ]]; then
-    alias pgrep_server=pgrep_server_release
+    pgrep_suffix=_release
+	echo "DEBUG: pgrep_server$pgrep_suffix"
 elif [[ $grep_release != true && $grep_git == true ]]; then
-    alias pgrep_server=pgrep_server_git
+    pgrep_suffix=_git
+	echo "DEBUG: pgrep_server$pgrep_suffix"
 fi
 if [[ "$send_countdown_" == "true" ]]; then
     message_countdown1='say Server will restart in 15min.'
@@ -483,10 +485,10 @@ if [[ "$send_countdown_" == "true" ]]; then
     send_countdown all_servers
 fi
 # we can only restart running servers and only those which are in our tmux session
-for cfg in $(ls "$userdir/configs/servers/*.cfg" 2>/dev/null); do
+for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     cfg_name=$(basename ${cfg%.cfg})
     server_config_check_and_set $cfg_name 
-    if pgrep_server &>/dev/null; then
+    if pgrep_server$pgrep_suffix &>/dev/null; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             echo -e "$print_info Restarting server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
@@ -516,11 +518,11 @@ function send_countdown() {
 send_countdown_to=
 case $1 in
     all_servers) 
-        for cfg in $("ls $userdir/configs/servers/*.cfg 2>/dev/null"); do
+        for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
         cfg_name=$(basename ${cfg%.cfg})
         server_config_check_and_set $cfg_name 
         # search for servers and save them in a field
-        if pgrep_server &>/dev/null; then
+        if pgrep_server$pgrep_suffix &>/dev/null; then
             if [[ $(tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window ") ]]; then
                 send_countdown_to="$send_countdown_to $tmux_window"
             fi
@@ -624,7 +626,7 @@ fi
 # close all servers
 # lock xstools, when update started 
 touch "$userdir/lock_update"
-for cfg in $(ls "$userdir/configs/servers/*.cfg" 2>/dev/null); do
+for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     cfg_name=$(basename ${cfg%.cfg})
     server_config_check_and_set $cfg_name 
     if pgrep_server &>/dev/null; then
