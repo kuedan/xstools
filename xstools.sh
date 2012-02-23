@@ -426,8 +426,8 @@ if [[ "$send_countdown_" == "true" ]]; then
     message_countdown1='say Server will restart in 15min.'
     message_countdown2='say Server will restart in 10min.'
     message_countdown3='say Server will restart in 5min.'
-    message_countdown4='say Server will restart in 1min.; say This will force a disconnect.'
-    message_countdown5='say Server will restart now.; say This will force a disconnect.'
+    message_countdown4='say Server will restart in 1min.'
+    message_countdown5='say Server will restart now.'
     send_countdown defined_servers $@
 fi
 for var in $@; do
@@ -480,8 +480,8 @@ if [[ "$send_countdown_" == "true" ]]; then
     message_countdown1='say Server will restart in 15min.'
     message_countdown2='say Server will restart in 10min.'
     message_countdown3='say Server will restart in 5min.'
-    message_countdown4='say Server will restart in 1min.; say This will force a disconnect.'
-    message_countdown5='say Server will restart now.; say This will force a disconnect.'
+    message_countdown4='say Server will restart in 1min.'
+    message_countdown5='say Server will restart now.'
     send_countdown all_servers
 fi
 # we can only restart running servers and only those which are in our tmux session
@@ -619,7 +619,7 @@ if [[ "$2" == "-c" ]]; then
     message_countdown1='say Server will be updated in 15min.'
     message_countdown2='say Server will be updated in 10min.'
     message_countdown3='say Server will be updated in 5min.'
-    message_countdown4='say Server will be updated in 1min.; say Updating takes less than 5min and will force a disconnect (restart).'
+    message_countdown4='say Server will be updated in 1min.'
     message_countdown5='say Server will be updated now.'
     send_countdown all_servers
 fi
