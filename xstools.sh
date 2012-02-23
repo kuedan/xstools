@@ -629,7 +629,7 @@ touch "$userdir/lock_update"
 for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     cfg_name=$(basename ${cfg%.cfg})
     server_config_check_and_set $cfg_name 
-    if pgrep_server &>/dev/null; then
+    if pgrep_server_git &>/dev/null; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then          
             echo -e "$print_info Stopping server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
