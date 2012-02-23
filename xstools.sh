@@ -220,6 +220,20 @@ fi
 
 # }}}
 
+### functions to find running release and/or git servers
+# release and git servers
+function grep_server() {
+    ps -af | grep "+set serverconfig $server_config" |grep -v grep
+}
+# release servers only
+function grep_server_release() {
+    ps -af |grep "xonotic-linux.*dedicated .* +set serverconfig $server_config" |grep -v grep
+}
+# git servers only
+function grep_server_git() {
+    ps -af | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $server_config" |grep -v /bin/sh |grep -v grep
+}
+
 ### start functions
 # {{{
 
@@ -309,20 +323,6 @@ done
 
 # }}}
 
-### functions to find running release and/or git servers
-# release and git servers
-function ps_spot_server_common() {
-ps -af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep
-} 
-# release servers only
-function ps_spot_server_release() {
-ps -af |grep "xonotic-linux.*dedicated .* +set serverconfig $server_config" 2>/dev/null |grep -v grep 
-}
-# git servers only
-function ps_spot_server_git() {
-ps -af | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $server_config" 2>/dev/null | grep -v /bin/sh |grep -v grep
-}
-
 ### stop functions
 # {{{
 
@@ -346,7 +346,7 @@ if [[ "$send_countdown_" == "true" ]]; then
 fi
 for var in $@; do
 server_config_check_and_set $var
-    if [[ $( ps_spot_server_common ) ]]; then
+    if grep_server &>/dev/null; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             echo -e "$print_info Stopping server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
@@ -370,19 +370,15 @@ sessionid_warning=false
 while getopts ":crg" options; do
     case $options in
         c) send_countdown_=true ;;
-        r) ps_spot_server_release=true ;;
-        g) ps_spot_server_git=true ;; 
+        r) grep_release=true ;;
+        g) grep_git=true ;; 
     esac
 done
-# set function to spot running servers 
-if [[ $ps_spot_server_release == true && $ps_spot_server_git == true ]]; then
-    ps_spot_server=ps_spot_server_common
-elif [[ $ps_spot_server_release == true ]]; then
-    ps_spot_server=ps_spot_server_release
-elif [[ $ps_spot_server_git == true ]]; then
-    ps_spot_server=ps_spot_server_git
-else
-    ps_spot_server=ps_spot_server_common
+# overwrite command if release or git only 
+if [[ $grep_release == true && $grep_git != true ]]; then
+    alias grep_server=grep_server_release
+elif [[ $grep_release != true && $grep_git == true ]]; then
+    alias grep_server=grep_server_git
 fi
 if [[ "$send_countdown_" == "true" ]]; then
     message_countdown1='say Server will shut down in 15min.'
@@ -396,7 +392,7 @@ fi
 for cfg in $(ls "$userdir/configs/servers/*.cfg" 2>/dev/null); do
     cfg_name=$(basename ${cfg%.cfg})
     server_config_check_and_set $cfg_name
-    if [[ $ps_spot_server ]]; then
+    if grep_server &>/dev/null; then
          if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             echo -e "$print_info Stopping server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
@@ -437,7 +433,7 @@ fi
 for var in $@; do
 server_config_check_and_set $var
     # we can only restart a server if server is running and tmux window exists
-    if [[ $( ps_spot_server_common ) ]]; then
+    if grep_server &>/dev/null; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             echo -e "$print_info Restarting server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
@@ -468,19 +464,15 @@ sessionid_warning=false
 while getopts ":crg" options; do
     case $options in
         c) send_countdown_=true ;;
-        r) ps_spot_server_release=true ;;
-        g) ps_spot_server_git=true ;; 
+        r) grep_release_only=true ;;
+        g) grep_git_only=true ;; 
     esac
 done
-# set function to spot running servers 
-if [[ $ps_spot_server_release == true && $ps_spot_server_git == true ]]; then
-    ps_spot_server=ps_spot_server_common
-elif [[ $ps_spot_server_release == true ]]; then
-    ps_spot_server=ps_spot_server_release
-elif [[ $ps_spot_server_git == true ]]; then
-    ps_spot_server=ps_spot_server_git
-else
-    ps_spot_server=ps_spot_server_common
+# overwrite command if release or git only 
+if [[ $grep_release == true && $grep_git != true ]]; then
+    alias grep_server=grep_server_release
+elif [[ $grep_release != true && $grep_git == true ]]; then
+    alias grep_server=grep_server_git
 fi
 if [[ "$send_countdown_" == "true" ]]; then
     message_countdown1='say Server will restart in 15min.'
@@ -494,7 +486,7 @@ fi
 for cfg in $(ls "$userdir/configs/servers/*.cfg" 2>/dev/null); do
     cfg_name=$(basename ${cfg%.cfg})
     server_config_check_and_set $cfg_name 
-    if [[ $ps_spot_server ]]; then
+    if grep_server &>/dev/null; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             echo -e "$print_info Restarting server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
@@ -528,7 +520,7 @@ case $1 in
         cfg_name=$(basename ${cfg%.cfg})
         server_config_check_and_set $cfg_name 
         # search for servers and save them in a field
-        if [[ $ps_spot_server ]]; then
+        if grep_server &>/dev/null; then
             if [[ $(tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window ") ]]; then
                 send_countdown_to="$send_countdown_to $tmux_window"
             fi
@@ -539,7 +531,7 @@ case $1 in
         shift
         for var in $@; do
             server_config_check_and_set $var
-            if [[ $ps_spot_server ]]; then
+            if grep_server &>/dev/null; then
                 if [[ $(tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window ") ]]; then
                     send_countdown_to="$send_countdown_to $tmux_window"
                 fi
@@ -618,8 +610,8 @@ elif [[ -z $git_update_date ]]; then
     echo >&2 -e "       date format: $(date +'%d %b %H:%M %Z') will be used for this update"
     git_update_date='%d %b %H:%M %Z'
 fi
-# spot git servers only
-ps_spot_server=ps_spot_server_git
+#  git servers only
+alias grep_server=grep_server_git
 # if we have -c as extra argument, then send countdown
 if [[ "$2" == "-c" ]]; then
     message_countdown1='say Server will be updated in 15min.'
@@ -635,7 +627,7 @@ touch "$userdir/lock_update"
 for cfg in $(ls "$userdir/configs/servers/*.cfg" 2>/dev/null); do
     cfg_name=$(basename ${cfg%.cfg})
     server_config_check_and_set $cfg_name 
-    if [[ $ps_spot_server ]]; then
+    if grep_server &>/dev/null; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then          
             echo -e "$print_info Stopping server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit" C-m
@@ -709,7 +701,7 @@ if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
     fi
     for var in $activ_server_windows; do
         server_config_check_and_set $var
-        if [[ $(ps -Af | grep "+set serverconfig $server_config"  2>/dev/null |grep -v grep ) ]]; then
+        if [[ $(ps -af | grep "+set serverconfig $server_config" 2>/dev/null |grep -v grep ) ]]; then
         # if you list your servers it could be very nice to check player numbers and server version :) ... so I added it
                 if [[ "$enable_quakestat" == "true" ]]; then
                 server_port=$(awk '/^port/ {print $2}'  $userdir/configs/servers/$server_config)
@@ -734,7 +726,7 @@ if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
     fi
     for var in $activ_rcon2irc_windows; do
         rcon2irc_config_check_and_set $var
-        if [[ $(ps -Af | grep "perl $rcon2irc_script $rcon2irc_config" 2>/dev/null |grep -v grep ) ]]; then
+        if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config" 2>/dev/null |grep -v grep ) ]]; then
             echo -e "       - $rcon2irc_name"
         else
             echo -e "       - $print_error window: '$tmux_window' has no running rcon2irc bot" >&2
@@ -927,7 +919,7 @@ server_send_check
 for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
     cfg_name=$(basename ${cfg%.cfg})
     server_config_check_and_set $cfg_name
-    if [[ $ps_spot_server ]]; then
+    if grep_server &>/dev/null; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
         server_send_set_ports_and_pws
         else
