@@ -742,13 +742,13 @@ fi
 
 # list all available server config files (not common ones)
 function xstools_list_configs() {
-echo -e "$print_info You have this server config files in 'scripts/servers'"
+echo -e "$print_info Server config files in 'configs/servers'"
 for cfg in $(ls $userdir/configs/servers/*.cfg); do
-    echo "       - $(basename ${cfg})"
+    echo "       - ${cfg##*/}"
 done 
-echo -e "$print_info You have this rcon2irc config files in 'scripts/rcon2irc'"
+echo -e "$print_info Rcon2irc config files in 'configs/rcon2irc'"
 for conf in $(ls $userdir/configs/rcon2irc/*.conf); do
-    echo "       - $(basename ${conf})"
+    echo "       - ${conf##*/}"
 done 
 } # end of xstools_list_configs
 
