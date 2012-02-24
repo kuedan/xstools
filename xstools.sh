@@ -124,11 +124,12 @@ function version_git_check_and_set() {
 
 function update_git() {
 cd "$basedir_git"
-./all update $git_update_options && ./all compile $git_compile_options
+./all update $git_update_options &&
 echo "// this file defines the last update date of your Xonotic git 
 // everytime you run an update the date of the builddate-git variable changes
 // you can define the date format in configs/xstools.conf
-set builddate-git \"$(date +"$git_update_date")\"" > "$userdir/configs/servers/common/builddate-git.cfg"
+set builddate-git \"$(date +"$git_update_date")\"" > "$userdir/configs/servers/common/builddate-git.cfg" &&
+./all compile $git_compile_options
 } # end of update_git()
 
 function install_git() {
