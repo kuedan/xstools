@@ -14,7 +14,7 @@
 # loaded in its own tmux window. Same for rcon2irc...
 # Basically you can...
 # start, stop, restart servers and rcon2irc bots
-# For more information check --help
+# For more information check -h
 #
 # Xonotic Server Tools by It'sMe is released under the following License:
 # Attribution-NonCommercial-ShareAlike 3.0 Unported (CC BY-NC-SA 3.0)
@@ -70,11 +70,11 @@ fi
 
 if [[ -z "$userdir" ]]; then
     echo >&2 -e "$print_error 'userdir' is empty"
-    echo >&2 -e "        check xstools.conf"
+    echo >&2 -e "        Check xstools.conf"
     exit 1
 elif [[ -z "$tmux_session" ]]; then
     echo >&2 -e "$print_error 'tmux_session' is empty"
-    echo >&2 -e "        check xstools.conf"
+    echo >&2 -e "        Check xstools.conf"
     exit 1
 elif [[ -f "$userdir/lock_update" ]]; then
     echo >&2 "xstools is locked, because of a git update."
@@ -385,7 +385,7 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
             echo -e "       Server '$server_name' has been stopped."
         else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
-            echo >&2 -e "        You have to fix this on your own, sorry."
+            echo >&2 -e "        You have to fix this on your own."
         fi
     fi
 done        
@@ -427,7 +427,7 @@ server_config_check_and_set $var
             echo -e "       Server '$server_name' has been restarted."
         else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
-            echo >&2 -e "        You have to fix this on your own, sorry."
+            echo >&2 -e "        You have to fix this on your own."
         fi
     else
     echo >&2 -e "$print_error Server '$server_name' is not running, cannot restart."
@@ -480,7 +480,7 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
             echo -e "       Server '$server_name' has been restarted."
         else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
-            echo >&2 -e "        You have to fix this on your own, sorry."
+            echo >&2 -e "        You have to fix this on your own."
         fi
     fi
 done        
@@ -604,7 +604,7 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
             restart_servers="$restart_servers $cfg_name"
         else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
-            echo >&2 -e "        You have to fix this on your own, sorry."
+            echo >&2 -e "        You have to fix this on your own."
             fi
     fi
 done        
@@ -681,8 +681,8 @@ if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
                 fi
             printf "%-30s%-s\n" "       - $server_name" "${server_players}${server_version}"
         else
-            echo -e "       - $print_error window: '$tmux_window' has no running server" >&2
-            echo -e "                 Use '--view $server_name' to fix it." >&2
+            echo >&2 -e "       - $print_error window: '$tmux_window' has no running server"
+            echo >&2 -e "                 Use '--view $server_name' to fix it."
         fi
     done
     # same for rcon2irc bots
@@ -697,8 +697,8 @@ if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
         if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config" 2>/dev/null |grep -v grep ) ]]; then
             echo -e "       - $rcon2irc_name"
         else
-            echo -e "       - $print_error window: '$tmux_window' has no running rcon2irc bot" >&2
-            echo -e "                 Use '--rcon2irc view $rcon2irc_name' to fix it." >&2
+            echo >&2 -e "       - $print_error window: '$tmux_window' has no running rcon2irc bot"
+            echo >&2 -e "                 Use '--rcon2irc view $rcon2irc_name' to fix it."
         fi
     done
 else
@@ -709,11 +709,11 @@ fi
 # list all available server and rcon2irc config files (not common ones)
 function xstools_list_configs() {
 echo -e "$print_info Server config files in 'configs/servers'"
-for cfg in $(ls $userdir/configs/servers/*.cfg); do
+for cfg in $(ls "$userdir"/configs/servers/*.cfg); do
     echo "       - ${cfg##*/}"
 done 
 echo -e "$print_info Rcon2irc config files in 'configs/rcon2irc'"
-for conf in $(ls $userdir/configs/rcon2irc/*.conf); do
+for conf in $(ls "$userdir"/configs/rcon2irc/*.conf); do
     echo "       - ${conf##*/}"
 done 
 } # end of xstools_list_configs
@@ -725,11 +725,11 @@ function server_add_pk3() {
 if [[ "$http_server" == "true"  ]]; then
     if [[ ! -d "$http_server_folder" ]]; then
         echo >&2 -e "$print_error $http_server_folder does not exist."
-        echo >&2 -e "        check xstools.conf (http_server_folder)"
+        echo >&2 -e "        Check xstools.conf (http_server_folder)"
         exit 1
     elif [[ "$http_server_option" != "copy" && "$http_server_option" != "hardlink" && "$http_server_option" != "symlink" ]]; then
         echo >&2 -e "$print_error '$http_server_option' is a invalid option."
-        echo >&2 -e "        check xstools.conf (http_server_option)"
+        echo >&2 -e "        Check xstools.conf (http_server_option)"
         exit 1
     fi
 fi
@@ -778,7 +778,7 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
             echo -e "       - '$server_name'"
         else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
-            echo >&2 -e "        You have to fix this on your own, sorry."
+            echo >&2 -e "        You have to fix this on your own."
         fi
     fi
 done
@@ -890,7 +890,7 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
         server_send_set_ports_and_pws
         else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
-            echo >&2 -e "        You have to fix this on your own, sorry."
+            echo >&2 -e "        You have to fix this on your own."
         fi
     fi
 done        
@@ -915,7 +915,7 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
             echo -e "       - $server_name"
         else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
-            echo >&2 -e "        You have to fix this on your own, sorry."
+            echo >&2 -e "        You have to fix this on your own."
         fi
     fi
 done
@@ -941,7 +941,8 @@ case $1 in
         echo >&2 -e "        Use --send 'set' or 'del'."
         exit 1
 esac
-} 
+}
+
 # }}}
 
 ### --- maplist functions
@@ -1239,7 +1240,7 @@ mv "$userdir"/data/data/maps/autogenerated/*.mapinfo "$userdir"/data/maps/
 # {{{
 function rcon2irc_first_config_check() {
 if [[ "$1" == "" ]]; then
-    echo "Bot name missing. Check -h or --help" >&2
+    echo >&2 "Bot name missing. Check -h or --help"
     exit 1
 fi
 } # end of rcon2irc_first_config_check()
@@ -1252,8 +1253,8 @@ if [[ -f $userdir/configs/rcon2irc/$1.rcon2irc.conf  ]]; then
     tmux_window="rcon2irc-$rcon2irc_name"
     rcon2irc_config_folder="$userdir/configs/rcon2irc"
 else
-    echo -e "$print_error '$1.rcon2irc.conf' is not placed in 'configs/rcon2irc/'." >&2
-    echo -e "        Please move the file into this folder." >&2
+    echo >&2 -e "$print_error '$1.rcon2irc.conf' is not placed in 'configs/rcon2irc/'."
+    echo >&2 -e "        Please move the file into this folder."
     continue
 fi
 } # end of rcon2irc_config_check_and_set()
@@ -1265,8 +1266,8 @@ sleep 1
 if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config" 2>/dev/null |grep -v grep ) ]]; then
     echo -e "$print_info rcon2irc '$rcon2irc_name' has been started."
 else
-    echo -e "$print_error Starting rcon2irc '$rcon2irc_name' failed." >&2
-    echo -e "        Use '--rcon2irc view $rcon2irc_name' to check window status/error message" >&2
+    echo >&2 -e "$print_error Starting rcon2irc '$rcon2irc_name' failed."
+    echo >&2 -e "        Use '--rcon2irc view $rcon2irc_name' to check window status/error message"
 fi
 } # end of rcon2irc_check_start()       
 
@@ -1290,8 +1291,8 @@ rcon2irc_config_check_and_set $var
     # option 3: rcon2irc is not running; tmux session exists, and window already exists
     # in this case: print error and continue with for loop
     elif [[ $(tmux list-windows -t $tmux_session 2>/dev/null | grep "$tmux_window " ) ]]; then
-        echo -e "$print_error rcon2irc '$rcon2irc_name' does not run, but tmux window '$tmux_window' exists." >&2
-        echo -e "        Use '--rcon2irc view $rcon2irc_name' to check window status." >&2
+        echo >&2 -e "$print_error rcon2irc '$rcon2irc_name' does not run, but tmux window '$tmux_window' exists."
+        echo >&2 -e "        Use '--rcon2irc view $rcon2irc_name' to check window status."
         continue
     else
     # option 4; rcon2irc is not running, tmux session exists, window does not exists 
@@ -1323,8 +1324,8 @@ rcon2irc_config_check_and_set $var
             tmux send -t $tmux_session:$tmux_window "exit" C-m 
             echo -e "       rcon2irc '$rcon2irc_name' has been stopped."
         else
-            echo -e "$print_error tmux window '$tmux_window' does not exists, but rcon2irc '$rcon2irc_name' is running." >&2
-            echo -e "        You have to fix this on your own, sorry." >&2
+            echo -e >&2 "$print_error tmux window '$tmux_window' does not exists, but rcon2irc '$rcon2irc_name' is running."
+            echo -e >&2 "        You have to fix this on your own."
         fi  
     else
         echo -e "$print_attention rcon2irc '$rcon2irc_name' was not found."
@@ -1334,8 +1335,8 @@ done
 
 function rcon2irc_stop_all() {
 # we can only stop running rcon2irc bots and only those which are in our tmux windows
-for conf in $(ls $userdir/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
-    conf_name=$(basename ${conf%\.rcon2irc.conf})
+for conf in $(ls "$userdir"/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
+    conf_name=$(basename ${conf%.rcon2irc.conf})
     rcon2irc_config_check_and_set $conf_name
 # nearly the same if statement like rcon2irc_stop
     if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep ) ]]; then
@@ -1347,11 +1348,9 @@ for conf in $(ls $userdir/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
             tmux send -t $tmux_session:$tmux_window "exit" C-m 
             echo -e "       rcon2irc '$rcon2irc_name' has been stopped."
         else
-            echo -e "$print_error tmux window '$tmux_window' does not exists, but rcon2irc '$rcon2irc_name' is running." >&2
-            echo -e "        You have to fix this on your own, sorry." >&2
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but rcon2irc '$rcon2irc_name' is running."
+            echo >&2 -e "        You have to fix this on your own."
         fi  
-    #else
-    #    echo -e "$print_attention rcon2irc '$rcon2irc_name' was not found."
     fi  
 done
 } # end of rcon2irc_stop_all()
@@ -1372,15 +1371,15 @@ rcon2irc_config_check_and_set $var
             if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config" 2>/dev/null |grep -v grep ) ]]; then
                 echo -e "       rcon2irc '$rcon2irc_name' has been restarted."
             else
-                echo -e "$print_error Starting rcon2irc '$rcon2irc_name' failed." >&2
-                echo -e "        Use '--rcon2irc view $rcon2irc_name' to check window status/error message" >&2
+                echo >&2 -e "$print_error Starting rcon2irc '$rcon2irc_name' failed."
+                echo >&2 -e "        Use '--rcon2irc view $rcon2irc_name' to check window status/error message"
             fi
         else
-            echo -e "$print_error tmux window '$tmux_window' does not exists, but server '$rcon2irc_name' is running." >&2
-            echo -e "        You have to fix this on your own, sorry." >&2
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$rcon2irc_name' is running."
+            echo >&2 -e "        You have to fix this on your own."
         fi
     else
-    echo -e "$print_error rcon2irc '$rcon2irc_name' is not running, cannot stop." >&2
+    echo >&2 -e "$print_error rcon2irc '$rcon2irc_name' is not running, cannot stop."
     fi
 done
 } # end of rcon2irc_restart()
@@ -1400,12 +1399,12 @@ for conf in $(ls $userdir/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
             if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config" 2>/dev/null |grep -v grep ) ]]; then
                 echo -e "       rcon2irc '$rcon2irc_name' has been restarted."
             else
-                echo -e "$print_error Starting rcon2irc '$rcon2irc_name' failed." >&2
-                echo -e "        Use '--rcon2irc view $rcon2irc_name' to check window status/error message" >&2
+                echo >&2 -e "$print_error Starting rcon2irc '$rcon2irc_name' failed."
+                echo >&2 -e "        Use '--rcon2irc view $rcon2irc_name' to check window status/error message"
             fi
         else
-            echo -e "$print_error tmux window '$tmux_window' does not exists, but server '$rcon2irc_name' is running." >&2
-            echo -e "        You have to fix this on your own, sorry." >&2
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$rcon2irc_name' is running."
+            echo >&2 -e "        You have to fix this on your own."
         fi
     fi
 done
@@ -1430,8 +1429,8 @@ rcon2irc_config_check_and_set $var
         tmux select-window -t $tmux_session:$tmux_window
         tmux attach -t $tmux_session
     else
-        echo -e "$print_error tmux window '$tmux_window' does not exist." >&2
-        echo -e "        Use '--list' to list all running bots." >&2
+        echo >&2 -e "$print_error tmux window '$tmux_window' does not exist."
+        echo >&2 -e "        Use '--list' to list all running bots."
     fi
 done
 } # end of rcon2irc_view
@@ -1539,7 +1538,7 @@ Exampe: Congiguration file: my-bot.rcon.cfg
 
 --start-all/--start/--stop-all/--restart-all support -r and -g as option.
 If you use -r (-g) as option for --start-all or --start , xstools will start
-'release' ('git') servers. Otherwise default will be used (check xstools.conf).
+'release' ('git') servers. Otherwise default will be used (Check xstools.conf).
 Example: xstools --start -g server1 
           (start server1 as git server)
           xstools --start-all -r 
@@ -1674,8 +1673,8 @@ esac
 
 function rcon2irc_control() {
 if [[ ! -f "$rcon2irc_script" ]]; then
-    echo -e "$print_error Could not find 'rcon2irc_script'." >&2
-    echo -e "        check xstools.conf" >&2
+    echo >&2 -e "$print_error Could not find 'rcon2irc_script'."
+    echo >&2 -e "        Check xstools.conf"
     exit 1
 fi
 case $1 in
