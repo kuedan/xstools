@@ -173,9 +173,6 @@ function install_release() {
 ### --- server functions
 # {{{
 
-### config functions
-# {{{
-
 # check if config is given
 function server_first_config_check() {
 if [[ "$1" == "" ]]; then
@@ -219,24 +216,15 @@ else
 fi
 } # end of server_config_check_and_set()
 
-# }}}
-
-### functions to find running release and/or git servers
-# release and git servers
 function pgrep_server() {
     ps -af | grep "+set serverconfig $server_config" |grep -v grep
 }
-# release servers only
 function pgrep_server_release() {
     ps -af |grep "xonotic-linux.*dedicated .* +set serverconfig $server_config" |grep -v grep
 }
-# git servers only
 function pgrep_server_git() {
     ps -af | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $server_config" |grep -v /bin/sh |grep -v grep
 }
-
-### start functions
-# {{{
 
 # basic function to start servers
 function server_start() {
@@ -322,11 +310,6 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
 done
 } # end of server_start_all()
 
-# }}}
-
-### stop functions
-# {{{
-
 # stop one or more servers
 function server_stop_specific() {
 server_first_config_check $1
@@ -408,11 +391,6 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
 done        
 } # end of server_stop_all()
 
-# }}}
-
-### restart functions
-# {{{
-
 # restart one or more servers
 function server_restart_specific() {
 server_first_config_check $1
@@ -472,10 +450,8 @@ done
 # overwrite command if release or git only 
 if [[ $grep_release == true && $grep_git != true ]]; then
     pgrep_suffix=_release
-	echo "DEBUG: pgrep_server$pgrep_suffix"
 elif [[ $grep_release != true && $grep_git == true ]]; then
     pgrep_suffix=_git
-	echo "DEBUG: pgrep_server$pgrep_suffix"
 fi
 if [[ "$send_countdown_" == "true" ]]; then
     message_countdown1='say Server will restart in 15min.'
@@ -509,11 +485,6 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     fi
 done        
 } # end of server_restart_all()
-
-# }}}
-
-### function to send countdown
-# {{{
 
 function send_countdown() {
 send_countdown_to=
@@ -589,11 +560,6 @@ done
 sleep 5
 } # end of send_countdown()
 
-# }}}
-
-### function to update git servers
-# {{{
-
 function server_update_git() {
 # do not check sessionid
 sessionid_warning=false
@@ -659,10 +625,6 @@ done
 # unlock xstools 
 rm -f "$userdir/lock_update"
 } # end of server_update_git()
-
-# }}}
-
-# }}}
 
 ### --- additional server functions
 # {{{
