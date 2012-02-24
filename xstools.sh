@@ -1260,9 +1260,9 @@ fi
 
 function rcon2irc_check_start() {
 # check if rcon2irc has been started successfull othewise tell 'Use --rcon2irc view...'
-# it seems that we need a small time periode until process is in process list ps -Af
+# it seems that we need a small time periode until process is in process list ps -af
 sleep 1
-if [[ $(ps -Af | grep "perl $rcon2irc_script $rcon2irc_config" 2>/dev/null |grep -v grep ) ]]; then
+if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config" 2>/dev/null |grep -v grep ) ]]; then
     echo -e "$print_info rcon2irc '$rcon2irc_name' has been started."
 else
     echo -e "$print_error Starting rcon2irc '$rcon2irc_name' failed." >&2
@@ -1277,7 +1277,7 @@ for var in $@; do
 rcon2irc_config_check_and_set $var
     # option 1: rcon2irc is already running
     # in this case: print error and continue with for loop
-    if [[ $(ps -Af | grep "perl $rcon2irc_script $rcon2irc_config" 2>/dev/null |grep -v grep ) ]]; then
+    if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config" 2>/dev/null |grep -v grep ) ]]; then
         echo -e "$print_attention rcon2irc '$rcon2irc_name' is already running."
         continue
     fi
@@ -1314,9 +1314,9 @@ function rcon2irc_stop() {
 rcon2irc_first_config_check $1
 for var in $@; do
 rcon2irc_config_check_and_set $var
-    if [[ $(ps -Af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep ) ]]; then
+    if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep ) ]]; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
-            rcon_pid=$(ps -Af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $2}')
+            rcon_pid=$(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $2}')
             echo -e "$print_info Stopping rcon2irc '$rcon2irc_name'..."
             kill -9 $rcon_pid
             sleep 1
@@ -1338,9 +1338,9 @@ for conf in $(ls $userdir/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
     conf_name=$(basename ${conf%\.rcon2irc.conf})
     rcon2irc_config_check_and_set $conf_name
 # nearly the same if statement like rcon2irc_stop
-    if [[ $(ps -Af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep ) ]]; then
+    if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep ) ]]; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
-            rcon_pid=$(ps -Af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $2}')
+            rcon_pid=$(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $2}')
             echo -e "$print_info Stopping rcon2irc '$rcon2irc_name'..."
             kill -9 $rcon_pid
             sleep 1
@@ -1361,15 +1361,15 @@ rcon2irc_first_config_check $1
 for var in $@; do
 rcon2irc_config_check_and_set $var
     # We can only restart a server if server is running and tmux session exists
-    if [[ $(ps -Af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep ) ]]; then
+    if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep ) ]]; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
-            rcon_pid=$(ps -Af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $2}')
+            rcon_pid=$(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $2}')
             echo -e "$print_info Restarting rcon2irc '$rcon2irc_name'..."
             kill -9 $rcon_pid
             sleep 1
             tmux send -t $tmux_session:$tmux_window "perl $rcon2irc_script $rcon2irc_config" C-m
             sleep 1
-            if [[ $(ps -Af | grep "perl $rcon2irc_script $rcon2irc_config" 2>/dev/null |grep -v grep ) ]]; then
+            if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config" 2>/dev/null |grep -v grep ) ]]; then
                 echo -e "       rcon2irc '$rcon2irc_name' has been restarted."
             else
                 echo -e "$print_error Starting rcon2irc '$rcon2irc_name' failed." >&2
@@ -1389,15 +1389,15 @@ function rcon2irc_restart_all() {
 for conf in $(ls $userdir/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
     conf_name=$(basename ${conf%\.rcon2irc.conf})
     rcon2irc_config_check_and_set $conf_name 
-    if [[ $(ps -Af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null |grep -v grep) ]]; then
+    if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null |grep -v grep) ]]; then
         if [[ $(tmux list-windows -t $tmux_session| grep -E "$tmux_window" 2>/dev/null) ]]; then
-            rcon_pid=$(ps -Af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $2}')
+            rcon_pid=$(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $2}')
             echo -e "$print_info Restarting rcon2irc '$rcon2irc_name'..."
             kill -9 $rcon_pid
             sleep 1
             tmux send -t $tmux_session:$tmux_window "perl $rcon2irc_script $rcon2irc_config" C-m
             sleep 1
-            if [[ $(ps -Af | grep "perl $rcon2irc_script $rcon2irc_config" 2>/dev/null |grep -v grep ) ]]; then
+            if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config" 2>/dev/null |grep -v grep ) ]]; then
                 echo -e "       rcon2irc '$rcon2irc_name' has been restarted."
             else
                 echo -e "$print_error Starting rcon2irc '$rcon2irc_name' failed." >&2
