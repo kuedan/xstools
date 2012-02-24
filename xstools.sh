@@ -1329,7 +1329,7 @@ done
 
 function rcon2irc_restart_all() {
 for conf in $(ls $userdir/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
-    rcon2irc_config_check_and_set $(basename ${conf%.rcon2irc.conf}
+    rcon2irc_config_check_and_set $(basename ${conf%.rcon2irc.conf})
     if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null |grep -v grep) ]]; then
         if [[ $(tmux list-windows -t $tmux_session| grep -E "$tmux_window" 2>/dev/null) ]]; then
             rcon_pid=$(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $2}')
