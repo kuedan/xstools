@@ -630,6 +630,7 @@ rm -f "$userdir/lock_update"
 
 ### --- additional server functions
 # {{{
+
 # function to attach user to tmux window of give server
 function server_view() {
 server_first_config_check $1
@@ -656,18 +657,18 @@ server_config_check_and_set $var
 done
 } # end of server_view()
 
-# list all running servers
+# list all running servers and rcon2irc bots
 function xstools_list_all() {
 sessionid_warning=false
 if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
-    activ_server_windows=$(tmux list-windows -t $tmux_session |awk -F\  '$1 ~ /[0-9]+\:/ && $2 ~ /server-.*/ {print $2}' | cut -f2- -d-)
+    activ_server_windows=$(tmux list-windows -t $tmux_session |awk -F\  '$2 ~ /server-.*/ {print $2}' |cut -f2- -d- |sort)
     if [[ -z $activ_server_windows ]]; then
         echo -e "$print_info No servers are running."
     else
         echo -e "$print_info Following servers are running:"
     fi
-    for var in $activ_server_windows; do
-        server_config_check_and_set $var
+    for cfg_name in $activ_server_windows; do
+        server_config_check_and_set $cfg_name
         if pgrep_server &>/dev/null; then
         # if you list your servers it could be very nice to check player numbers and server version :) ... so I added it
                 if [[ "$enable_quakestat" == "true" ]]; then
@@ -685,7 +686,7 @@ if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
         fi
     done
     # same for rcon2irc bots
-    activ_rcon2irc_windows=$(tmux list-windows -t $tmux_session |awk -F\  '$1 ~ /[0-9]+\:/ && $2 ~ /rcon2irc-.*/ {print $2}' | cut -f2- -d-)
+    activ_rcon2irc_windows=$(tmux list-windows -t $tmux_session |awk -F\  '$2 ~ /rcon2irc-.*/ {print $2}' |cut -f2- -d- |sort)
     if [[ -z $activ_rcon2irc_windows ]]; then
         echo -e "$print_info No rcon2irc bots are running."
     else
@@ -705,7 +706,7 @@ else
 fi
 } # end of xstools_list_all()
 
-# list all available server config files (not common ones)
+# list all available server and rcon2irc config files (not common ones)
 function xstools_list_configs() {
 echo -e "$print_info Server config files in 'configs/servers'"
 for cfg in $(ls $userdir/configs/servers/*.cfg); do
@@ -722,22 +723,21 @@ function server_add_pk3() {
 # and send rescan_pending 1 to all servers to search for new added packages
 # check if http_server_folder exists if http_server is set to true
 if [[ "$http_server" == "true"  ]]; then
-    if [[ ! -d $http_server_folder ]]; then
-        echo -e "$print_error $http_server_folder does not exist." >&2
-        echo -e "        check xstools.conf (http_server_folder)" >&2
+    if [[ ! -d "$http_server_folder" ]]; then
+        echo >&2 -e "$print_error $http_server_folder does not exist."
+        echo >&2 -e "        check xstools.conf (http_server_folder)"
         exit 1
-    elif [[ "$http_server_option" != "copy" ]] && [[ "$http_server_option" != "hardlink" ]] && [[ "$http_server_option" != "symlink" ]]; then
-        echo -e "$print_error '$http_server_option' is a invalid option." >&2
-        echo -e "        check xstools.conf (http_server_option)" >&2
+    elif [[ "$http_server_option" != "copy" && "$http_server_option" != "hardlink" && "$http_server_option" != "symlink" ]]; then
+        echo >&2 -e "$print_error '$http_server_option' is a invalid option."
+        echo >&2 -e "        check xstools.conf (http_server_option)"
         exit 1
     fi
 fi
 # check urls now
 for var in $@; do
-    echo "$var" | grep -E 'http://.+.pk3' || {
-    echo -e "$print_error xstools only accepts pk3 files from a http url." >&2
-    echo -e "        No files have been added. Please add them on your own to 'packages'" >&2
-    echo -e "        and use '--rescan'" >&2
+    echo "$var" | grep -E 'http://.+\.pk3' &>/dev/null || {
+    echo >&2 -e "$print_error xstools only accepts pk3 files from a http url."
+    echo >&2 -e "        No files have been added. Please add them on your own to 'packages'"
     exit 1 
 }
 done
@@ -745,20 +745,20 @@ done
 for var in $@; do
     pk3file_name=$(basename $var |sed 's/%23/#/g' )
     # do not download already existing pk3 packages
-    if [[ -f $userdir/packages/$pk3file_name ]]; then 
+    if [[ -f "$userdir"/packages/$pk3file_name ]]; then 
         echo -e "$print_info $pk3file_name already exists."
         continue
     fi 
-    wget --directory-prefix=$userdir/packages -N $var
+    wget --directory-prefix="$userdir/packages" -N $var
     # create copy/symlink/hardlink for http server       
     if [[ "$http_server" == "true" ]]; then
         case $http_server_option in
             copy)
-                cp $userdir/packages/$pk3file_name $http_server_folder/$pk3file_name;;
+                cp "$userdir"/packages/$pk3file_name "$http_server_folder"/$pk3file_name;;
             hardlink)
-                ln $userdir/packages/$pk3file_name $http_server_folder/$pk3file_name;;
+                ln "$userdir"/packages/$pk3file_name "$http_server_folder"/$pk3file_name;;
             symlink)
-                ln -s $userdir/packages/$pk3file_name $http_server_folder/$pk3file_name;;
+                ln -s "$userdir"/packages/$pk3file_name "$http_server_folder"/$pk3file_name;;
         esac
     fi
 done
@@ -768,8 +768,8 @@ server_send_rescan
 # send rescan_pending 1 to servers to scan for new added pk3 packages
 function server_send_rescan() {
 echo -e "$print_info Servers will scan for new packages at endmatch."
-echo -e "$print_info 'rescan_pending 1' has been sent to server..."
-for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
+echo -e "       'rescan_pending 1' has been sent to server..."
+for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     cfg_name=$(basename ${cfg%.cfg})
     server_config_check_and_set $cfg_name
     if pgrep_server &>/dev/null; then
@@ -777,8 +777,8 @@ for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
             tmux send -t $tmux_session:$tmux_window "rescan_pending 1" C-m
             echo -e "       - '$server_name'"
         else
-            echo -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running." >&2
-            echo -e "        You have to fix this on your own, sorry." >&2
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+            echo >&2 -e "        You have to fix this on your own, sorry."
         fi
     fi
 done
@@ -786,18 +786,18 @@ done
 
 # check files and config for sending commands to servers via rcon 
 function server_send_check() {
-if [[ ! -x $rcon_script ]]; then
-    echo -e "$print_error Could not find rcon script." >&2
-    echo -e "        Check xstools.conf. Also check flags, need +x" >&2
+if [[ ! -x "$rcon_script" ]]; then
+    echo >&2 -e "$print_error Could not find rcon script."
+    echo >&2 -e "        Check xstools.conf. Also check flags, need +x"
     exit 1
 elif [[ "$password_file" == "configs" ]]; then
     search_in_configs="true"
-elif [[ -f $password_file ]]; then
+elif [[ -f "$password_file" ]]; then
     search_in_configs="false"
     single_rcon_password=$(awk '/^rcon_password/ {print $2}' $password_file)
 else 
-    echo -e "$print_error Could not find rcon password(s)." >&2
-    echo -e "        Check xstools.conf." >&2
+    echo >&2 -e "$print_error Could not find rcon password(s)."
+    echo >&2 -e "        Check xstools.conf."
     exit 1
 fi
 } # end of server_send_check() 
@@ -806,14 +806,14 @@ fi
 # used in for statements
 function server_send_set_ports_and_pws() {
 # we use servers config name, to save the port
-server_port=$(awk '/^port/ {print $2}' $userdir/configs/servers/$server_config)
+server_port=$(awk '/^port/ {print $2}' "$userdir"/configs/servers/$server_config)
 # test if we have found a port... simply grep for a field of digits :)
-if ! echo $server_port | grep -E '[0-9]{4,5}' >/dev/null 2>&1; then
-    echo -e "$print_error Could not find a port in $server_config" >&2
-    echo -e "       No command has been sent to any server..." >&2
+if ! echo $server_port | grep -E '[0-9]{4,5}' &>/dev/null; then
+    echo >&2 -e "$print_error Could not find a port in $server_config"
+    echo >&2 -e "       No command has been sent to any server..."
     exit 1
-elif ! [[ $ps_spot_server ]]; then
-    echo -e "$print_error Server '$server_name' is not running." >&2
+elif ! pgrep_server &>/dev/null; then
+    echo >&2 -e "$print_error Server '$server_name' is not running."
     continue
 fi
 all_server_names="$all_server_names $server_name"
@@ -823,15 +823,15 @@ if [[ $search_in_configs == "true" ]]; then
     rcon_password=$(awk '/^rcon_password/ {print $2}' $userdir/configs/servers/$server_config)
     # test if we have found a rcon_password.... simply test if rcon_password is NOT empty
     if [[ $rcon_password == "" ]]; then
-        echo -e "$print_error Could not find a rcon password in $server_config" >&2
-        echo -e "       No command has been sent to any server..." >&2
+        echo >&2 -e "$print_error Could not find a rcon password in $server_config"
+        echo >&2 -e "       No command has been sent to any server..."
         exit 1
     fi
     all_rcon_passwords="$all_rcon_passwords $rcon_password"
 else
     if [[ $single_rcon_password == "" ]]; then
-        echo -e "$print_error Could not find a rcon password in your passwords file." >&2
-        echo -e "       No command has been sent to any server..." >&2
+        echo >&2 -e "$print_error Could not find a rcon password in your passwords file."
+        echo >&2 -e "       No command has been sent to any server..."
         exit 1
     fi
 all_rcon_passwords="$all_rcon_passwords $single_rcon_password"
@@ -859,8 +859,8 @@ function server_send_command() {
 # check if everything is fine ...
 server_send_check
 # check if arguments contain -c for seperating command from server names
-if ! echo "$@" | grep ' -c ' >/dev/null 2>&1; then
-    echo -e "$print_error Syntax is: --send <server(s)> -c <command>" >&2
+if ! echo "$@" | grep ' -c ' &>/dev/null; then
+    echo >&2 -e "$print_error Syntax is: --send <server(s)> -c <command>"
     exit 1
 fi
 
@@ -882,15 +882,15 @@ server_send_command_now
 function server_send_all_command() {
 # check if everything is fine ...
 server_send_check
-for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
+for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     cfg_name=$(basename ${cfg%.cfg})
     server_config_check_and_set $cfg_name
     if pgrep_server &>/dev/null; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
         server_send_set_ports_and_pws
         else
-            echo -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running." >&2
-            echo -e "        You have to fix this on your own, sorry." >&2
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+            echo >&2 -e "        You have to fix this on your own, sorry."
         fi
     fi
 done        
@@ -901,11 +901,11 @@ my_command="$@"
 server_send_command_now
 } # end of server_send_all_command()
 
-# set new log files for all servers
+# log files for servers
 function server_set_logs() {
 echo -e "$print_info New log file set for server:"
 log_date=$(date +"%Y%m%d")
-for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
+for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     cfg_name=$(basename ${cfg%.cfg})
     if pgrep_server &>/dev/null; then
         server_config_check_and_set $cfg_name 
@@ -914,8 +914,8 @@ for cfg in $(ls $userdir/configs/servers/*.cfg 2>/dev/null); do
             tmux send -t $tmux_session:$tmux_window "log_file \"$log_format\"" C-m
             echo -e "       - $server_name"
         else
-            echo -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running." >&2
-            echo -e "        You have to fix this on your own, sorry." >&2
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+            echo >&2 -e "        You have to fix this on your own, sorry."
         fi
     fi
 done
@@ -924,11 +924,11 @@ done
 # delete old log files
 function server_del_logs() {
 if [[ $mdays == "" ]]; then
-    echo -e "$print_error You have not set a value for 'mdays'." >&2
-    echo -e "        Check xstools.conf" >&2
+    echo >&2 -e "$print_error You have not set a value for 'mdays'."
+    echo >&2 -e "        Check xstools.conf"
     exit 1
 fi
-find $userdir/logs/*.log -type f -mtime +$mdays -exec rm -f {} \;
+find "$userdir"/logs/*.log -type f -mtime +$mdays -exec rm -f {} \;
 echo -e "$print_info Log files older than $mdays days deleted."
 } # end of server_del_logs
 
@@ -937,8 +937,8 @@ case $1 in
     "set") server_set_logs;;
     "del") server_del_logs;;
     ""|*)  
-        echo -e "$print_error Argument invalid or missing." >&2
-        echo -e "        Use --send 'set' or 'del'." >&2
+        echo >&2 -e "$print_error Argument invalid or missing."
+        echo >&2 -e "        Use --send 'set' or 'del'."
         exit 1
 esac
 } 
@@ -948,7 +948,7 @@ esac
 # {{{
 function server_maplist_git() {
 echo -e "$print_info Checking git mapinfos."
-for map_info_location in $basedir_git/data/xonotic-maps.pk3dir/maps/*.mapinfo; do
+for map_info_location in "$basedir_git"/data/xonotic-maps.pk3dir/maps/*.mapinfo; do
     map_info=$(basename $map_info_location)
     map_name=${map_info%\.mapinfo}
     if [[ -f $userdir/data/maps/$map_info ]]; then
@@ -964,7 +964,7 @@ done
 
 function server_maplist_release() {
 echo -e "$print_info Checking release mapinfos."
-map_infos=$(unzip -l $basedir_release/data/xonotic-*-maps.pk3 |grep -Eo '[A-Za-z0-9#._+-]+\.mapinfo' |tr "\n" " ")
+map_infos=$(unzip -l "$basedir_release"/data/xonotic-*-maps.pk3 |grep -Eo '[A-Za-z0-9#._+-]+\.mapinfo' |tr "\n" " ")
 for map_info in $map_infos; do
     map_name=${map_info%\.mapinfo}
     if [[ -f $userdir/data/maps/$map_info ]]; then
@@ -973,103 +973,95 @@ for map_info in $map_infos; do
 #   elif [[ pk3 has been copied to packages... ]]; then
 #       continue
     fi
-    unzip -p $basedir_release/data/xonotic-*-maps.pk3 maps/$map_info | grep -Eo "^(gametype|type) $@" >/dev/null &&
+    unzip -p "$basedir_release"/data/xonotic-*-maps.pk3 maps/$map_info | grep -Eo "^(gametype|type) $@" >/dev/null &&
     maplist="$map_name $maplist"
 done
 }
 
 # create maplists for one or more gametypes
 function server_maplist() {
-which unzip >/dev/null 2>&1 || {
-    echo -e "$print_error Couldn't find unzip, which is required." >&2
+which unzip &>/dev/null || {
+    echo >&2 -e "$print_error Couldn't find unzip, which is required."
     exit 1
 }
-which uniq >/dev/null 2>&1 || {
-    echo -e "$print_error Couldn't find uniq, which is required." >&2
+which uniq &>/dev/null || {
+    echo >&2 -e "$print_error Couldn't find uniq, which is required."
     exit 1
 }
 
 case $default_version in
     git) 
-    # we have default option 'git'
     version_git_check_and_set
     server_maplist_git "$@"
         ;;   
     release)
-    # we have default option 'release'
     version_release_check_and_set
     server_maplist_release "$@"
         ;;   
 esac
 echo -e "$print_info Checking user added .pk3 packages."
-# then we check manual added maps
 # users may add sublevel folders to packages
-package_folders=$(find $userdir/packages -type d)
+package_folders=$(find "$userdir"/packages -type d)
 for folder in $package_folders; do
     # no mapinfo in this directory.. then continue with next one
-    ls $folder/*.pk3 >/dev/null 2>&1 || continue
+    ls $folder/*.pk3 &>/dev/null || continue
     for map_pk3 in $folder/*.pk3; do
         # pk3 packages can contain several bsp files
-        # save all of them in a simple variable
         map_bsps=$(unzip -l $map_pk3 |grep -Eo '[A-Za-z0-9#._+-]+\.bsp' |tr "\n" " ")
-        # check if pk3 package contains a bsp, if not continue with for loop
+        # check if pk3 package contains a bsp, if not continue
         if [[ -z $map_bsps ]]; then
             continue
         fi  
         # get the mapname of every bsp
         for map_bsp in $map_bsps; do
-            map_name=${map_bsp%\.bsp}
+            map_name=${map_bsp%.bsp}
             # we have the map name... and can search for a mapinfo file in different folders/files
             # first we search data/maps
-            if [[ -f $userdir/data/maps/$map_name.mapinfo ]]; then
-                grep -Eo "^(gametype|type) $@" $userdir/data/maps/$map_name.mapinfo >/dev/null &&
+            if [[ -f "$userdir"/data/maps/$map_name.mapinfo ]]; then
+                grep -Eo "^(gametype|type) $@" "$userdir"/data/maps/$map_name.mapinfo >/dev/null &&
                 maplist="$map_name $maplist"
-                # we have checked the used mapinfo file...
                 continue
                 # if there is no mapinfo in data/maps, we check the mapinfo in pk3 package
             elif unzip -l ${map_pk3} | grep maps/$map_name.mapinfo >/dev/null; then
                 unzip -p ${map_pk3} maps/$map_name.mapinfo | grep -Eo "^(gametype|type) $@" >/dev/null &&
                 maplist="$map_name $maplist"
-                # we have check the used mapinfo file
                 continue
                 # last chance an autogenerated one 
             elif [[ -f $userdir/data/data/maps/autogenerated/$map_name.mapinfo ]]; then
                 grep -Eo "^(gametype|type) $@" $userdir/data/data/maps/autogenerated/$map_name.mapinfo >/dev/null &&
                 maplist="$map_name $maplist"
-                # we have checked the used mapinfo file
                 continue    
             else
-                echo -e "$print_error No $map_name.mapinfo file found!" >&2
-                echo -e "        ... $(basename $map_pk3)"
+                echo >&2 -e "$print_error No $map_name.mapinfo file found!"
+                echo >&2 -e "        ... ${map_pk3##*/}"
             fi
         done
     done
 done
 # sort the map names
-# now we just need to sort our map names
 if [[ -z $maplist ]]; then
-    echo -e "$print_attention No maps for $@" >&2
+    echo >&2 -e "$print_attention No maps for $@"
 elif [[ $@ == "" ]]; then
     echo -e "$print_info Maplist for all gametypes:"
     echo $maplist |tr " " "\n" |sort |uniq |tr "\n" " "
-    echo
 else
     echo -e "$print_info Maplist for $@:"
     echo $maplist |tr " " "\n" |sort |uniq |tr "\n" " "
-    echo
 fi
 } # end of server_maplist()
+
 # }}}
 
 ### --- mapinfo functions
 # {{{
+
 # check of first argument is given and a pk3 name
 function server_mapinfo_check_first() {
 if [[ "$1" == "" ]]; then
-    echo -e "$print_error pk3 file missing. Check -h or --help" >&2
+    echo >&2 -e "$print_error pk3 file missing. Check -h or --help"
     exit 1
-elif ! echo "$1" | grep ".pk3" >/dev/null 2>&1; then
-    echo -e "$print_error Argument must be a pk3 file." >&2
+elif ! echo "$1" | grep ".pk3" 2>/dev/null; then
+    echo >&2 -e "$print_error Argument must be a pk3 file."
     exit 1
 fi
 } # end of server_mapinfo_check_first()
@@ -1078,10 +1070,10 @@ fi
 # (used in for statements)
 function server_mapinfo_check() {
 if ! echo "$map_pk3" | grep ".pk3" >/dev/null 2>&1; then
-    echo -e "$print_error $(basename $map_pk3) is not a a pk3 file." >&2
+    echo -e "$print_error ${map_pk3##*/} is not a a pk3 file." >&2
     continue
 elif [[ ! -f $map_pk3 ]]; then
-    echo -e "$print_error Could not find $(basename $map_pk3)." >&2
+    echo -e "$print_error Could not find ${map_pk3##*/}"
     continue        
 fi
 } # end of server_mapinfo_check()
@@ -1092,35 +1084,20 @@ server_mapinfo_check_first $1
 echo -e "$print_info Extract all mapinfo files of given pk3 files."
 echo -e "       No mapinfo file will be overwritten."
 zip_option="-n"
-
-#if [ "$@" -gt "4" ]; then
-#   PS3="Choose an option: "
-#   option1="never overwrite existing files"
-#   option2="overwrite files WITHOUT prompting"
-#   option3="decide for each file"
-#   select answer in "$option1" "$option2" "$option3"; do
-#       case "$answer" in
-#           "$option1") zip_option="-n"; echo -e "$print_info Script will not overwrite existing files..." ; break;; 
-#           "$option2") zip_option="-o"; echo -e "$print_info Script will overwrite existing files..." ; break;; 
-#           "$option3") break;; 
-#       esac
-#   done
-#fi
-
 for map_pk3 in "$@"; do
     server_mapinfo_check $map_pk3
-    echo $map_pk3 | grep '.pk3' >/dev/null 2>&1 || echo -e "$print_error $(basename $map_pk3) is not a pk3 file." >&2
+    echo $map_pk3 | grep '.pk3' &>/dev/null || echo -e "$print_error ${map_pk3##/*} is not a pk3 file." >&2
     map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9#._+-]+\.mapinfo' |tr "\n" " ")
     if [[ -z $map_infos ]]; then
-        echo -e "$print_attention $(basename $map_pk3) does not contain a mapinfo file."
+        echo -e "$print_attention ${map_pk3##/*} does not contain a mapinfo file."
         continue
     fi
     for map_info in $map_infos; do
         if [[ -f $userdir/data/maps/$map_info ]]; then
             echo -e "$print_info data/maps/$map_info already exists."
         else
-            echo -e "$print_info Extract $map_info of $(basename $map_pk3)."
-            unzip $zip_option -q -d $userdir/data $map_pk3 maps/$map_info
+            echo -e "$print_info Extract $map_info of ${map_pk3##/*}."
+            unzip $zip_option -q -d "$userdir"/data $map_pk3 maps/$map_info
         fi
     done
 done
@@ -1133,14 +1110,14 @@ echo -e "       No mapinfo file will be overwritten."
 package_folders=$(find $userdir/packages -type d)
 for folder in $package_folders; do
     # no mapinfo in this directory.. then continue with next one
-    ls $folder/*.pk3 >/dev/null 2>&1 || continue
+    ls $folder/*.pk3 &>/dev/null || continue
     for map_pk3 in $folder/*.pk3; do
         map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9#._+-]+\.mapinfo' |tr "\n" " ")
         if [[ -z $map_infos ]]; then
             continue
         fi
         for map_info in $map_infos; do
-            unzip -q -n -d $userdir/data $map_pk3 maps/$map_info
+            unzip -q -n -d "$userdir"/data $map_pk3 maps/$map_info
         done
     done
 done
@@ -1151,7 +1128,7 @@ function server_mapinfo_diff() {
 server_mapinfo_check_first $1
 for map_pk3 in "$@"; do
     server_mapinfo_check $map_pk3
-    echo $map_pk3 | grep '.pk3' >/dev/null 2>&1 || echo -e "$print_error $(basename $map_pk3) is not a pk3 file." >&2
+    echo $map_pk3 | grep '.pk3' &>/dev/null || echo -e "$print_error ${map_pk##*/} is not a pk3 file." >&2
     map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9#._+-]+\.mapinfo' |tr "\n" " ")
     if [[ -z $map_infos ]]; then
         echo -e "$print_attention $(basename $map_pk3) does not contain a mapinfo file."
@@ -1159,12 +1136,12 @@ for map_pk3 in "$@"; do
         continue
     fi
     for map_info in $map_infos; do
-        if [[ -f $userdir/data/maps/$map_info ]]; then
+        if [[ -f "$userdir"/data/maps/$map_info ]]; then
             echo -e "$print_info Difference of data/maps/$map_info and $map_pk3:"
-            diff $userdir/data/maps/$map_info <(unzip -p -q $map_pk3 maps/$map_info) &&
+            diff "$userdir"/data/maps/$map_info <(unzip -p -q $map_pk3 maps/$map_info) &&
             echo "       No Difference..."
         else
-            echo -e "$print_attention Cannot compare files, $userdir/data/maps/$map_info does not exist"
+            echo -e "$print_attention Cannot compare files: "$userdir"/data/maps/$map_info does not exist"
         fi
     done
 done
@@ -1172,19 +1149,19 @@ done
 
 # show the difference of all mapinfo files in pk3 package and in data/maps 
 function server_mapinfo_diff_all() {
-package_folders=$(find $userdir/packages -type d)
+package_folders=$(find "$userdir"/packages -type d)
 for folder in $package_folders; do
     # no mapinfo in this directory.. then continue with next one
-    ls $folder/*.pk3 >/dev/null 2>&1 || continue
+    ls $folder/*.pk3 &>/dev/null || continue
     for map_pk3 in $folder/*.pk3; do
-        echo $map_pk3 | grep '.pk3' >/dev/null 2>&1 || echo -e "$print_error $(basename $map_pk3) is not a pk3 file." >&2
+        echo $map_pk3 | grep '.pk3' &>/dev/null || echo -e "$print_error ${map_pk3##*/} is not a pk3 file." >&2
         map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9#._+-]+\.mapinfo' |tr "\n" " ")
         if [[ -z $map_infos ]]; then
             continue
         fi
         for map_info in $map_infos; do
-            if [[ -f $userdir/data/maps/$map_info ]]; then
-                if ! diff $userdir/data/maps/$map_info <(unzip -p -q $map_pk3 maps/$map_info) >/dev/null 2>&1; then
+            if [[ -f "$userdir"/data/maps/$map_info ]]; then
+                if ! diff $userdir/data/maps/$map_info <(unzip -p -q $map_pk3 maps/$map_info) &>/dev/null; then
                     echo -e "$print_info Difference of data/maps/$map_info and $map_pk3:"
                     diff $userdir/data/maps/$map_info <(unzip -p -q $map_pk3 maps/$map_info) 
                 fi
@@ -1199,10 +1176,10 @@ function server_mapinfo_show() {
 server_mapinfo_check_first $1
 for map_pk3 in "$@"; do
     server_mapinfo_check $map_pk3
-    echo $map_pk3 | grep '.pk3' >/dev/null 2>&1 || echo -e "$print_error $(basename $map_pk3) is not a pk3 file." >&2
+    echo $map_pk3 | grep '.pk3' &>/dev/null || echo -e "$print_error ${map_pk3##*/} is not a pk3 file." >&2
     map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9#._+-]+\.mapinfo' |tr "\n" " ")
     if [[ -z $map_infos ]]; then
-        echo -e "$print_attention $(basename $map_pk3) does not contain a mapinfo."
+        echo -e "$print_attention ${map_pk3##*/} does not contain a mapinfo."
         continue
     fi
     for map_info in $map_infos; do
@@ -1212,7 +1189,7 @@ for map_pk3 in "$@"; do
         else
             echo -e "$print_info data/maps/$map_info does not exists."
         fi
-        echo -e "$print_info $(basename $map_pk3) - $map_info:"
+        echo -e "$print_info ${map_pk3##*/} - $map_info:"
         unzip -p -q $map_pk3 maps/$map_info
     done
 done
@@ -1221,32 +1198,40 @@ done
 # reduce server console errors messages 
 # replace type 'type' with 'gametype', copy autogenerated mapinfo files
 function server_mapinfo_fix() {
-echo -e "$print_info Fixing 'type' in mapinfos in data/maps..."
-for map_info_l in $userdir/data/maps/*.mapinfo; do
-    sed -i 's/^type /gametype /g' $map_info_l >/dev/null 2>&1
+echo -e "$print_info Fix mapinfos in data/maps..."
+for map_info_l in "$userdir"/data/maps/*.mapinfo; do
+    sed -i 's/^type /gametype /g' $map_info_l &>/dev/null
+    sed -i 's/^gametype freezetag/gametype ft/g' $map_info_l &>/dev/null
+    sed -i 's/^gametype keepaway/gametype ka/g' $map_info_l &>/dev/null
+    sed -i 's/^gametype nexball/gametype nb/g' $map_info_l &>/dev/null
 done
-echo -e "$print_info Scanning pk3 packages for 'type' and fix it..."
+echo -e "$print_info Scanning pk3 packages and fix them..."
 echo -e "       Existing mapinfos are not overwritten."
-package_folders=$(find $userdir/packages -type d)
+package_folders=$(find "$userdir"/packages -type d)
 for folder in $package_folders; do
     # no pk3 files in this directory.. then continue with next one
-    ls $folder/*.pk3 >/dev/null 2>&1 || continue
+    ls $folder/*.pk3 &>/dev/null || continue
     for map_pk3 in $folder/*.pk3; do
         map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9#._+-]+\.mapinfo' |tr "\n" " ")
         if [[ -z $map_infos ]]; then
             continue
         fi
         for map_info in $map_infos; do
-            if [[ -f $userdir/data/maps/$map_info ]]; then
+            if [[ -f "$userdir"/data/maps/$map_info ]]; then
                 continue
-            elif unzip -q -p $map_pk3 maps/$map_info | grep '^type ' >/dev/null 2>&1; then
-                unzip -q -p $map_pk3 maps/$map_info | sed 's/^type /gametype /g' > $userdir/data/maps/$map_info
+            elif unzip -q -p $map_pk3 maps/$map_info |grep -E '(^type )|(^gametype (freezetag)|(keepaway)|(nexball))' &>/dev/null; then
+                unzip -q -p $map_pk3 maps/$map_info |\
+                sed 's/^type /gametype /g'|\
+                sed 's/^gametype freezetag/gametype ft/g'|\
+                sed 's/^gametype keepaway/gametype ka/g'|\
+                sed 's/^gametype nexball/gametype nb/g'|\
+                > "$userdir"/data/maps/$map_info
             fi
         done
     done
 done
-echo -e "$print_info Copying autogenerated maps into data/maps..."
-cp -f $userdir/data/data/maps/autogenerated/*.mapinfo $userdir/data/maps/
+echo -e "$print_info Move autogenerated maps into data/maps..."
+mv "$userdir"/data/data/maps/autogenerated/*.mapinfo "$userdir"/data/maps/
 } # end of server_mapinfo_fix()
 # }}}
 
