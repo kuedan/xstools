@@ -228,8 +228,8 @@ function pgrep_server_git() {
 
 # basic function to start servers
 function server_start() {
-for cfg_name in $@; do
-server_config_check_and_set $cfg_name
+for server_name in $@; do
+server_config_check_and_set $server_name
     # option 1: server is already running
     # -> print error and continue with for loop
     if pgrep_server &>/dev/null; then
@@ -305,8 +305,8 @@ if [[ $version_has_been_set == false ]]; then
     esac
 fi
 for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
-    cfg_name=$(basename ${cfg%.cfg})
-    server_start $cfg_name
+    server_name=$(basename ${cfg%.cfg})
+    server_start $server_name
 done
 } # end of server_start_all()
 
@@ -331,8 +331,8 @@ if [[ "$send_countdown_" == "true" ]]; then
     message_timer_[3]=5
     send_countdown specific_servers $@
 fi
-for var in $@; do
-server_config_check_and_set $var
+for server_name in $@; do
+server_config_check_and_set $server_name
     if pgrep_server &>/dev/null; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             echo -e "$print_info Stopping server '$server_name'..."
@@ -380,8 +380,8 @@ if [[ "$send_countdown_" == "true" ]]; then
 fi
 # we can only stop running servers and only those which are in our tmux session
 for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
-    cfg_name=$(basename ${cfg%.cfg})
-    server_config_check_and_set $cfg_name
+    server_name=$(basename ${cfg%.cfg})
+    server_config_check_and_set $server_name
     if pgrep_server$pgrep_suffix &>/dev/null; then
          if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             echo -e "$print_info Stopping server '$server_name'..."
@@ -418,8 +418,8 @@ if [[ "$send_countdown_" == "true" ]]; then
     message_timer_[3]=5
     send_countdown defined_servers $@
 fi
-for var in $@; do
-server_config_check_and_set $var
+for server_name in $@; do
+server_config_check_and_set $server_name
     # we can only restart a server if server is running and tmux window exists
     if pgrep_server &>/dev/null; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
@@ -475,8 +475,8 @@ if [[ "$send_countdown_" == "true" ]]; then
 fi
 # we can only restart running servers and only those which are in our tmux session
 for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
-    cfg_name=$(basename ${cfg%.cfg})
-    server_config_check_and_set $cfg_name 
+    server_name=$(basename ${cfg%.cfg})
+    server_config_check_and_set $server_name 
     if pgrep_server$pgrep_suffix &>/dev/null; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             echo -e "$print_info Restarting server '$server_name'..."
@@ -503,8 +503,8 @@ send_countdown_to=
 case $1 in
     all_servers) 
         for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
-        cfg_name=$(basename ${cfg%.cfg})
-        server_config_check_and_set $cfg_name 
+        server_name=$(basename ${cfg%.cfg})
+        server_config_check_and_set $server_name 
         # search for servers and save them in a field
         if pgrep_server$pgrep_suffix &>/dev/null; then
             if [[ $(tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window ") ]]; then
@@ -628,8 +628,8 @@ if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
     else
         echo -e "$print_info Following servers are running:"
     fi
-    for cfg_name in $activ_server_windows; do
-        server_config_check_and_set $cfg_name
+    for server_name in $activ_server_windows; do
+        server_config_check_and_set $server_name
         if pgrep_server &>/dev/null; then
         # if you list your servers it could be very nice to check player numbers and server version :) ... so I added it
                 if [[ "$enable_quakestat" == "true" ]]; then
@@ -731,10 +731,11 @@ function server_send_rescan() {
 echo -e "$print_info Servers will scan for new packages at endmatch."
 echo -e "       'rescan_pending 1' has been sent to server..."
 for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
-    cfg_name=$(basename ${cfg%.cfg})
-    server_config_check_and_set $cfg_name
+    server_config=${cfg##*/}
     if pgrep_server &>/dev/null; then
-        if [[ $(tmux list-windows -t $tmux_session| grep -E "$tmux_window" 2>/dev/null) ]]; then
+		server_name=${server_config%.cfg}
+		server_config_check_and_set $server_name
+        if [[ $(tmux list-windows -t $tmux_session| grep -E "$tmux_window " 2>/dev/null) ]]; then
             tmux send -t $tmux_session:$tmux_window "rescan_pending 1" C-m
             echo -e "       - '$server_name'"
         else
@@ -844,8 +845,8 @@ function server_send_all_command() {
 # check if everything is fine ...
 server_send_check
 for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
-    cfg_name=$(basename ${cfg%.cfg})
-    server_config_check_and_set $cfg_name
+    server_name=$(basename ${cfg%.cfg})
+    server_config_check_and_set $server_name
     if pgrep_server &>/dev/null; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
         server_send_set_ports_and_pws
@@ -867,9 +868,10 @@ function server_set_logs() {
 echo -e "$print_info New log file set for server:"
 log_date=$(date +"%Y%m%d")
 for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
-    cfg_name=$(basename ${cfg%.cfg})
+    server_config=${cfg##*/}
     if pgrep_server &>/dev/null; then
-        server_config_check_and_set $cfg_name 
+		server_name=${server_config%.cfg}
+		server_config_check_and_set $server_name
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             log_format="logs/$server_name.$log_date.log"
             tmux send -t $tmux_session:$tmux_window "log_file \"$log_format\"" C-m
@@ -912,7 +914,7 @@ function server_maplist_git() {
 echo -e "$print_info Checking git mapinfos."
 for map_info_location in "$basedir_git"/data/xonotic-maps.pk3dir/maps/*.mapinfo; do
     map_info=$(basename $map_info_location)
-    map_name=${map_info%\.mapinfo}
+    map_name=${map_info%.mapinfo}
     if [[ -f $userdir/data/maps/$map_info ]]; then
         # user has defined his own mapinfo
         continue
@@ -928,7 +930,7 @@ function server_maplist_release() {
 echo -e "$print_info Checking release mapinfos."
 map_infos=$(unzip -l "$basedir_release"/data/xonotic-*-maps.pk3 |grep -Eo '[A-Za-z0-9#._+-]+\.mapinfo' |tr "\n" " ")
 for map_info in $map_infos; do
-    map_name=${map_info%\.mapinfo}
+    map_name=${map_info%.mapinfo}
     if [[ -f $userdir/data/maps/$map_info ]]; then
         # user has defined his own mapinfo
         continue
@@ -1265,7 +1267,7 @@ done
 
 function rcon2irc_start_all() {
  for conf in $(ls $userdir/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
- conf_name=$(basename ${conf%\.rcon2irc.conf})
+ conf_name=$(basename ${conf%.rcon2irc.conf})
  rcon2irc_start $conf_name
  done
 } # end of rcon2irc_start_all()
@@ -1295,7 +1297,7 @@ done
 function rcon2irc_stop_all() {
 # we can only stop running rcon2irc bots and only those which are in our tmux windows
 for conf in $(ls "$userdir"/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
-    conf_name=$(basename ${conf%.rcon2irc.conf})
+    conf_name=$(basename ${conf.rcon2irc.conf})
     rcon2irc_config_check_and_set $conf_name
 # nearly the same if statement like rcon2irc_stop
     if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep ) ]]; then
@@ -1345,7 +1347,7 @@ done
 
 function rcon2irc_restart_all() {
 for conf in $(ls $userdir/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
-    conf_name=$(basename ${conf%\.rcon2irc.conf})
+    conf_name=$(basename ${conf%.rcon2irc.conf})
     rcon2irc_config_check_and_set $conf_name 
     if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null |grep -v grep) ]]; then
         if [[ $(tmux list-windows -t $tmux_session| grep -E "$tmux_window" 2>/dev/null) ]]; then
