@@ -626,6 +626,8 @@ done
 rm -f "$userdir/lock_update"
 } # end of server_update_git()
 
+# }}}
+
 ### --- additional server functions
 # {{{
 # function to attach user to tmux window of give server
@@ -1477,8 +1479,6 @@ xstools
                                   use option '-c' to send countdown   
     --list                      - list running servers/rcon2irc bots
     --list-configs              - list server and rcon2irc configs
-    --info <server(s)>          - show info about server(s)
-    --info-all                  - show info about all server(s)    
     --view <server(s)>          - view server console
     --add-pk3 <url(s)>          - add pk3 files from given urls
     --rescan                    - rescan for new added packages
@@ -1579,11 +1579,6 @@ countdown of 15min before servers are stopped or restarted.
 --list                  List all running servers and bots.
 
 --list-configs          List all server and rcon2irc configuration files.
-
---info <server(s)>      Show informations like hostname, port.... of server(s).
-                        If qstat is enabled you will get more informations.
-
---info-all              Same as --info, but this lists info for all servers.
 
 --view <server(s)>      Attach a tmux window and show server console of server(s).
 
@@ -1731,8 +1726,6 @@ case $1 in
  --update-git|update-git)            basic_config_check; server_update_git "$@";;
  --list|list|ls)                     basic_config_check; xstools_list_all;;
  --list-configs|list-configs)        basic_config_check; xstools_list_configs;;
- --info|info)                        basic_config_check; shift && server_info $@;;
- --info-all|info-all)                basic_config_check; server_info_all "$@";;
  --view|view)                        basic_config_check; shift && server_view "$@";;
  --add-pk3|add-pk3)                  basic_config_check; shift && server_add_pk3 "$@";;
  --rescan|rescan)                    basic_config_check; server_send_rescan;;
