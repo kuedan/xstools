@@ -124,11 +124,11 @@ function version_git_check_and_set() {
 
 function update_git() {
 cd "$basedir_git"
-./all update $git_update_options &&
 echo "// this file defines the last update date of your Xonotic git 
 // everytime you run an update the date of the builddate-git variable changes
 // you can define the date format in configs/xstools.conf
 set builddate-git \"$(date +"$git_update_date")\"" > "$userdir/configs/servers/common/builddate-git.cfg" &&
+./all update $git_update_options &&
 ./all compile $git_compile_options
 } # end of update_git()
 
@@ -321,11 +321,15 @@ if [[ $1 == -c ]]; then
     shift
 fi
 if [[ "$send_countdown_" == "true" ]]; then
-    message_countdown1='say Server will shut down in 15min.'
-    message_countdown2='say Server will shut down in 10min.'
-    message_countdown3='say Server will shut down in 5min.'
-    message_countdown4='say Server will shut down in 1min.'
-    message_countdown5='say Server will shut down now.'
+    message_n=4
+    message_1='say Server will shutdown in 10min.'
+    message_timer_1=300
+    message_2='say Server will shutdown in 5min.'
+    message_timer_2=240
+    message_3='say Server will shutdown in 1min.'
+    message_timer_3=55
+    message_4='say Server will shutdown now.'
+    message_timer_4=5
     send_countdown specific_servers $@
 fi
 for var in $@; do
@@ -365,11 +369,15 @@ elif [[ $grep_release != true && $grep_git == true ]]; then
     pgrep_suffix=_git
 fi
 if [[ "$send_countdown_" == "true" ]]; then
-    message_countdown1='say Server will shut down in 15min.'
-    message_countdown2='say Server will shut down in 10min.'
-    message_countdown3='say Server will shut down in 5min.'
-    message_countdown4='say Server will shut down in 1min.'
-    message_countdown5='say Server will shut down now.'
+    message_n=4
+    message_1='say Server will shutdown in 10min.'
+    message_timer_1=300
+    message_2='say Server will shutdown in 5min.'
+    message_timer_2=240
+    message_3='say Server will shutdown in 1min.'
+    message_timer_3=55
+    message_4='say Server will shutdown now.'
+    message_timer_4=5
     send_countdown all_servers
 fi
 # we can only stop running servers and only those which are in our tmux session
@@ -402,11 +410,15 @@ if [[ $1 == -c ]]; then
     shift
 fi
 if [[ "$send_countdown_" == "true" ]]; then
-    message_countdown1='say Server will restart in 15min.'
-    message_countdown2='say Server will restart in 10min.'
-    message_countdown3='say Server will restart in 5min.'
-    message_countdown4='say Server will restart in 1min.'
-    message_countdown5='say Server will restart now.'
+    message_n=4
+    message_1='say Server will restart in 10min.'
+    message_timer_1=300
+    message_2='say Server will restart in 5min.'
+    message_timer_2=240
+    message_3='say Server will restart in 1min.'
+    message_timer_3=55
+    message_4='say Server will restart now.'
+    message_timer_4=5
     send_countdown defined_servers $@
 fi
 for var in $@; do
@@ -454,11 +466,15 @@ elif [[ $grep_release != true && $grep_git == true ]]; then
     pgrep_suffix=_git
 fi
 if [[ "$send_countdown_" == "true" ]]; then
-    message_countdown1='say Server will restart in 15min.'
-    message_countdown2='say Server will restart in 10min.'
-    message_countdown3='say Server will restart in 5min.'
-    message_countdown4='say Server will restart in 1min.'
-    message_countdown5='say Server will restart now.'
+    message_n=4
+    message_1='say Server will restart in 10min.'
+    message_timer_1=300
+    message_2='say Server will restart in 5min.'
+    message_timer_2=240
+    message_3='say Server will restart in 1min.'
+    message_timer_3=55
+    message_4='say Server will restart now.'
+    message_timer_4=5
     send_countdown all_servers
 fi
 # we can only restart running servers and only those which are in our tmux session
@@ -514,50 +530,19 @@ case $1 in
             ;;
 esac
 # send countdown to servers
-echo -e "$print_info Sending countdown of 15min..."
-for var in ${send_countdown_to}; do
-tmux send -t $tmux_session:$var "
-set sv_adminnick_bak \"\${sv_adminnick}\";
-set sv_adminnick \"^1Info System^3\";
-$message_countdown1;
-wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
+counter=0
+while [ "$counter" -lt "$message_n" ]; do
+    counter=$[$counter+1]
+    echo "Sending: ${message_[$counter]}"
+    for server in ${send_countdown_to}; do
+        tmux send -t $tmux_session:$server "
+        set sv_adminnick_bak \"\${sv_adminnick}\";
+        set sv_adminnick \"^1attention^3\";
+        ${message_[$counter]};
+        wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
+    done
+    sleep ${message_timer_[$counter]}
 done
-sleep 5m
-echo -e "       10min..."
-for var in ${send_countdown_to}; do 
-tmux send -t $tmux_session:$var "
-set sv_adminnick_bak \"\${sv_adminnick}\";
-set sv_adminnick \"^1Info System^3\";
-$message_countdown2;
-wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
-done
-sleep 5m
-echo -e "       5min..."
-for var in ${send_countdown_to}; do 
-tmux send -t $tmux_session:$var "
-set sv_adminnick_bak \"\${sv_adminnick}\";
-set sv_adminnick \"^1Info System^3\";
-$message_countdown3;
-wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
-done
-sleep 4m
-echo -e "       1min..."
-for var in ${send_countdown_to}; do 
-tmux send -t $tmux_session:$var "
-set sv_adminnick_bak \"\${sv_adminnick}\";
-set sv_adminnick \"^1Info System^3\";
-$message_countdown4;
-wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
-done
-sleep 55
-for var in ${send_countdown_to}; do 
-tmux send -t $tmux_session:$var "
-set sv_adminnick_bak \"\${sv_adminnick}\";
-set sv_adminnick \"^1Info System^3\";
-$message_countdown5;
-wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
-done
-sleep 5
 } # end of send_countdown()
 
 function server_update_git() {
@@ -583,45 +568,24 @@ fi
 alias pgrep_server=pgrep_server_git
 # if we have -c as extra argument, then send countdown
 if [[ "$2" == "-c" ]]; then
-    message_countdown1='say Server will be updated in 15min.'
-    message_countdown2='say Server will be updated in 10min.'
-    message_countdown3='say Server will be updated in 5min.'
-    message_countdown4='say Server will be updated in 1min.'
-    message_countdown5='say Server will be updated now.'
+    message_n=4
+    message_1='say Server will be updated in 10min.'
+    message_timer_1=300
+    message_2='say Server will be updated in 5min.'
+    message_timer_2=240
+    message_3='say Server will be updated in 1min.'
+    message_timer_3=55
+    message_4='say Server will be updated now: Server restarts in a few.'
+    message_timer_4=5
     send_countdown all_servers
 fi
 # close all servers
 # lock xstools, when update started 
 touch "$userdir/lock_update"
-for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
-    cfg_name=$(basename ${cfg%.cfg})
-    server_config_check_and_set $cfg_name 
-    if pgrep_server_git &>/dev/null; then
-        if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then          
-            echo -e "$print_info Stopping server '$server_name'..."
-            tmux send -t $tmux_session:$tmux_window "quit" C-m
-            echo -e "       Server '$server_name' has been stopped."
-            restart_servers="$restart_servers $cfg_name"
-        else
-            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
-            echo >&2 -e "        You have to fix this on your own."
-            fi
-    fi
-done        
 # simply update
 update_git
 # start all servers
-for cfg_name in $restart_servers; do
-    server_config_check_and_set $cfg_name
-    if [[ "$logs_date" == "true" ]]; then
-        tmux send -t $tmux_session:$tmux_window 'last_command="!!"' C-m
-        tmux send -t $tmux_session:$tmux_window "log_dp_argument=\"$log_dp_argument\"" C-m
-        tmux send -t $tmux_session:$tmux_window 'eval $(echo "$last_command" | awk -F"+set log_file" -v log_dp_argument="$log_dp_argument" "{print \$1 log_dp_argument}")' C-m
-    else
-        tmux send -t $tmux_session:$tmux_window '!!' C-m
-    fi
-    echo -e "$print_info Server '$server_name' has been restarted."
-done
+server_restart_all -g
 # unlock xstools 
 rm -f "$userdir/lock_update"
 } # end of server_update_git()
