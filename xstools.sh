@@ -321,15 +321,14 @@ if [[ $1 == -c ]]; then
     shift
 fi
 if [[ "$send_countdown_" == "true" ]]; then
-    message_n=4
-    message_1='say Server will shutdown in 10min.'
-    message_timer_1=300
-    message_2='say Server will shutdown in 5min.'
-    message_timer_2=240
-    message_3='say Server will shutdown in 1min.'
-    message_timer_3=55
-    message_4='say Server will shutdown now.'
-    message_timer_4=5
+    message_[0]='Server will shutdown in 10min.'
+    message_timer_[0]=300
+    message_[1]='Server will shutdown in 5min.'
+    message_timer_[1]=240
+    message_[2]='Server will shutdown in 1min.'
+    message_timer_[2]=55
+    message_[3]='Server will shutdown now.'
+    message_timer_[3]=5
     send_countdown specific_servers $@
 fi
 for var in $@; do
@@ -369,15 +368,14 @@ elif [[ $grep_release != true && $grep_git == true ]]; then
     pgrep_suffix=_git
 fi
 if [[ "$send_countdown_" == "true" ]]; then
-    message_n=4
-    message_1='say Server will shutdown in 10min.'
-    message_timer_1=300
-    message_2='say Server will shutdown in 5min.'
-    message_timer_2=240
-    message_3='say Server will shutdown in 1min.'
-    message_timer_3=55
-    message_4='say Server will shutdown now.'
-    message_timer_4=5
+    message_[0]='Server will shutdown in 10min.'
+    message_timer_[0]=300
+    message_[1]='Server will shutdown in 5min.'
+    message_timer_[1]=240
+    message_[2]='Server will shutdown in 1min.'
+    message_timer_[2]=55
+    message_[3]='Server will shutdown now.'
+    message_timer_[3]=5
     send_countdown all_servers
 fi
 # we can only stop running servers and only those which are in our tmux session
@@ -410,15 +408,14 @@ if [[ $1 == -c ]]; then
     shift
 fi
 if [[ "$send_countdown_" == "true" ]]; then
-    message_n=4
-    message_1='say Server will restart in 10min.'
-    message_timer_1=300
-    message_2='say Server will restart in 5min.'
-    message_timer_2=240
-    message_3='say Server will restart in 1min.'
-    message_timer_3=55
-    message_4='say Server will restart now.'
-    message_timer_4=5
+    message_[0]='Server will restart in 10min.'
+    message_timer_[0]=300
+    message_[1]='Server will restart in 5min.'
+    message_timer_[1]=240
+    message_[2]='Server will restart in 1min.'
+    message_timer_[2]=55
+    message_[3]='Server will restart now.'
+    message_timer_[3]=5
     send_countdown defined_servers $@
 fi
 for var in $@; do
@@ -466,15 +463,14 @@ elif [[ $grep_release != true && $grep_git == true ]]; then
     pgrep_suffix=_git
 fi
 if [[ "$send_countdown_" == "true" ]]; then
-    message_n=4
-    message_1='say Server will restart in 10min.'
-    message_timer_1=300
-    message_2='say Server will restart in 5min.'
-    message_timer_2=240
-    message_3='say Server will restart in 1min.'
-    message_timer_3=55
-    message_4='say Server will restart now.'
-    message_timer_4=5
+    message_[0]='Server will restart in 10min.'
+    message_timer_[0]=300
+    message_[1]='Server will restart in 5min.'
+    message_timer_[1]=240
+    message_[2]='Server will restart in 1min.'
+    message_timer_[2]=55
+    message_[3]='Server will restart now.'
+    message_timer_[3]=5
     send_countdown all_servers
 fi
 # we can only restart running servers and only those which are in our tmux session
@@ -531,17 +527,17 @@ case $1 in
 esac
 # send countdown to servers
 counter=0
-while [ "$counter" -lt "$message_n" ]; do
-    counter=$[$counter+1]
+while [ "$counter" -lt "${#message_[@]}" ]; do
     echo "Sending: ${message_[$counter]}"
     for server in ${send_countdown_to}; do
         tmux send -t $tmux_session:$server "
         set sv_adminnick_bak \"\${sv_adminnick}\";
-        set sv_adminnick \"^1attention^3\";
-        ${message_[$counter]};
+        set sv_adminnick \"^1Server System^3\";
+        say ${message_[$counter]};
         wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
     done
     sleep ${message_timer_[$counter]}
+    counter=$[$counter+1]
 done
 } # end of send_countdown()
 
@@ -564,19 +560,19 @@ elif [[ -z $git_update_date ]]; then
     echo >&2 -e "       date format: $(date +'%d %b %H:%M %Z') will be used for this update"
     git_update_date='%d %b %H:%M %Z'
 fi
-#  git servers only
-alias pgrep_server=pgrep_server_git
+# git servers only
+pgrep_suffix=_git
 # if we have -c as extra argument, then send countdown
 if [[ "$2" == "-c" ]]; then
-    message_n=4
-    message_1='say Server will be updated in 10min.'
-    message_timer_1=300
-    message_2='say Server will be updated in 5min.'
-    message_timer_2=240
-    message_3='say Server will be updated in 1min.'
-    message_timer_3=55
-    message_4='say Server will be updated now: Server restarts in a few.'
-    message_timer_4=5
+    message_[0]='Server will be updated in 10min.'
+    message_timer_[0]=300
+    message_[1]='Server will be updated in 5min.'
+    message_timer_[1]=240
+    message_[2]='Server will be updated in 1min.'
+    message_timer_[2]=55
+    message_[3]='Server will be updated now: Server restarts in a few.'
+    message_timer_[3]=5
+	# all_servers is all git servers - due the defined suffix
     send_countdown all_servers
 fi
 # close all servers
@@ -584,8 +580,9 @@ fi
 touch "$userdir/lock_update"
 # simply update
 update_git
-# start all servers
-server_restart_all -g
+# restart all git servers
+# option -g need not to be set - due the defined suffix
+server_restart_all
 # unlock xstools 
 rm -f "$userdir/lock_update"
 } # end of server_update_git()
