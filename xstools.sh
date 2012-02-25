@@ -334,8 +334,8 @@ server_config_check_and_set $var
     if pgrep_server &>/dev/null; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             echo -e "$print_info Stopping server '$server_name'..."
-            tmux send -t $tmux_session:$tmux_window "quit" C-m
-            sleep 2
+            tmux send -t $tmux_session:$tmux_window "endmatch; quit" C-m
+            sleep 0.5
             tmux send -t $tmux_session:$tmux_window "exit" C-m
             echo -e "       Server '$server_name' has been stopped."
         else
@@ -380,8 +380,8 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     if pgrep_server$pgrep_suffix &>/dev/null; then
          if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             echo -e "$print_info Stopping server '$server_name'..."
-            tmux send -t $tmux_session:$tmux_window "quit" C-m
-            sleep 2
+            tmux send -t $tmux_session:$tmux_window "endmatch; quit" C-m
+            sleep 0.5
             tmux send -t $tmux_session:$tmux_window "exit" C-m
             echo -e "       Server '$server_name' has been stopped."
         else
@@ -417,8 +417,11 @@ server_config_check_and_set $var
     if pgrep_server &>/dev/null; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             echo -e "$print_info Restarting server '$server_name'..."
-            tmux send -t $tmux_session:$tmux_window "quit" C-m
-            sleep 2
+            tmux send -t $tmux_session:$tmux_window "quit_and_redirect self; endmatch" C-m
+            sleep 1
+            while pgrep_server &>/dev/null; do
+            sleep 1
+            done 
             if [[ "$logs_date" == "true" ]]; then
                 tmux send -t $tmux_session:$tmux_window 'last_command="!!"' C-m
                 tmux send -t $tmux_session:$tmux_window "log_dp_argument=\"$log_dp_argument\"" C-m
@@ -470,8 +473,11 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     if pgrep_server$pgrep_suffix &>/dev/null; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             echo -e "$print_info Restarting server '$server_name'..."
-            tmux send -t $tmux_session:$tmux_window "quit" C-m
-            sleep 2
+            tmux send -t $tmux_session:$tmux_window "quit_and_redirect self; endmatch" C-m
+            sleep 1
+            while pgrep_server &>/dev/null; do
+            sleep 1
+            done 
             if [[ "$logs_date" == "true" ]]; then
                 tmux send -t $tmux_session:$tmux_window 'last_command="!!"' C-m
                 tmux send -t $tmux_session:$tmux_window "log_dp_argument=\"$log_dp_argument\"" C-m
@@ -719,7 +725,7 @@ echo -e "       'rescan_pending 1' has been sent to server..."
 for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     server_config=${cfg##*/}
     if pgrep_server &>/dev/null; then
-		server_config_check_and_set ${server_config%.cfg}
+        server_config_check_and_set ${server_config%.cfg}
         if [[ $(tmux list-windows -t $tmux_session| grep -E "$tmux_window " 2>/dev/null) ]]; then
             tmux send -t $tmux_session:$tmux_window "rescan_pending 1" C-m
             echo -e "       - '$server_name'"
@@ -854,7 +860,7 @@ log_date=$(date +"%Y%m%d")
 for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     server_config=${cfg##*/}
     if pgrep_server &>/dev/null; then
-		server_config_check_and_set ${server_config%.cfg}
+        server_config_check_and_set ${server_config%.cfg}
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             log_format="logs/$server_name.$log_date.log"
             tmux send -t $tmux_session:$tmux_window "log_file \"$log_format\"" C-m
