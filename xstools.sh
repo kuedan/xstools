@@ -728,7 +728,7 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
         server_config_check_and_set ${server_config%.cfg}
         if [[ $(tmux list-windows -t $tmux_session| grep -E "$tmux_window " 2>/dev/null) ]]; then
             tmux send -t $tmux_session:$tmux_window "rescan_pending 1" C-m
-            echo -e "       - '$server_name'"
+            echo -e "       - $server_name"
         else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
             echo >&2 -e "        You have to fix this on your own."
