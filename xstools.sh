@@ -518,7 +518,7 @@ case $1 in
                 fi
             fi
         done
-            ;;
+        ;;
 esac
 # send countdown to servers
 counter=0
