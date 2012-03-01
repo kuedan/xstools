@@ -217,8 +217,18 @@ function pgrep_server_git() {
 
 # basic function to start servers
 function server_start() {
+if [[ -f "$userdir/configs/server_paths.conf" ]]; then
+    echo -e "$print_info xstools uses server_paths.conf"
+    source "$userdir/configs/server_paths.conf"
+    function_generate_dp_default_arguments=true
+fi
 for var in $@; do
-server_config_check_and_set $var
+    server_config_check_and_set $var
+    if [[ $function_generate_dp_default_arguments == true ]]; then
+        echo generate
+        generate_dp_default_arguments $server_name
+    fi
+    dp_default_arguments_bak="$dp_default_arguments"
     # set sessionid if used
     if [[ "$sessionid_per_config" == "true" ]]; then
         if [[ $sessionid_warning == true && ! -f "$userdir/key_0.d0si.$server_name" ]]; then
@@ -256,6 +266,7 @@ server_config_check_and_set $var
         tmux send -t $tmux_session:$tmux_window "$server_command $dp_default_arguments +set serverconfig $server_config $log_dp_argument" C-m 
         echo -e "$print_info Server '$server_name' has been started."
 fi
+dp_default_arguments="$dp_default_arguments_bak"
 done
 } # end of server_start()
 
@@ -419,9 +430,9 @@ server_config_check_and_set $var
             echo -e "$print_info Restarting server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit_and_redirect self; endmatch" C-m
             sleep 1
-            while pgrep_server &>/dev/null; do
-            sleep 1
-            done 
+			while pgrep_server &>/dev/null; do
+			sleep 1
+			done 
             if [[ "$logs_date" == "true" ]]; then
                 tmux send -t $tmux_session:$tmux_window 'last_command="!!"' C-m
                 tmux send -t $tmux_session:$tmux_window "log_dp_argument=\"$log_dp_argument\"" C-m
@@ -475,9 +486,9 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
             echo -e "$print_info Restarting server '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit_and_redirect self; endmatch" C-m
             sleep 1
-            while pgrep_server &>/dev/null; do
-            sleep 1
-            done 
+			while pgrep_server &>/dev/null; do
+			sleep 1
+			done 
             if [[ "$logs_date" == "true" ]]; then
                 tmux send -t $tmux_session:$tmux_window 'last_command="!!"' C-m
                 tmux send -t $tmux_session:$tmux_window "log_dp_argument=\"$log_dp_argument\"" C-m
@@ -518,7 +529,7 @@ case $1 in
                 fi
             fi
         done
-        ;;
+            ;;
 esac
 # send countdown to servers
 counter=0
@@ -578,6 +589,7 @@ update_git
 server_restart_all
 # unlock xstools 
 rm -f "$userdir/lock_update"
+echo "./all compile $git_compile_options"
 } # end of server_update_git()
 
 # }}}
@@ -725,10 +737,10 @@ echo -e "       'rescan_pending 1' has been sent to server..."
 for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     server_config=${cfg##*/}
     if pgrep_server &>/dev/null; then
-        server_config_check_and_set ${server_config%.cfg}
+		server_config_check_and_set ${server_config%.cfg}
         if [[ $(tmux list-windows -t $tmux_session| grep -E "$tmux_window " 2>/dev/null) ]]; then
             tmux send -t $tmux_session:$tmux_window "rescan_pending 1" C-m
-            echo -e "       - $server_name"
+            echo -e "       - '$server_name'"
         else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
             echo >&2 -e "        You have to fix this on your own."
@@ -860,7 +872,7 @@ log_date=$(date +"%Y%m%d")
 for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     server_config=${cfg##*/}
     if pgrep_server &>/dev/null; then
-        server_config_check_and_set ${server_config%.cfg}
+		server_config_check_and_set ${server_config%.cfg}
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             log_format="logs/$server_name.$log_date.log"
             tmux send -t $tmux_session:$tmux_window "log_file \"$log_format\"" C-m
