@@ -1,5 +1,5 @@
-These are the configs used by xstools
-https://github.com/itsme-/xstools
+the repo for these config files can be found at:
+https://itsme-@github.com/itsme-/server.configs.git
 
 ### Credits
 
