@@ -321,15 +321,158 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
 done
 } # end of server_start_all()
 
+function server_stop() {
+case $1 in
+	defined_servers)
+		shift
+		for server_name in $@; do
+		server_config_check_and_set $server_name
+			if pgrep_server &>/dev/null; then
+				if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
+					tmux send -t $tmux_session:$tmux_window "endmatch; quit" C-m
+					sleep 0.5
+					tmux send -t $tmux_session:$tmux_window "exit" C-m
+					echo -e "$print_info Server '$server_name' has been stopped."
+				else
+					echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+					echo >&2 -e "        You have to fix this on your own."
+				fi
+			else
+				echo >&2 -e "$print_error Server '$server_name' is not running, cannot stop."
+			fi
+		done;;
+	all_servers)
+		for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
+			server_config_check_and_set $(basename ${cfg%.cfg})
+			if pgrep_server$pgrep_suffix &>/dev/null; then
+				if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
+					tmux send -t $tmux_session:$tmux_window "endmatch; quit" C-m
+					sleep 0.5
+					tmux send -t $tmux_session:$tmux_window "exit" C-m
+					echo -e "       Server '$server_name' has been stopped."
+				else
+					echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+					echo >&2 -e "        You have to fix this on your own."
+				fi
+			fi
+		done;;
+esac  
+} # end of server_stop()
+
+function server_stop_redirect() {
+server_names=( $@ )
+counter=0
+while [ $counter -lt ${#server_names[@]} ]; do
+server_config_check_and_set ${server_names[$counter]}
+    if pgrep_server &>/dev/null; then
+        if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
+            echo -e "$print_info Sending 'quit_and_redirect $quit_and_redirect_to' to '$server_name'..."
+            tmux send -t $tmux_session:$tmux_window "quit_and_redirect ${quit_and_redirect_to};" C-m
+            if [[ -n $quit_and_redirect_now ]]; then
+            tmux send -t $tmux_session:$tmux_window "endmatch;" C-m
+            fi
+        else
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+            echo >&2 -e "        You have to fix this on your own."
+            # delete the entry from field
+            unset server_names[$counter]
+        fi
+    else
+        echo >&2 -e "$print_error Server '$server_name' is not running, cannot stop."
+        # delete the entry from field
+        unset server_names[$counter]
+    fi
+    counter=$[$counter+1] # ((counter++))
+done
+# get the new field of server names
+server_names=( $(echo ${server_names[@]}) )
+sleep 0.5
+counter=0
+while [ $counter -lt ${#server_names[@]} ]; do
+	server_config_check_and_set ${server_names[$counter]}
+		if ! pgrep_server &>/dev/null; then
+			tmux send -t $tmux_session:$tmux_window "exit" C-m
+			echo -e "       Server '$server_name' has been stopped."
+			unset server_names[$counter]
+			server_names=( $(echo ${server_names[@]}) )
+		else
+			counter=$[$counter+1]
+			if [[ $counter -gt ${#server_names[@]} ]]; then
+				counter=0
+			fi
+		fi
+	sleep 2
+done
+} # end of server_stop_redirect
+
+function server_stop_empty() {
+server_names=( $@ )
+counter=0
+while [ $counter -lt ${#server_names[@]} ]; do
+server_config_check_and_set ${server_names[$counter]}
+    if pgrep_server &>/dev/null; then
+        if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
+            echo -e "$print_info Sending 'quit_when empty 1' to '$server_name'..."
+            tmux send -t $tmux_session:$tmux_window "quit_when_empty 1;" C-m
+            if [[ -n $quit_and_redirect_now ]]; then
+            tmux send -t $tmux_session:$tmux_window "endmatch;" C-m
+            fi
+        else
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+            echo >&2 -e "        You have to fix this on your own."
+            # delete the entry from field
+            unset server_names[$counter]
+        fi
+    else
+        echo >&2 -e "$print_error Server '$server_name' is not running, cannot stop."
+        # delete the entry from field
+        unset server_names[$counter]
+    fi
+    counter=$[$counter+1] # ((counter++))
+done
+# get the new field of server names
+server_names=( $(echo ${server_names[@]}) )
+sleep 0.5
+counter=0
+while [ $counter -lt ${#server_names[@]} ]; do
+	server_config_check_and_set ${server_names[$counter]}
+		if ! pgrep_server &>/dev/null; then
+			tmux send -t $tmux_session:$tmux_window "exit" C-m
+			echo -e "       Server '$server_name' has been stopped."
+			unset server_names[$counter]
+			server_names=( $(echo ${server_names[@]}) )
+		else
+			counter=$[$counter+1]
+			if [[ $counter -gt ${#server_names[@]} ]]; then
+				counter=0
+			fi
+		fi
+	sleep 2
+done
+} # end of server_stop_empty
+
 # stop one or more servers
 function server_stop_specific() {
-server_first_config_check $1
-# version check not needed to stop servers ...
-if [[ $1 == -c ]]; then
-    send_countdown_=true
-    shift
+while getopts ":cq:ne" options; do
+    case $options in
+        c) send_countdown_=true;;
+        q) quit_and_redirect=true; quit_and_redirect_to="$OPTARG";;
+        n) quit_and_redirect_now=true;;
+        e) quit_when_empty=true;;
+    esac
+done
+shift $((OPTIND-1))
+if [[ -n $send_countdown_ && -n $quit_and_redirect ]]; then
+	echo >&2 "$print_error You cannot use -c and -q option."
+	exit 1
+elif [[ -n $send_countdown_ && -n $quit_when_empty ]]; then
+	echo >&2 "$print_error You cannot use -c and -e option."
+	exit 1
+elif [[ -n $quit_and_redirect && -n $quit_when_empty ]]; then
+	echo >&2 "$print_error You cannot use -q and -e option."
+	exit 1
 fi
-if [[ "$send_countdown_" == "true" ]]; then
+if [[ -n $send_countdown_ ]]; then
     message_[0]='Server will shutdown in 10min.'
     message_timer_[0]=300
     message_[1]='Server will shutdown in 5min.'
@@ -338,43 +481,49 @@ if [[ "$send_countdown_" == "true" ]]; then
     message_timer_[2]=55
     message_[3]='Server will shutdown now.'
     message_timer_[3]=5
-    send_countdown specific_servers $@
+    send_notice defined_servers $@
+    server_stop defined_servers $@
+elif [[ -n $quit_and_redirect && -z $quit_and_redirect_to ]]; then
+	echo >&2 -e "$print_error Please define the server to redirect to."
+	exit 1
+elif [[ -n $quit_and_redirect ]]; then
+	send_notice defined_servers $@
+	server_stop_redirect defined_servers $@
+elif [[ -n $quit_when_empty ]]; then
+	server_stop_empty defined_servers $@
+else
+	server_stop defined_servers $@
 fi
-for var in $@; do
-server_config_check_and_set $var
-    if pgrep_server &>/dev/null; then
-        if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
-            echo -e "$print_info Stopping server '$server_name'..."
-            tmux send -t $tmux_session:$tmux_window "endmatch; quit" C-m
-            sleep 0.5
-            tmux send -t $tmux_session:$tmux_window "exit" C-m
-            echo -e "       Server '$server_name' has been stopped."
-        else
-            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
-            echo >&2 -e "        You have to fix this on your own."
-        fi
-    else
-        echo >&2 -e "$print_error Server '$server_name' is not running, cannot stop."
-    fi
-done
 } # end of server_stop_specific()
 
 # function to stop all servers
 function server_stop_all() {
-while getopts ":crg" options; do
+while getopts ":rgcq:ne" options; do
     case $options in
-        c) send_countdown_=true ;;
-        r) grep_release=true ;;
-        g) grep_git=true ;; 
+        r) grep_release=true;;
+        c) send_countdown_=true;;
+        q) quit_and_redirect=true; quit_and_redirect_to="$OPTARG";;
+        n) quit_and_redirect_now=true;;
+        e) quit_when_empty=true;;
     esac
 done
-# overwrite command if release or git only 
+shift $((OPTIND-1))
+if [[ -n $send_countdown_ && -n $quit_and_redirect ]]; then
+	echo >&2 "$print_error You cannot use -c and -q option."
+	exit 1
+elif [[ -n $send_countdown_ && -n $quit_when_empty ]]; then
+	echo >&2 "$print_error You cannot use -c and -e option."
+	exit 1
+elif [[ -n $quit_and_redirect && -n $quit_when_empty ]]; then
+	echo >&2 "$print_error You cannot use -q and -e option."
+	exit 1
+fi
 if [[ $grep_release == true && $grep_git != true ]]; then
     pgrep_suffix=_release
 elif [[ $grep_release != true && $grep_git == true ]]; then
     pgrep_suffix=_git
 fi
-if [[ "$send_countdown_" == "true" ]]; then
+if [[ -n $send_countdown_ ]]; then
     message_[0]='Server will shutdown in 10min.'
     message_timer_[0]=300
     message_[1]='Server will shutdown in 5min.'
@@ -383,35 +532,187 @@ if [[ "$send_countdown_" == "true" ]]; then
     message_timer_[2]=55
     message_[3]='Server will shutdown now.'
     message_timer_[3]=5
-    send_countdown all_servers
+    send_notice all_servers $@
+    server_stop all_servers $@
+elif [[ -n $quit_and_redirect && -z $quit_and_redirect_to ]]; then
+	echo >&2 -e "$print_error Please define the server to redirect to."
+	exit 1
+elif [[ -n $quit_and_redirect ]]; then
+	send_notice all_servers $@
+	server_stop_redirect all_servers $@
+elif [[ -n $quit_when_empty ]]; then
+	server_stop_empty all_servers
+else
+	server_stop all_servers
 fi
-# we can only stop running servers and only those which are in our tmux session
-for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
-    server_config_check_and_set $(basename ${cfg%.cfg})
-    if pgrep_server$pgrep_suffix &>/dev/null; then
-         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
-            echo -e "$print_info Stopping server '$server_name'..."
-            tmux send -t $tmux_session:$tmux_window "endmatch; quit" C-m
-            sleep 0.5
-            tmux send -t $tmux_session:$tmux_window "exit" C-m
-            echo -e "       Server '$server_name' has been stopped."
+} # end of server_stop_all()
+
+function server_restart() {
+case $1 in
+	defined_servers)
+		shift
+		for server_name in $@; do
+			server_config_check_and_set $server_name
+			if pgrep_server &>/dev/null; then
+				if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
+					echo -e "$print_info Restarting server '$server_name'..."
+					tmux send -t $tmux_session:$tmux_window "endmatch; quit" C-m
+					sleep 0.5
+					if [[ "$logs_date" == "true" ]]; then
+						tmux send -t $tmux_session:$tmux_window 'last_command="!!"' C-m
+						tmux send -t $tmux_session:$tmux_window "log_dp_argument=\"$log_dp_argument\"" C-m
+						tmux send -t $tmux_session:$tmux_window 'eval $(echo "$last_command" | awk -F"+set log_file" -v log_dp_argument="$log_dp_argument" "{print \$1 log_dp_argument}")' C-m
+					else
+						tmux send -t $tmux_session:$tmux_window '!!' C-m
+					fi
+					echo -e "       Server '$server_name' has been restarted."
+				else
+					echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+					echo >&2 -e "        You have to fix this on your own."
+				fi
+				else
+			echo >&2 -e "$print_error Server '$server_name' is not running, cannot restart."
+			fi
+		done;;
+	all_servers)
+		for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
+			server_config_check_and_set $(basename ${cfg%.cfg})
+			if pgrep_server$pgrep_suffix &>/dev/null; then
+				if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
+					echo -e "$print_info Restarting server '$server_name'..."
+					tmux send -t $tmux_session:$tmux_window "endmatch; quit" C-m
+					sleep 0.5
+					if [[ "$logs_date" == "true" ]]; then
+						tmux send -t $tmux_session:$tmux_window 'last_command="!!"' C-m
+						tmux send -t $tmux_session:$tmux_window "log_dp_argument=\"$log_dp_argument\"" C-m
+						tmux send -t $tmux_session:$tmux_window 'eval $(echo "$last_command" | awk -F"+set log_file" -v log_dp_argument="$log_dp_argument" "{print \$1 log_dp_argument}")' C-m
+					else
+						tmux send -t $tmux_session:$tmux_window '!!' C-m
+					fi
+					echo -e "       Server '$server_name' has been restarted."
+				else
+					echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+					echo >&2 -e "        You have to fix this on your own."
+				fi
+			fi
+		done;;
+esac 
+} # end of server_restart
+
+function server_restart_redirect() {
+server_names=( $@ )
+counter=0
+while [ $counter -lt ${#server_names[@]} ]; do
+server_config_check_and_set ${server_names[$counter]}
+    if pgrep_server &>/dev/null; then
+        if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
+            echo -e "$print_info Sending 'quit_and_redirect $quit_and_redirect_to' to '$server_name'..."
+            tmux send -t $tmux_session:$tmux_window "quit_and_redirect ${quit_and_redirect_to};" C-m
+            if [[ -n $quit_and_redirect_now ]]; then
+            tmux send -t $tmux_session:$tmux_window "endmatch;" C-m
+            fi
         else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
             echo >&2 -e "        You have to fix this on your own."
+            # delete the entry from field
+            unset server_names[$counter]
         fi
+    else
+        echo >&2 -e "$print_error Server '$server_name' is not running, cannot stop."
+        # delete the entry from field
+        unset server_names[$counter]
     fi
-done        
-} # end of server_stop_all()
+    counter=$[$counter+1] # ((counter++))
+done
+# get the new field of server names
+server_names=( $(echo ${server_names[@]}) )
+sleep 0.5
+counter=0
+while [ $counter -lt ${#server_names[@]} ]; do
+	server_config_check_and_set ${server_names[$counter]}
+		if ! pgrep_server &>/dev/null; then
+			tmux send -t $tmux_session:$tmux_window "exit" C-m
+			echo -e "       Server '$server_name' has been stopped."
+			unset server_names[$counter]
+			server_names=( $(echo ${server_names[@]}) )
+		else
+			counter=$[$counter+1]
+			if [[ $counter -gt ${#server_names[@]} ]]; then
+				counter=0
+			fi
+		fi
+	sleep 2
+done
+} # end of server_restart_redirect
+
+function server_restart_empty() {
+server_names=( $@ )
+counter=0
+while [ $counter -lt ${#server_names[@]} ]; do
+server_config_check_and_set ${server_names[$counter]}
+    if pgrep_server &>/dev/null; then
+        if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
+            echo -e "$print_info Sending 'quit_when empty 1' to '$server_name'..."
+            tmux send -t $tmux_session:$tmux_window "quit_when_empty 1;" C-m
+            if [[ -n $quit_and_redirect_now ]]; then
+            tmux send -t $tmux_session:$tmux_window "endmatch;" C-m
+            fi
+        else
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+            echo >&2 -e "        You have to fix this on your own."
+            # delete the entry from field
+            unset server_names[$counter]
+        fi
+    else
+        echo >&2 -e "$print_error Server '$server_name' is not running, cannot stop."
+        # delete the entry from field
+        unset server_names[$counter]
+    fi
+    counter=$[$counter+1] # ((counter++))
+done
+# get the new field of server names
+server_names=( $(echo ${server_names[@]}) )
+sleep 0.5
+counter=0
+while [ $counter -lt ${#server_names[@]} ]; do
+	server_config_check_and_set ${server_names[$counter]}
+		if ! pgrep_server &>/dev/null; then
+			tmux send -t $tmux_session:$tmux_window "exit" C-m
+			echo -e "       Server '$server_name' has been stopped."
+			unset server_names[$counter]
+			server_names=( $(echo ${server_names[@]}) )
+		else
+			counter=$[$counter+1]
+			if [[ $counter -gt ${#server_names[@]} ]]; then
+				counter=0
+			fi
+		fi
+	sleep 2
+done
+} # end of server_restart_empty
 
 # restart one or more servers
 function server_restart_specific() {
-server_first_config_check $1
-# version check not needed to restart servers ...
-if [[ $1 == -c ]]; then
-    send_countdown_=true
-    shift
+while getopts ":cq:ne" options; do
+    case $options in
+        c) send_countdown_=true;;
+        q) quit_and_redirect=true; quit_and_redirect_to="$OPTARG";;
+        n) quit_and_redirect_now=true;;
+        e) quit_when_empty=true;;
+    esac
+done
+shift $((OPTIND-1))
+if [[ -n $send_countdown_ && -n $quit_and_redirect ]]; then
+	echo >&2 "$print_error You cannot use -c and -q option."
+	exit 1
+elif [[ -n $send_countdown_ && -n $quit_when_empty ]]; then
+	echo >&2 "$print_error You cannot use -c and -e option."
+	exit 1
+elif [[ -n $quit_and_redirect && -n $quit_when_empty ]]; then
+	echo >&2 "$print_error You cannot use -q and -e option."
+	exit 1
 fi
-if [[ "$send_countdown_" == "true" ]]; then
+if [[ -n $send_countdown_ ]]; then
     message_[0]='Server will restart in 10min.'
     message_timer_[0]=300
     message_[1]='Server will restart in 5min.'
@@ -420,54 +721,49 @@ if [[ "$send_countdown_" == "true" ]]; then
     message_timer_[2]=55
     message_[3]='Server will restart now.'
     message_timer_[3]=5
-    send_countdown defined_servers $@
+    send_notice defined_servers $@
+    server_restart defined_servers $@
+elif [[ -n $quit_and_redirect && -z $quit_and_redirect_to ]]; then
+	echo >&2 -e "$print_error Please define the server to redirect to."
+	exit 1
+elif [[ -n $quit_and_redirect ]]; then
+	send_notice defined_servers $@
+	server_restart_redirect defined_servers $@
+elif [[ -n $quit_when_empty ]]; then
+	server_restart_empty defined_servers $@
+else
+	server_restart defined_servers $@
 fi
-for var in $@; do
-server_config_check_and_set $var
-    # we can only restart a server if server is running and tmux window exists
-    if pgrep_server &>/dev/null; then
-        if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
-            echo -e "$print_info Restarting server '$server_name'..."
-            tmux send -t $tmux_session:$tmux_window "quit_and_redirect self; endmatch" C-m
-            sleep 1
-			while pgrep_server &>/dev/null; do
-			sleep 1
-			done 
-            if [[ "$logs_date" == "true" ]]; then
-                tmux send -t $tmux_session:$tmux_window 'last_command="!!"' C-m
-                tmux send -t $tmux_session:$tmux_window "log_dp_argument=\"$log_dp_argument\"" C-m
-                tmux send -t $tmux_session:$tmux_window 'eval $(echo "$last_command" | awk -F"+set log_file" -v log_dp_argument="$log_dp_argument" "{print \$1 log_dp_argument}")' C-m
-            else
-                tmux send -t $tmux_session:$tmux_window '!!' C-m
-            fi
-            echo -e "       Server '$server_name' has been restarted."
-        else
-            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
-            echo >&2 -e "        You have to fix this on your own."
-        fi
-    else
-    echo >&2 -e "$print_error Server '$server_name' is not running, cannot restart."
-    fi
-done
 } # end of server_restart_specific()
 
 # function to restart all servers
 function server_restart_all() {
-# define function to spot running servers 
-while getopts ":crg" options; do
+while getopts ":rgcq:ne" options; do
     case $options in
-        c) send_countdown_=true ;;
-        r) grep_release=true ;;
-        g) grep_git=true ;; 
+        r) grep_release=true;;
+        c) send_countdown_=true;;
+        q) quit_and_redirect=true; quit_and_redirect_to="$OPTARG";;
+        n) quit_and_redirect_now=true;;
+        e) quit_when_empty=true;;
     esac
 done
-# overwrite command if release or git only 
+shift $((OPTIND-1))
+if [[ -n $send_countdown_ && -n $quit_and_redirect ]]; then
+	echo >&2 "$print_error You cannot use -c and -q option."
+	exit 1
+elif [[ -n $send_countdown_ && -n $quit_when_empty ]]; then
+	echo >&2 "$print_error You cannot use -c and -e option."
+	exit 1
+elif [[ -n $quit_and_redirect && -n $quit_when_empty ]]; then
+	echo >&2 "$print_error You cannot use -q and -e option."
+	exit 1
+fi
 if [[ $grep_release == true && $grep_git != true ]]; then
     pgrep_suffix=_release
 elif [[ $grep_release != true && $grep_git == true ]]; then
     pgrep_suffix=_git
 fi
-if [[ "$send_countdown_" == "true" ]]; then
+if [[ -n $send_countdown_ ]]; then
     message_[0]='Server will restart in 10min.'
     message_timer_[0]=300
     message_[1]='Server will restart in 5min.'
@@ -476,37 +772,84 @@ if [[ "$send_countdown_" == "true" ]]; then
     message_timer_[2]=55
     message_[3]='Server will restart now.'
     message_timer_[3]=5
-    send_countdown all_servers
+    send_notice all_servers
+    server_restart all_servers
+elif [[ -n $quit_and_redirect && -z $quit_and_redirect_to ]]; then
+	echo >&2 -e "$print_error Please define the server to redirect to."
+	exit 1
+elif [[ -n $quit_and_redirect ]]; then
+	send_notice all_servers
+	server_restart_redirect all_servers
+elif [[ -n $quit_when_empty ]]; then
+	server_restart_empty all_servers
+else
+	server_restart all_servers
 fi
-# we can only restart running servers and only those which are in our tmux session
-for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
-    server_config_check_and_set $(basename ${cfg%.cfg})
-    if pgrep_server$pgrep_suffix &>/dev/null; then
-        if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
-            echo -e "$print_info Restarting server '$server_name'..."
-            tmux send -t $tmux_session:$tmux_window "quit_and_redirect self; endmatch" C-m
-            sleep 1
-			while pgrep_server &>/dev/null; do
-			sleep 1
-			done 
-            if [[ "$logs_date" == "true" ]]; then
-                tmux send -t $tmux_session:$tmux_window 'last_command="!!"' C-m
-                tmux send -t $tmux_session:$tmux_window "log_dp_argument=\"$log_dp_argument\"" C-m
-                tmux send -t $tmux_session:$tmux_window 'eval $(echo "$last_command" | awk -F"+set log_file" -v log_dp_argument="$log_dp_argument" "{print \$1 log_dp_argument}")' C-m
-            else
-                tmux send -t $tmux_session:$tmux_window '!!' C-m
-            fi
-            echo -e "       Server '$server_name' has been restarted."
-        else
-            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
-            echo >&2 -e "        You have to fix this on your own."
-        fi
-    fi
-done        
 } # end of server_restart_all()
 
-function send_countdown() {
-send_countdown_to=
+function send_notice() {
+send_notice_to=
+case $1 in
+    specific_servers)
+        shift
+        for server_name in $@; do
+            server_config_check_and_set $server_name
+            if pgrep_server &>/dev/null; then
+                if [[ $(tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window ") ]]; then
+                    send_notice_to="$send_notice_to $tmux_window"
+                fi
+            fi
+        done;;
+    all_servers) 
+        for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
+        server_config_check_and_set $(basename ${cfg%.cfg})
+        # search for servers and save them in a field
+        if pgrep_server$pgrep_suffix &>/dev/null; then
+            if [[ $(tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window ") ]]; then
+                send_notice_to="$send_notice_to $tmux_window"
+            fi
+        fi
+        done;;
+
+esac
+if [[ -n $notice_countdown ]]; then
+	# send countdown to servers
+	counter=0
+	while [ "$counter" -lt "${#message_[@]}" ]; do
+		echo "Sending: ${message_[$counter]}"
+		for tmux_window in ${send_notice_to}; do
+			tmux send -t $tmux_session:$tmux_window "
+			set sv_adminnick_bak \"\${sv_adminnick}\";
+			set sv_adminnick \"^1Server System^3\";
+			say ${message_[$counter]};
+			wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
+		done
+		sleep ${message_timer_[$counter]}
+		counter=$[$counter+1]
+	done
+elif [[ -n $notice_redirect && $notice_redirect_to == "self" ]]; then
+	for tmux_window in ${send_notice_to}; do
+		tmux send -t $tmux_session:$tmux_window "
+		set sv_adminnick_bak \"\${sv_adminnick}\";
+		set sv_adminnick \"^1Server System^3\";
+		say Server will restart at endmatch;
+		say You will reconnect automatically; 
+		wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
+	done
+elif [[ -n $notice_redirect && -n $notice_redirect_to ]]; then
+	for tmux_window in ${send_notice_to}; do
+		tmux send -t $tmux_session:$tmux_window "
+		set sv_adminnick_bak \"\${sv_adminnick}\";
+		set sv_adminnick \"^1Server System^3\";
+		say Server will restart at endmatch;
+		say You will be redirected to another server; 
+		wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
+	done
+fi
+} # end of send_notice()
+
+function send_redirect_notice() {
+send_redirect_notice_to=
 case $1 in
     all_servers) 
         for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
@@ -514,7 +857,7 @@ case $1 in
         # search for servers and save them in a field
         if pgrep_server$pgrep_suffix &>/dev/null; then
             if [[ $(tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window ") ]]; then
-                send_countdown_to="$send_countdown_to $tmux_window"
+                send_redirect_notice_to="$send_redirect_notice_to $tmux_window"
             fi
         fi
         done
@@ -525,27 +868,21 @@ case $1 in
             server_config_check_and_set $server_name
             if pgrep_server &>/dev/null; then
                 if [[ $(tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window ") ]]; then
-                    send_countdown_to="$send_countdown_to $tmux_window"
+                    send_redirect_notice_to="$send_redirect_notice_to $tmux_window"
                 fi
             fi
         done
-            ;;
+        ;;
 esac
-# send countdown to servers
-counter=0
-while [ "$counter" -lt "${#message_[@]}" ]; do
-    echo "Sending: ${message_[$counter]}"
-    for server in ${send_countdown_to}; do
-        tmux send -t $tmux_session:$server "
-        set sv_adminnick_bak \"\${sv_adminnick}\";
-        set sv_adminnick \"^1Server System^3\";
-        say ${message_[$counter]};
-        wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
-    done
-    sleep ${message_timer_[$counter]}
-    counter=$[$counter+1]
+# send redirect notice to servers
+for server in ${send_redirect_notice_to}; do
+    tmux send -t $tmux_session:$server "
+    set sv_adminnick_bak \"\${sv_adminnick}\";
+    set sv_adminnick \"^1Server System^3\";
+    say Server will restart at endmatch. $redirect_server_notice;
+    wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
 done
-} # end of send_countdown()
+} # end of send_redirect_notice()
 
 function server_update_git() {
 # git version...
@@ -577,7 +914,7 @@ if [[ "$2" == "-c" ]]; then
     message_[3]='Server will be updated now: Server restarts in a few.'
     message_timer_[3]=5
     # all_servers is all git servers - due the defined suffix
-    send_countdown all_servers
+    send_notice all_servers
 fi
 # close all servers
 # lock xstools, when update started 
@@ -737,10 +1074,10 @@ echo -e "       'rescan_pending 1' has been sent to server..."
 for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     server_config=${cfg##*/}
     if pgrep_server &>/dev/null; then
-		server_config_check_and_set ${server_config%.cfg}
+        server_config_check_and_set ${server_config%.cfg}
         if [[ $(tmux list-windows -t $tmux_session| grep -E "$tmux_window " 2>/dev/null) ]]; then
             tmux send -t $tmux_session:$tmux_window "rescan_pending 1" C-m
-            echo -e "       - '$server_name'"
+            echo -e "       - $server_name"
         else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
             echo >&2 -e "        You have to fix this on your own."
@@ -872,7 +1209,7 @@ log_date=$(date +"%Y%m%d")
 for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     server_config=${cfg##*/}
     if pgrep_server &>/dev/null; then
-		server_config_check_and_set ${server_config%.cfg}
+        server_config_check_and_set ${server_config%.cfg}
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             log_format="logs/$server_name.$log_date.log"
             tmux send -t $tmux_session:$tmux_window "log_file \"$log_format\"" C-m
