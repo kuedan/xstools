@@ -812,7 +812,7 @@ case $1 in
         done;;
 
 esac
-if [[ -n $notice_countdown ]]; then
+if [[ -n $send_countdown_ ]]; then
 	# send countdown to servers
 	counter=0
 	while [ "$counter" -lt "${#message_[@]}" ]; do
