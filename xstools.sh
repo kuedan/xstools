@@ -453,10 +453,11 @@ done
 
 # stop one or more servers
 function server_stop_specific() {
-while getopts ":cq:ne" options; do
+while getopts ":cqs:ne" options; do
     case $options in
         c) send_countdown_=true;;
-        q) quit_and_redirect=true; quit_and_redirect_to="$OPTARG";;
+        q) quit_and_redirect=true;;
+        s) quit_and_redirect_to="$OPTARG";;
         n) quit_and_redirect_now=true;;
         e) quit_when_empty=true;;
     esac
@@ -498,11 +499,12 @@ fi
 
 # function to stop all servers
 function server_stop_all() {
-while getopts ":rgcq:ne" options; do
+while getopts ":rgcqs:ne" options; do
     case $options in
         r) grep_release=true;;
         c) send_countdown_=true;;
-        q) quit_and_redirect=true; quit_and_redirect_to="$OPTARG";;
+        q) quit_and_redirect=true;;
+        s) quit_and_redirect_to="$OPTARG";;
         n) quit_and_redirect_now=true;;
         e) quit_when_empty=true;;
     esac
