@@ -645,71 +645,19 @@ while [ $counter -lt ${#server_names[@]} ]; do
 done
 } # end of server_restart_redirect
 
-function server_restart_empty() {
-server_names=( $@ )
-counter=0
-while [ $counter -lt ${#server_names[@]} ]; do
-server_config_check_and_set ${server_names[$counter]}
-    if pgrep_server &>/dev/null; then
-        if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
-            echo -e "$print_info Sending 'quit_when empty 1' to '$server_name'..."
-            tmux send -t $tmux_session:$tmux_window "quit_when_empty 1;" C-m
-            if [[ -n $quit_and_redirect_now ]]; then
-            tmux send -t $tmux_session:$tmux_window "endmatch;" C-m
-            fi
-        else
-            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
-            echo >&2 -e "        You have to fix this on your own."
-            # delete the entry from field
-            unset server_names[$counter]
-        fi
-    else
-        echo >&2 -e "$print_error Server '$server_name' is not running, cannot stop."
-        # delete the entry from field
-        unset server_names[$counter]
-    fi
-    counter=$[$counter+1] # ((counter++))
-done
-# get the new field of server names
-server_names=( $(echo ${server_names[@]}) )
-sleep 0.5
-counter=0
-while [ $counter -lt ${#server_names[@]} ]; do
-	server_config_check_and_set ${server_names[$counter]}
-		if ! pgrep_server &>/dev/null; then
-			tmux send -t $tmux_session:$tmux_window "exit" C-m
-			echo -e "       Server '$server_name' has been stopped."
-			unset server_names[$counter]
-			server_names=( $(echo ${server_names[@]}) )
-		else
-			counter=$[$counter+1]
-			if [[ $counter -gt ${#server_names[@]} ]]; then
-				counter=0
-			fi
-		fi
-	sleep 2
-done
-} # end of server_restart_empty
-
 # restart one or more servers
 function server_restart_specific() {
-while getopts ":cq:ne" options; do
+while getopts ":cqs:n" options; do
     case $options in
         c) send_countdown_=true;;
-        q) quit_and_redirect=true; quit_and_redirect_to="$OPTARG";;
-        n) quit_and_redirect_now=true;;
-        e) quit_when_empty=true;;
+        q) restart_and_redirect=true;;
+        s) restart_and_redirect_to="$OPTARG";;
+        n) restart_and_redirect_now=true;;
     esac
 done
 shift $((OPTIND-1))
-if [[ -n $send_countdown_ && -n $quit_and_redirect ]]; then
+if [[ -n $send_countdown_ && -n $restart_and_redirect ]]; then
 	echo >&2 "$print_error You cannot use -c and -q option."
-	exit 1
-elif [[ -n $send_countdown_ && -n $quit_when_empty ]]; then
-	echo >&2 "$print_error You cannot use -c and -e option."
-	exit 1
-elif [[ -n $quit_and_redirect && -n $quit_when_empty ]]; then
-	echo >&2 "$print_error You cannot use -q and -e option."
 	exit 1
 fi
 if [[ -n $send_countdown_ ]]; then
@@ -723,14 +671,12 @@ if [[ -n $send_countdown_ ]]; then
     message_timer_[3]=5
     send_notice defined_servers $@
     server_restart defined_servers $@
-elif [[ -n $quit_and_redirect && -z $quit_and_redirect_to ]]; then
+elif [[ -n $restart_and_redirect && -z $restart_and_redirect_to ]]; then
 	echo >&2 -e "$print_error Please define the server to redirect to."
 	exit 1
-elif [[ -n $quit_and_redirect ]]; then
+elif [[ -n $restart_and_redirect ]]; then
 	send_notice defined_servers $@
 	server_restart_redirect defined_servers $@
-elif [[ -n $quit_when_empty ]]; then
-	server_restart_empty defined_servers $@
 else
 	server_restart defined_servers $@
 fi
@@ -738,24 +684,18 @@ fi
 
 # function to restart all servers
 function server_restart_all() {
-while getopts ":rgcq:ne" options; do
+while getopts ":rgcqs:n" options; do
     case $options in
         r) grep_release=true;;
         c) send_countdown_=true;;
-        q) quit_and_redirect=true; quit_and_redirect_to="$OPTARG";;
-        n) quit_and_redirect_now=true;;
-        e) quit_when_empty=true;;
+        q) restart_and_redirect=true;;
+        s) restart_and_redirect_to="$OPTARG";;
+        n) restart_and_redirect_now=true;;
     esac
 done
 shift $((OPTIND-1))
-if [[ -n $send_countdown_ && -n $quit_and_redirect ]]; then
+if [[ -n $send_countdown_ && -n $restart_and_redirect ]]; then
 	echo >&2 "$print_error You cannot use -c and -q option."
-	exit 1
-elif [[ -n $send_countdown_ && -n $quit_when_empty ]]; then
-	echo >&2 "$print_error You cannot use -c and -e option."
-	exit 1
-elif [[ -n $quit_and_redirect && -n $quit_when_empty ]]; then
-	echo >&2 "$print_error You cannot use -q and -e option."
 	exit 1
 fi
 if [[ $grep_release == true && $grep_git != true ]]; then
@@ -774,14 +714,12 @@ if [[ -n $send_countdown_ ]]; then
     message_timer_[3]=5
     send_notice all_servers
     server_restart all_servers
-elif [[ -n $quit_and_redirect && -z $quit_and_redirect_to ]]; then
+elif [[ -n $restart_and_redirect && -z $restart_and_redirect_to ]]; then
 	echo >&2 -e "$print_error Please define the server to redirect to."
 	exit 1
-elif [[ -n $quit_and_redirect ]]; then
+elif [[ -n $restart_and_redirect ]]; then
 	send_notice all_servers
 	server_restart_redirect all_servers
-elif [[ -n $quit_when_empty ]]; then
-	server_restart_empty all_servers
 else
 	server_restart all_servers
 fi
