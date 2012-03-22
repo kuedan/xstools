@@ -250,7 +250,12 @@ for var in $@; do
     # option 2: server is not running, tmux session does not exist
     # -> start a new tmux session with new window and start server
     if [[ ! $(tmux list-sessions 2>/dev/null| grep "$tmux_session:" ) ]]; then
-        tmux new-session -d -n $tmux_window -s $tmux_session
+        if [[ -f $HOME/.tmux.conf ]]; then
+            TMUX=`which tmux`
+        else
+            TMUX="`which tmux` -f $xstool_dir/conf/.tmux.conf"
+        fi
+        $TMUX new-session -d -n $tmux_window -s $tmux_session
         tmux send -t $tmux_session:$tmux_window "$server_command $dp_default_arguments +set serverconfig $server_config $log_dp_argument" C-m 
         echo -e "$print_info Server '$server_name' has been started."
     # option 3: server is not running; tmux session exists, and window already exists
@@ -1524,7 +1529,12 @@ rcon2irc_config_check_and_set $var
     # option 2: rcon2irc is not running, tmux session does not exist
     # in this case: start a new tmux session, with new window and start rcon2irc
     if [[ ! $(tmux list-sessions 2>/dev/null| grep "$tmux_session:" ) ]]; then
-        tmux new-session -d -n $tmux_window -s $tmux_session
+        if [[ -f $HOME/.tmux.conf ]]; then
+            TMUX=`which tmux`
+        else
+            TMUX="`which tmux` -f $xstool_dir/conf/.tmux.conf"
+        fi
+        $TMUX new-session -d -n $tmux_window -s $tmux_session
         tmux send -t $tmux_session:$tmux_window "cd $rcon2irc_config_folder && perl $rcon2irc_script $rcon2irc_config" C-m 
         rcon2irc_check_start 
     # option 3: rcon2irc is not running; tmux session exists, and window already exists
