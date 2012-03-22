@@ -606,16 +606,18 @@ esac
 } # end of server_restart
 
 function server_restart_redirect() {
+shift
 server_names=( $@ )
 counter=0
 while [ $counter -lt ${#server_names[@]} ]; do
 server_config_check_and_set ${server_names[$counter]}
+echo DEBUG: $?
     if pgrep_server &>/dev/null; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
-            echo -e "$print_info Sending 'quit_and_redirect $quit_and_redirect_to' to '$server_name'..."
-            tmux send -t $tmux_session:$tmux_window "quit_and_redirect ${quit_and_redirect_to};" C-m
-            if [[ -n $quit_and_redirect_now ]]; then
-            tmux send -t $tmux_session:$tmux_window "endmatch;" C-m
+            echo -e "$print_info Sending 'quit_and_redirect $restart_and_redirect_to' to '$server_name'..."
+            tmux send -t $tmux_session:$tmux_window "quit_and_redirect ${restart_and_redirect_to}" C-m
+            if [[ -n $restart_and_redirect_now ]]; then
+            tmux send -t $tmux_session:$tmux_window "endmatch" C-m
             fi
         else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
@@ -636,15 +638,25 @@ sleep 0.5
 counter=0
 while [ $counter -lt ${#server_names[@]} ]; do
     server_config_check_and_set ${server_names[$counter]}
+echo DEBUG 0 $server_names
         if ! pgrep_server &>/dev/null; then
-            tmux send -t $tmux_session:$tmux_window "exit" C-m
-            echo -e "       Server '$server_name' has been stopped."
+            if [[ "$logs_date" == "true" ]]; then
+                tmux send -t $tmux_session:$tmux_window 'last_command="!!"' C-m
+                tmux send -t $tmux_session:$tmux_window "log_dp_argument=\"$log_dp_argument\"" C-m
+                tmux send -t $tmux_session:$tmux_window 'eval $(echo "$last_command" | awk -F"+set log_file" -v log_dp_argument="$log_dp_argument" "{print \$1 log_dp_argument}")' C-m
+            else
+                tmux send -t $tmux_session:$tmux_window '!!' C-m
+            fi
+            echo -e "       Server '$server_name' has been restarted."
             unset server_names[$counter]
             server_names=( $(echo ${server_names[@]}) )
+echo DEBUG 1 $server_names
         else
             counter=$[$counter+1]
-            if [[ $counter -gt ${#server_names[@]} ]]; then
+echo DEBUG 2 $server_names
+            if [[ $counter -eq ${#server_names[@]} ]]; then
                 counter=0
+echo DEBUG 3 counter set to 0
             fi
         fi
     sleep 2
@@ -657,7 +669,7 @@ while getopts ":cqs:n" options; do
     case $options in
         c) send_countdown_=true;;
         q) restart_and_redirect=true;;
-        s) restart_and_redirect_to="$OPTARG";;
+        s) restart_and_redirect_custom=true; restart_and_redirect_to="$OPTARG";;
         n) restart_and_redirect_now=true;;
     esac
 done
@@ -665,6 +677,11 @@ shift $((OPTIND-1))
 if [[ -n $send_countdown_ && -n $restart_and_redirect ]]; then
     echo >&2 "$print_error You cannot use -c and -q option."
     exit 1
+fi
+if [[ -z $restart_and_redirect_custom ]]; then
+echo DEBUG: SET restart_and_redirect_to=self
+    restart_and_redirect_to=self
+
 fi
 if [[ -n $send_countdown_ ]]; then
     message_[0]='Server will restart in 10min.'
@@ -678,6 +695,7 @@ if [[ -n $send_countdown_ ]]; then
     send_notice defined_servers $@
     server_restart defined_servers $@
 elif [[ -n $restart_and_redirect && -z $restart_and_redirect_to ]]; then
+    #TODO: server cvar has to be checked... HOSTNAME or ip + port
     echo >&2 -e "$print_error Please define the server to redirect to."
     exit 1
 elif [[ -n $restart_and_redirect ]]; then
@@ -695,7 +713,7 @@ while getopts ":rgcqs:n" options; do
         r) grep_release=true;;
         c) send_countdown_=true;;
         q) restart_and_redirect=true;;
-        s) restart_and_redirect_to="$OPTARG";;
+        s) restart_and_redirect_custom=true; restart_and_redirect_to="$OPTARG";;
         n) restart_and_redirect_now=true;;
     esac
 done
@@ -703,6 +721,11 @@ shift $((OPTIND-1))
 if [[ -n $send_countdown_ && -n $restart_and_redirect ]]; then
     echo >&2 "$print_error You cannot use -c and -q option."
     exit 1
+fi
+if [[ -z $restart_and_redirect_custom ]]; then
+echo DEBUG: SET restart_and_redirect_to=self
+    restart_and_redirect_to=self
+
 fi
 if [[ $grep_release == true && $grep_git != true ]]; then
     pgrep_suffix=_release
@@ -721,6 +744,7 @@ if [[ -n $send_countdown_ ]]; then
     send_notice all_servers
     server_restart all_servers
 elif [[ -n $restart_and_redirect && -z $restart_and_redirect_to ]]; then
+    #TODO: server cvar has to be checked... HOSTNAME or ip + port
     echo >&2 -e "$print_error Please define the server to redirect to."
     exit 1
 elif [[ -n $restart_and_redirect ]]; then
