@@ -612,8 +612,21 @@ esac
 } # end of server_restart
 
 function server_restart_redirect() {
-shift
-server_names=( $@ )
+case $1 in
+    defined_servers)
+        shift
+        server_names=( $@ );;
+    all_servers)
+        all_servers=
+        for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
+            server_config_check_and_set $(basename ${cfg%.cfg})
+            if pgrep_server$pgrep_suffix &>/dev/null; then
+                all_servers="$all_servers $server_name"
+            fi
+        done
+        server_names=( $all_servers );;
+esac
+
 counter=0
 while [ $counter -lt ${#server_names[@]} ]; do
 server_config_check_and_set ${server_names[$counter]}
@@ -692,7 +705,7 @@ while getopts ":cqs:n" options; do
         c) send_countdown_=true;;
         q) restart_and_redirect=true;;
         s) restart_and_redirect_custom=true; restart_and_redirect_to="$OPTARG";;
-        n) restart_and_redirect_now=true;;
+        n) restart_and_redirect_now=true; restart_and_redirect=true;;
     esac
 done
 shift $((OPTIND-1))
@@ -739,7 +752,7 @@ while getopts ":rgcqs:n" options; do
         c) send_countdown_=true;;
         q) restart_and_redirect=true;;
         s) restart_and_redirect_custom=true; restart_and_redirect_to="$OPTARG";;
-        n) restart_and_redirect_now=true;;
+        n) restart_and_redirect_now=true; restart_and_redirect=true;;
     esac
 done
 shift $((OPTIND-1))
@@ -783,7 +796,7 @@ fi
 function send_notice() {
 send_notice_to=
 case $1 in
-    specific_servers)
+    defined_servers)
         shift
         for server_name in $@; do
             server_config_check_and_set $server_name
@@ -820,7 +833,25 @@ if [[ -n $send_countdown_ ]]; then
         sleep ${message_timer_[$counter]}
         counter=$[$counter+1]
     done
-elif [[ -n $notice_redirect && $notice_redirect_to == "self" ]]; then
+elif [[ -n $restart_and_redirect_now && $restart_and_redirect_to == "self" ]]; then
+    for tmux_window in ${send_notice_to}; do
+        tmux send -t $tmux_session:$tmux_window "
+        set sv_adminnick_bak \"\${sv_adminnick}\";
+        set sv_adminnick \"^1Server System^3\";
+        say Server will restart now;
+        say You will reconnect automatically; 
+        wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
+    done
+elif [[ -n $restart_and_redirect_now && -n $restart_and_redirect_to ]]; then
+    for tmux_window in ${send_notice_to}; do
+        tmux send -t $tmux_session:$tmux_window "
+        set sv_adminnick_bak \"\${sv_adminnick}\";
+        set sv_adminnick \"^1Server System^3\";
+        say Server will restart now;
+        say You will be redirected to another server; 
+        wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
+    done
+elif [[ -n $restart_and_redirect && $restart_and_redirect_to == "self" ]]; then
     for tmux_window in ${send_notice_to}; do
         tmux send -t $tmux_session:$tmux_window "
         set sv_adminnick_bak \"\${sv_adminnick}\";
@@ -829,7 +860,7 @@ elif [[ -n $notice_redirect && $notice_redirect_to == "self" ]]; then
         say You will reconnect automatically; 
         wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
     done
-elif [[ -n $notice_redirect && -n $notice_redirect_to ]]; then
+elif [[ -n $restart_and_redirect && -n $restart_and_redirect_to ]]; then
     for tmux_window in ${send_notice_to}; do
         tmux send -t $tmux_session:$tmux_window "
         set sv_adminnick_bak \"\${sv_adminnick}\";
@@ -840,42 +871,6 @@ elif [[ -n $notice_redirect && -n $notice_redirect_to ]]; then
     done
 fi
 } # end of send_notice()
-
-function send_redirect_notice() {
-send_redirect_notice_to=
-case $1 in
-    all_servers) 
-        for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
-        server_config_check_and_set $(basename ${cfg%.cfg})
-        # search for servers and save them in a field
-        if pgrep_server$pgrep_suffix &>/dev/null; then
-            if [[ $(tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window ") ]]; then
-                send_redirect_notice_to="$send_redirect_notice_to $tmux_window"
-            fi
-        fi
-        done
-        ;;
-    defined_servers)
-        shift
-        for server_name in $@; do
-            server_config_check_and_set $server_name
-            if pgrep_server &>/dev/null; then
-                if [[ $(tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window ") ]]; then
-                    send_redirect_notice_to="$send_redirect_notice_to $tmux_window"
-                fi
-            fi
-        done
-        ;;
-esac
-# send redirect notice to servers
-for server in ${send_redirect_notice_to}; do
-    tmux send -t $tmux_session:$server "
-    set sv_adminnick_bak \"\${sv_adminnick}\";
-    set sv_adminnick \"^1Server System^3\";
-    say Server will restart at endmatch. $redirect_server_notice;
-    wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
-done
-} # end of send_redirect_notice()
 
 function server_update_git() {
 # git version...
