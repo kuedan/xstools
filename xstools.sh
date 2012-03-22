@@ -485,9 +485,10 @@ if [[ -n $send_countdown_ ]]; then
     message_timer_[3]=5
     send_notice defined_servers $@
     server_stop defined_servers $@
-elif [[ -n $quit_and_redirect && -z $quit_and_redirect_to ]]; then
-    echo >&2 -e "$print_error Please define the server to redirect to."
-    exit 1
+#elif [[ -n $quit_and_redirect && -z $quit_and_redirect_to ]]; then
+#    #TODO: server cvar has to be checked... HOSTNAME or ip + port
+#    echo >&2 -e "$print_error Please define the server to redirect to."
+#    exit 1
 elif [[ -n $quit_and_redirect ]]; then
     send_notice defined_servers $@
     server_stop_redirect defined_servers $@
@@ -537,9 +538,10 @@ if [[ -n $send_countdown_ ]]; then
     message_timer_[3]=5
     send_notice all_servers $@
     server_stop all_servers $@
-elif [[ -n $quit_and_redirect && -z $quit_and_redirect_to ]]; then
-    echo >&2 -e "$print_error Please define the server to redirect to."
-    exit 1
+#elif [[ -n $quit_and_redirect && -z $quit_and_redirect_to ]]; then
+#    #TODO: server cvar has to be checked... HOSTNAME or ip + port
+#    echo >&2 -e "$print_error Please define the server to redirect to."
+#    exit 1
 elif [[ -n $quit_and_redirect ]]; then
     send_notice all_servers $@
     server_stop_redirect all_servers $@
@@ -723,10 +725,10 @@ if [[ -n $send_countdown_ ]]; then
     message_timer_[3]=5
     send_notice defined_servers $@
     server_restart defined_servers $@
-elif [[ -n $restart_and_redirect && -z $restart_and_redirect_to ]]; then
-    #TODO: server cvar has to be checked... HOSTNAME or ip + port
-    echo >&2 -e "$print_error Please define the server to redirect to."
-    exit 1
+#elif [[ -n $restart_and_redirect && -z $restart_and_redirect_to ]]; then
+#    #TODO: server cvar has to be checked... HOSTNAME or ip + port
+#    echo >&2 -e "$print_error Please define the server to redirect to."
+#    exit 1
 elif [[ -n $restart_and_redirect ]]; then
     send_notice defined_servers $@
     server_restart_redirect defined_servers $@
@@ -772,10 +774,10 @@ if [[ -n $send_countdown_ ]]; then
     message_timer_[3]=5
     send_notice all_servers
     server_restart all_servers
-elif [[ -n $restart_and_redirect && -z $restart_and_redirect_to ]]; then
-    #TODO: server cvar has to be checked... HOSTNAME or ip + port
-    echo >&2 -e "$print_error Please define the server to redirect to."
-    exit 1
+#elif [[ -n $restart_and_redirect && -z $restart_and_redirect_to ]]; then
+#    #TODO: server cvar has to be checked... HOSTNAME or ip + port
+#    echo >&2 -e "$print_error Please define the server to redirect to."
+#    exit 1
 elif [[ -n $restart_and_redirect ]]; then
     send_notice all_servers
     server_restart_redirect all_servers
@@ -1531,9 +1533,8 @@ if [[ -f $userdir/configs/rcon2irc/$1.rcon2irc.conf  ]]; then
     tmux_window="rcon2irc-$rcon2irc_name"
     rcon2irc_config_folder="$userdir/configs/rcon2irc"
 else
-    echo >&2 -e "$print_error '$1.rcon2irc.conf' is not placed in 'configs/rcon2irc/'."
-    echo >&2 -e "        Please move the file into this folder."
-    continue
+    echo >&2 -e "$print_error No config file available for '$rcon2irc_name'"
+    exit 1
 fi
 } # end of rcon2irc_config_check_and_set()
 
@@ -1551,6 +1552,9 @@ fi
 
 function rcon2irc_start() {
 rcon2irc_first_config_check $1
+for rcon2irc_name in $@; do
+    rcon2irc_config_check_and_set $rcon2irc_name
+done
 for var in $@; do
 # check if $var exists and set our variables:
 rcon2irc_config_check_and_set $var
@@ -1596,6 +1600,9 @@ function rcon2irc_start_all() {
 
 function rcon2irc_stop() {
 rcon2irc_first_config_check $1
+for rcon2irc_name in $@; do
+    rcon2irc_config_check_and_set $rcon2irc_name
+done
 for var in $@; do
 rcon2irc_config_check_and_set $var
     if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep ) ]]; then
@@ -1639,6 +1646,9 @@ done
 
 function rcon2irc_restart() {
 rcon2irc_first_config_check $1
+for rcon2irc_name in $@; do
+    rcon2irc_config_check_and_set $rcon2irc_name
+done
 for var in $@; do
 rcon2irc_config_check_and_set $var
     # We can only restart a server if server is running and tmux session exists
