@@ -181,8 +181,7 @@ if [[ "$1" == "" ]]; then
 fi
 } # end server_first_config_check()
 
-# check given config, set session id and logfile
-# (function is used as part of for loop)
+# check given config, set logfile
 function server_config_check_and_set() {
 if [[ -f "$userdir/configs/servers/$1.cfg"  ]]; then
     server_name="$1"
@@ -228,18 +227,16 @@ for var in $@; do
         get_dp_default_arguments $server_name
     fi
     dp_default_arguments_bak="$dp_default_arguments"
-    # set sessionid if used
-    if [[ "$sessionid_per_config" == "true" ]]; then
-        if [[ $sessionid_warning == true && ! -f "$userdir/key_0.d0si.$server_name" ]]; then
-            echo -e "$print_attention Key key_0.d0si.$server_name does not exist."
-            read -p '            Do you want to go on? (y) ' answer_key
-            if [[ $answer_key != y ]]; then
-                echo >&2 '            Abort'
-                exit 1
-            fi
+    # set sessionid
+    if [[ $sessionid_warning == true && ! -f "$userdir/key_0.d0si.$server_name" ]]; then
+        echo -e "$print_attention Key key_0.d0si.$server_name does not exist."
+        read -p '            Do you want to go on? (y) ' answer_key
+        if [[ $answer_key != y ]]; then
+            echo >&2 '            Abort'
+            exit 1
         fi
-        dp_default_arguments="$dp_default_arguments -sessionid $server_name"
     fi
+    dp_default_arguments="$dp_default_arguments -sessionid $server_name"
     # option 1: server is already running
     # -> print error and continue with for loop
     if pgrep_server &>/dev/null; then
@@ -286,9 +283,6 @@ do
     case $opt in
         g) version_git_check_and_set && version_has_been_set=true;;
         r) version_release_check_and_set && version_has_been_set=true;;
-        i) ( [ $OPTARG == true ] || [ $OPTARG == false ] ) && sessionid_per_config="$OPTARG" ||\
-            { echo -e "$print_error Option -i needs 'true' or 'false' as argument." >&2
-            exit 1; };;
     esac
 done
 shift $((OPTIND-1))
@@ -310,9 +304,6 @@ do
     case $opt in
         g) version_git_check_and_set && version_has_been_set=true;;
         r) version_release_check_and_set && version_has_been_set=true;;
-        i) ( [ $OPTARG == true ] || [ $OPTARG == false ] ) && sessionid_per_config="$OPTARG" ||\
-            { echo -e "$print_error Option -i needs 'true' or 'false' as argument." >&2
-            exit 1; };;
     esac
 done
 shift $((OPTIND-1))
@@ -1733,21 +1724,14 @@ function xstools_help() {
 cat << EOF
 -- Commands --
 xstools
-    --install-git               - download xonotic git into basedir
+    --install-git                  - download xonotic git into basedir
 
-    --start-all <-rgi>           - start all servers
-    --start <-rgi> <server(s)>   - start servers
-    --stop-all <-c>              - stop all servers
-    --stop <-rgc> <server(s)>    - stop servers
-    --restart-all <-rgc>         - restart all servers
-    --restart <-rgc> <server(s)> - restart-servers
-
-     start-all/start/stop-all/restart-all support the options
-     -r or -g to specify release or git servers
-     start-all/start support the option -i to disable or enable a 
-     unique session id per config
-     stop-all/stop/restart-all/restart support the option -c to send a
-     countdown
+    --start-all <-rg>              - start all servers
+    --start <-rg> <server(s)>      - start servers
+    --stop-all <-ecqns>            - stop all servers
+    --stop <-rgecnqs> <server(s)>  - stop servers
+    --restart-all <-rgcqns>        - restart all servers
+    --restart <-cnqs> <server(s)>  - restart-servers
 
     --update-git                - update git and restart git servers
                                   use option '-c' to send countdown   
@@ -1770,7 +1754,7 @@ xstools
         diff-all                - show the difference of all mapinfo files
         fix                     - fix server console warnings by mapinfo files
         show                    - show mapinfo files of given pk3 package
-        
+
     --rcon2irc                  syntax: --rcon2irc command <bot(s)>
         start-all               - start all rcon2irc bots
         start <bot(s)>          - start rcon2irc bots
@@ -1787,30 +1771,30 @@ EOF
 
 function xstools_more_help() {
 cat << EOF
-Xonotic Server Tools is a collection of functions to manage many different
-servers by loading every single server in a seperate tmux window. You can 
+Xonotic Server Tools is a collection of functions to manage your Xonotic
+servers by loading every single server in a seperate tmux window. You can
 easily control those servers by their names. This script supports 'release'
 and 'git' servers.
 
 ----- Important Usage Notes
 
-Xonotic Server Tools recognize your server configuration files in 
-'configs/servers' by their file extension .cfg. The name of the server 
-is created by the file name without extension. 
-That is "config_file%\.cfg". The name of the tmux window has a 
-prefix "server-".
+Server configuration files in are recognized by the extension .cfg and
+must be placed in 'configs/servers'. The name of the server is created by
+the file name without extension. That is "config_file%\.cfg".
+The name of the tmux window has a prefix "server-".
 Example: Configuration file: my-server.cfg
-         Server name: my-server      Window name: my-server
-rcon2irc files are recogized by .rcon2irc.conf. The name of the rcon2irc bot 
-is created by the filename without extension, too. 
-That is "config_file%\.rcon2irc.conf". The name of the tmux window has a 
-prefix "rcon2irc-".
+         Server name: my-server      Window name: server-my-server
+rcon2irc configuration files  are recogized by the extension .rcon2irc.conf
+and must be placed in 'configs/rcon2irc'. The name of the rcon2irc bot is
+created by without extension. That is "config_file%\.rcon2irc.conf".
+The name of the tmux window has a prefix "rcon2irc-".
 Exampe: Congiguration file: my-bot.rcon.cfg
-        rcon2irc bot name: my-bot    Window name: rcon-my-bot
+        rcon2irc bot name: my-bot    Window name: rcon2irc-my-bot
+
 
 ----- Functions
 
---install-git           Download Xonotic Git and save it in the given 'basedir' 
+--install-git           Download Xonotic Git and save it in the given basedir
                         folder. Check xtools.conf to adjust this.
 
 --start-all             Start all servers whose configuration files are placed
@@ -1826,53 +1810,34 @@ Exampe: Congiguration file: my-bot.rcon.cfg
 
 --restart <server(s)>   Restart specific server(s).
 
---start-all/--start/--stop-all/--restart-all support -r and -g as option.
-If you use -r (-g) as option for --start-all or --start , xstools will start
-'release' ('git') servers. Otherwise default will be used (Check xstools.conf).
-Example: xstools --start -g server1 
-          (start server1 as git server)
-          xstools --start-all -r 
-          (start all servers, which are not running, as 'release' servers)
-If you use -r (-g) as option for --restart-all, xstools will 
-restart 'release' ('git') servers only.
-If you use -r (-g) as option for --stop-all, xstools will stop
-'release' ('git') servers only.
 
-start-all/start support the option -i to disable or enable a 
-unique session id per config. The argument of -i must be
-'true' to enable a session id per config, or 'false' to disable.
-
-stop-all/stop/restart-all/restart support -c as option to send a
-countdown of 15min before servers are stopped or restarted.
+-------------------------------------------------------------------------------
 
 --update-git            Update Xonotic git and restart all servers.
-
---update-git -c         Same as --update-all, but with a countdown of 15min
-                        This countdown will be sent to players as a message.
 
 --list                  List all running servers and bots.
 
 --list-configs          List all server and rcon2irc configuration files.
 
---view <server(s)>      Attach a tmux window and show server console of server(s).
+--view <server(s)>      Attach a tmux window and show server console of
+                        server(s).
 
---add-pk3 <url(s)>      Add .pk3 files to 'packages' from given urls and rescan 
+--add-pk3 <url(s)>      Add .pk3 files to 'packages' from given urls and rescan
                         for them at endmatch with every server.
 
---rescan                Rescan for new added packages at endmatch with every 
-                        server.
+--rescan                Rescan for new added packages at endmatch, every server
 
 --send-all <command>    Send a command to all servers and receive output.
 
 --send <server(s)>      Send a command to given servers and receive output.
-      -c <command>      The beginning of command is defined by -c.                  
-                        
+      -c <command>      The beginning of command is defined by -c.
+
 --logs set              Change the log file of all running servers to 
                         'serverconfig.date.log', where 'serverconfig' is the
                         server name  and 'date' is 'YearMonthDay'. 
 
 --logs del              Delete older log files in 'logs/' than given time in
-                        days.
+                        days. Check xstools.conf to adjust this.
 
 --maplist               Create a maplist for all gamtypes or use a regex.
                         Examples:
@@ -1881,26 +1846,27 @@ countdown of 15min before servers are stopped or restarted.
 
 --mapinfo               Syntax: --mapinfo command <pk3(s)>
                         command is one of the following options:
-        
+
         extract <pk3(s)>    Extract mapinfo files of given pk3 package(s)
                             to 'data/maps/'.
 
-        extract-all     Extract all mapinfo files of pk3 packages in 'packages/'
+        extract-all     Extract all mapinfo files of pk3 packages in 'packages'
                         and its subfolders to 'data/maps/'.
-    
+
         diff <pk3(s)>   Show difference between pk3 package mapinfo
                         and mapinfo file in 'data/maps/'.
 
         diff-all        Same as 'diff' but for all pk3 packages in 'packages' 
-                        and its subdirs. No output if comparing was not possible
+                       and its subdirs. No output if comparing was not possible
                         No output if mapinfo files are the same.
-    
+
         fix             Fix server console warnings by mapinfo files:
-                        Replace 'type' with 'gametype' and copy autogenerated
-                        mapinfo files to 'data/maps/'.
-    
-        show <pk3(s)>   Show mapinfo file of given pk3 package and mapinfo file 
-                        in 'data/maps/'
+                        Replace 'type' with 'gametype'
+                        Replace long gametype names with short ones
+                        and copy autogenerated mapinfo files to 'data/maps/'.
+
+        show <pk3(s)>   Show mapinfo file of given pk3 package and mapinfo file
+                        in 'data/maps/'.
 
 --rcon2irc              Syntax: --rcon2irc command <bot(s)>
                         command is one of the following options:
@@ -2013,7 +1979,7 @@ case $1 in
  -h|h)                               xstools_help;;
  "")                                 echo >&2 "xstools needs an argument, check -h or --help"; exit 1;;
  *)                                  echo >&2 "This is not a valid argument! Check -h or --help"; exit 1;;
-esac    
+esac
 # }}}
 
 # vim: foldmethod=marker:foldmarker={{{,}}}:foldlevel=0
