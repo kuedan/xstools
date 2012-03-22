@@ -200,8 +200,8 @@ if [[ -f "$userdir/configs/servers/$1.cfg"  ]]; then
         log_dp_argument=""
     fi
 else
-    echo >&2 -e "$print_error No config file available for '$1'"
-    continue
+    echo >&2 -e "$print_error No config file available for '$server_name'"
+    exit 1
 fi
 } # end of server_config_check_and_set()
 
@@ -278,6 +278,9 @@ done
 function server_start_specific() {
 server_first_config_check $1
 version_has_been_set=false
+for server_name in $@; do
+    server_config_check_and_set $server_name
+done
 while getopts ":rgi:" opt
 do
     case $opt in
@@ -477,6 +480,9 @@ elif [[ -n $quit_and_redirect && -n $quit_when_empty ]]; then
     echo >&2 "$print_error You cannot use -q and -e option."
     exit 1
 fi
+for server_name in $@; do
+    server_config_check_and_set $server_name
+done
 if [[ -n $send_countdown_ ]]; then
     message_[0]='Server will shutdown in 10min.'
     message_timer_[0]=300
@@ -619,7 +625,21 @@ echo DEBUG: $?
             if [[ -n $restart_and_redirect_now ]]; then
             tmux send -t $tmux_session:$tmux_window "endmatch" C-m
             fi
+    if [[ -n $restart_and_redirect_now ]]; then
+    echo DEBUG NOWWWWW
+    sleep 1
+        if [[ "$logs_date" == "true" ]]; then
+            echo DEBUG NOW 1
+            tmux send -t $tmux_session:$tmux_window 'last_command="!!"' C-m
+            tmux send -t $tmux_session:$tmux_window "log_dp_argument=\"$log_dp_argument\"" C-m
+            tmux send -t $tmux_session:$tmux_window 'eval $(echo "$last_command" | awk -F"+set log_file" -v log_dp_argument="$log_dp_argument" "{print \$1 log_dp_argument}")' C-m
         else
+            echo DEBUG NOW 2
+            tmux send -t $tmux_session:$tmux_window '!!' C-m
+        fi
+        echo -e "       Server '$server_name' has been restarted."
+    fi
+    else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
             echo >&2 -e "        You have to fix this on your own."
             # delete the entry from field
@@ -632,6 +652,7 @@ echo DEBUG: $?
     fi
     counter=$[$counter+1] # ((counter++))
 done
+if [[ -z $restart_and_redirect_now ]]; then
 # get the new field of server names
 server_names=( $(echo ${server_names[@]}) )
 sleep 0.5
@@ -661,6 +682,7 @@ echo DEBUG 3 counter set to 0
         fi
     sleep 2
 done
+fi
 } # end of server_restart_redirect
 
 # restart one or more servers
@@ -678,6 +700,9 @@ if [[ -n $send_countdown_ && -n $restart_and_redirect ]]; then
     echo >&2 "$print_error You cannot use -c and -q option."
     exit 1
 fi
+for server_name in $@; do
+    server_config_check_and_set $server_name
+done
 if [[ -z $restart_and_redirect_custom ]]; then
 echo DEBUG: SET restart_and_redirect_to=self
     restart_and_redirect_to=self
