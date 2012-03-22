@@ -220,13 +220,12 @@ function server_start() {
 if [[ -f "$userdir/configs/server_paths.conf" ]]; then
     echo -e "$print_info xstools uses server_paths.conf"
     source "$userdir/configs/server_paths.conf"
-    function_generate_dp_default_arguments=true
+    function_get_dp_default_arguments=true
 fi
 for var in $@; do
     server_config_check_and_set $var
-    if [[ $function_generate_dp_default_arguments == true ]]; then
-        echo generate
-        generate_dp_default_arguments $server_name
+    if [[ $function_get_dp_default_arguments == true ]]; then
+        get_dp_default_arguments $server_name
     fi
     dp_default_arguments_bak="$dp_default_arguments"
     # set sessionid if used
