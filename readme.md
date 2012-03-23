@@ -11,7 +11,7 @@
             |____/ \___|_|    \_/ \___|_|      |_|\___/ \___/|_|___/
 
 
------ Version: 0.99 beta 
+----- Version: 0.2 
       Created by: It'sMe
                   
       For any questions or help, join #xstools, quakenet (IRC).
