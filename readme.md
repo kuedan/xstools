@@ -14,7 +14,7 @@
 ----- Version: 0.99 beta 
       Created by: It'sMe
                   
-      For any questions and help, join #xstools, quakenet (IRC).
+      For any questions or help, join #xstools, quakenet (IRC).
 
 ----- Required Software: tmux
       Optional Software: perl  (for rcon2irc)
@@ -22,12 +22,12 @@
                          qstat (to list server informations)
 
 ----- Description:
-      Xonotic Server Tools is a collection of functions to manage many different
-      servers by loading every single server in a seperate tmux window. You can 
-      easily control those servers by their names. This script supports Xonotic 
-      release and git servers.
+      Xonotic Server Tools is a collection of functions to manage different
+      Xonotic servers by loading every single server in a seperate tmux window.
+      You can easily control those servers by their names. This script supports
+      Xonotic release and git servers.
       Next to managing servers and rcon2irc bots Xonotic Server Tools supports
-      a more extended home folder tree, but it still supports 'the default'.
+      a more extended home folder tree, but also 'the default'.
       The new folder tree gives a better overview of your server files:
       'pk3' packages, log files, server configuration files ... 
 
@@ -41,151 +41,151 @@
       ├── logs -> data/logs/   - just a symlink 
       └── packages             - place your packages (.pk3) here
 
-      If the 'Xonotic Server Tools' should be able to recongize your configuration 
-      files then use for Xonotic servers .cfg and for rcon2irc .rcon2irc.conf as file 
-      extension.
+      Use the following extenstions for your configs:
+      Server configuration files: .cfg
+      Rcon2irc configuration files: .rcon2irc.conf
+
+---- Functions:
         
------ General Usage:
-      xstools
-        --install-git           Download Xonotic Git and save it in the given 'basedir' 
-                                folder. Check xtools.conf to adjust this.
+    --install-git           Download Xonotic Git and save it in the given basedir
+                            folder. Check xtools.conf to adjust this.
 
-        --start-all             Start all servers whose configuration files are placed
-                                in 'configs/servers'. Those configuration files are 
-                                recognized by their extension .cfg.
+    --start-all             Start all servers whose configuration files are placed
+                            in 'configs/servers'.
+      Options:   -r         Start all servers as release servers.
+                 -g         Start all servers as git servers.
+                            (otherwise use default)
+    
+    --start <server(s)>     Start specific server(s).
+      Options:   -r         Start given servers as release servers.
+                 -g         Start given servers as git servers.
+                            (otherwise use default)
 
-        --start <server(s)>     Same as --start-all, but you can specify server(s).
+    --stop-all              Stop all running servers..
+      Options:  -r          command only affects release servers.
+                -g          command only affects git servers.
+                            (otherwise command affects all servers)
 
-        --stop-all              Stop all currently running servers. Those servers must
-                                run in the defined tmux session. Otherwise xstools 
-                                cannot stop them.
+    --stop <server(s)>      Stop specific server(s).
 
-        --stop <server(s)>      Stop specific server(s).
+    Options for both stop functions:
+                -c          Send a countdown of 10min before quit.
+                -q <server> Quit server at endmatch and redirect all players
+                            to given server (hostname+port).
+                -n          Optional parameter in combination with -q. Directly
+                            quit, do not wait for endmatch.
+                -e          Quit server when empty and next level starts.
+                -w          Optional parameter in combination with -q. xstools
 
-        --restart-all           Restart all running server(s).
+    --restart-all           Restart all running server(s).
+      Options:  -r          command only affects release servers.
+                -g          command only affects git servers.
+                            (otherwise command affects all servers)
 
-        --restart <server(s)>   Restart specific server(s).
+    --restart <server(s)>   Restart specific server(s).
 
-        --start-all/--start/--stop-all/--restart-all support -r and -g as optional
-        argument.
-        If you use -r (-g) as argument for --start-all or --start , xstools will start
-        'release' ('git') servers. Otherwise default will be used (check xstools.conf).
-        Example: xstools --start -g server1 
-                  (start server1 as git server)
-                  xstools --start-all -r 
-                  (start all servers, which are not running, as 'release' servers)
-        If you use -r (-g) as argument for --restart-all, xstools will restart
-        'release' ('git') servers only.
-        If you use -r (-g) as argument for --stop-all, xstools will stop
-        'release' ('git') servers only.
+    Options for both restart functions:
+                -c          Send a countdown of 10min before restart.
+                -q <server> Restart server at endmatch and redirect all players
+                            to given server (hostname+port).
+                -s          Restart server at endmatch at let all players reconnect.
+                -n          Optional parameter in combination with -q or -s.
+                            Directly restart, do not wait for endmatch.
 
-        start-all/start support the option -i to disable or enable a unique session id 
-        per config. The argument of -i must be 'true' to enable a session id per config,
-        or 'false' to disable.
+    --update-git            Update Xonotic git and restart all servers.
+      Options:  -c          Send a countdown of 10min before restart.
+                -s          Restart at endmatch and let all players reconnect.
+                -n          Optional parameter in combination with -s.
+                            Directly restart, do not wait for endmatch.
 
-        stop-all/stop/restart-all/restart support -c as optional argument to send a
-        countdown of 15min before servers are stopped or restarted.
+    --list                  List all running servers and bots.
 
-        --update-git            Update Xonotic git and restart git servers.
+    --list-configs          List all server and rcon2irc configuration files.
 
-        --update-git -c         Same as --update-all, but with a countdown of 15min
-                                This countdown will be sent to players as a message.
+    --view <server(s)>      Attach a tmux window and show server console of
+                            server(s).
 
-        --list                  List all running servers and bots.
+    --add-pk3 <url(s)>      Add .pk3 files to 'packages' from given urls and rescan
+                            for them at endmatch with every server.
 
-        --list-configs          List all server and rcon2irc configuration files.
+    --rescan                Rescan for new added packages at endmatch, every server
 
-        --info <server(s)>      Show informations like hostname, port.... of server(s).
-                                If qstat is enabled you will get more informations.
+    --send-all <command>    Send a command to all servers and receive output.
 
-        --info-all              Same as --info, but this lists info for all servers.
+    --send <server(s)>      Send a command to given servers and receive output.
+          -c <command>      The beginning of command is defined by -c.
 
-        --view <server(s)>      Attach a tmux window and show server console of server(s).
+    --logs set              Change the log file of all running servers to 
+                            'serverconfig.date.log', where 'serverconfig' is the
+                            server name  and 'date' is 'YearMonthDay'. 
 
-        --add-pk3 <url(s)>      Add .pk3 files to 'packages' from given urls and rescan 
-                                for them at endmatch with every server.
+    --logs del              Delete older log files in 'logs/' than given time in
+                            days. Check xstools.conf to adjust this.
 
-        --rescan                Rescan for new added packages at endmatch with every 
-                                server.
+    --maplist               Create a maplist for all gamtypes or use a regex.
+                            Examples:
+                            ctf          --maplist ctf
+                            ctf,lms,dm   --maplist '(ctf|lms|\bdm)'
 
-        --send-all <command>    Send a command to all servers and receive output.
+    --mapinfo               Syntax: --mapinfo command <pk3(s)>
+                            command is one of the following options:
 
-        --send <server(s)>      Send a command to given servers and receive output.
-              -c <command>      The beginning of command is defined by -c.
-
-        --logs set              Change the logfile of all running servers to 
-                                'serverconfig.date.log', where 'serverconfig' is the
-                                server name  and 'date' is 'YearMonthDay'. 
-
-        --logs del              Delete older log files in 'logs/' than given time in days.
-
-        --maplist               Create a maplist for all gamtypes or use a regex.
-                                Examples:
-                                ctf          --maplist ctf
-                                ctf,lms,dm   --maplist '(ctf|lms|\bdm)'
-
-        --mapinfo               Syntax: --mapinfo command <pk3(s)>
-                                command is one of the following options:
-        
             extract <pk3(s)>    Extract mapinfo files of given pk3 package(s)
                                 to 'data/maps/'.
 
-            extract-all         Extract all mapinfo files of pk3 packages in 'packages/'
-                                and its subfolders to 'data/maps/'.
-    
-            diff <pk3(s)>       Show difference between pk3 package mapinfo
-                                and mapinfo file in 'data/maps/'.
-    
-            diff-all            Same as 'diff' but for all pk3 packages in 'packages' 
-                                and its subdirs. No output if comparing was not possible.
-                                No output if mapinfo files are the same.
+            extract-all     Extract all mapinfo files of pk3 packages in 'packages'
+                            and its subfolders to 'data/maps/'.
 
-            fix                 Fix server console warnings by mapinfo files:
-                                Replace 'type' with 'gametype' and copy autogenerated
-                                mapinfo files to 'data/maps/'.
-    
-            show <pk3(s)>       Show mapinfo file of given pk3 package and mapinfo file 
-                                in 'data/maps/'.
+            diff <pk3(s)>   Show difference between pk3 package mapinfo
+                            and mapinfo file in 'data/maps/'.
 
-        --rcon2irc              Syntax: --rcon2irc command <bot(s)>
-                                command is one of the following options:
-       
-             start-all          Start all rcon2irc bots, whose configuration files
-                                are placed in 'configs/rcon2irc'. Those configuration 
-                                files are recognized by their extenstion .rcon2irc.conf.
+            diff-all        Same as 'diff' but for all pk3 packages in 'packages' 
+                            and its subdirs. No output if comparing was not possible
+                            No output if mapinfo files are the same.
 
-             start <bot(s)>     Same as --rcon-start-all, but you can specify bot(s).
+            fix             Fix server console warnings by mapinfo files:
+                            Replace 'type' with 'gametype'
+                            Replace long gametype names with short ones
+                            and copy autogenerated mapinfo files to 'data/maps/'.
 
-             stop-all           Stop all currently running bots. Those servers must
-                                run in the defined tmux session. Otherwise xstools 
-                                cannot stop them.
+            show <pk3(s)>   Show mapinfo file of given pk3 package and mapinfo file
+                            in 'data/maps/'.
 
-             stop <bot(s)>      Stop specific bot(s).
+    --rcon2irc              Syntax: --rcon2irc command <bot(s)>
+                            command is one of the following options:
 
-             restart-all        Restart all running bot(s).
+        start-all         Start all rcon2irc bots, whose configuration files
+                          are placed in 'configs/rcon2irc'. Those configuration 
+                          files are recognized by their extenstion .rcon2irc.conf
 
-             restart <bot(s)>   Restart rcon2irc specific bot(s).
+        start <bot(s)>    same as --rcon-start-all, but you can specify bot(s)
 
-             view <bot(s)>      Attach a tmux window and show bot console of bot(s).
+        stop-all          Stop all currently running bots. Those servers must
+                          run in the defined tmux session. Otherwise xstools 
+                          cannot stop them.
 
+        stop <bot(s)>     Stop specific bot(s).
 
-        --help                  Print this help.
+        restart-all       Restart all running bot(s).
 
-        -h                      Print a list of available functions.
+        restart <bot(s)>  Restart rcon2irc specific bot(s).
 
------ Installation:
-      For installation please read the INSTALL file. 
+        view <bot(s)>     Attach a tmux window and show bot console of bot(s).
 
 ----- Common Important Usage Notes:
-      Xonotic Server Tools recognize your server configuration files in 
-      'configs/servers' by their file extension .cfg. The name of the server 
-      is created by the file name without extension. 
-      That is "config_file%\.cfg". The name of the tmux window has a 
-      prefix "server-".
-      rcon2irc files are recogized by .rcon2irc.conf. The name of the rcon2irc bot 
-      is created by the filename without extension, too. 
-      That is "config_file%\.rcon2irc.conf". The name of the tmux window has a 
-      prefix "rcon2irc-".
+    Server configuration files in are recognized by the extension .cfg and
+    must be placed in 'configs/servers'. The name of the server is created by
+    the file name without extension. That is "config_file%\.cfg".
+    The name of the tmux window has a prefix "server-".
+    Example: Configuration file: my-server.cfg
+             Server name: my-server      Window name: server-my-server
+    rcon2irc configuration files  are recogized by the extension .rcon2irc.conf
+    and must be placed in 'configs/rcon2irc'. The name of the rcon2irc bot is
+    created by without extension. That is "config_file%\.rcon2irc.conf".
+    The name of the tmux window has a prefix "rcon2irc-".
+    Exampe: Congiguration file: my-bot.rcon.cfg
+            rcon2irc bot name: my-bot    Window name: rcon2irc-my-bot
+
 ----- rcon2irc Important Usage Notes:
       If you are loading extra plugins in your .rcon2irc.conf configuration file
       ... then use the full path '/home/user/..../plugin.pl' 
