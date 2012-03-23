@@ -971,6 +971,10 @@ done
 
 # list all running servers and rcon2irc bots
 function xstools_list_all() {
+if ! tmux list-sessions | cut -d: -f1 | grep $tmux_session &>/dev/null; then
+    echo >&2 -e "$print_error tmux session '$tmux_session' not activ"
+    exit 1
+fi
 if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
     activ_server_windows=$(tmux list-windows -t $tmux_session |awk -F\  '$2 ~ /server-.*/ {print $2}' |cut -f2- -d- |sort)
     if [[ -z $activ_server_windows ]]; then
@@ -1012,8 +1016,6 @@ if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
             echo >&2 -e "                 Use '--rcon2irc view $rcon2irc_name' to fix it."
         fi
     done
-#else
-#    echo -e "$print_info There are no bots/servers running."
 fi
 } # end of xstools_list_all()
 
