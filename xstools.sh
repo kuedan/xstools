@@ -1,20 +1,10 @@
 #!/bin/bash
 #
 # Xonotic Server Tools
+# https://github.com/itsme-/xstools
 #
 # Version: 0.1
 # Created by: It'sMe
-#
-# Required Software: tmux
-# Optional Software: perl, git, qstat
-#
-# Description:
-# This script is created to help admins to manage their servers 
-# Every server, which can easily called by its name, will be
-# loaded in its own tmux window. Same for rcon2irc..
-# Basically you can...
-# start, stop, restart servers and rcon2irc bots
-# For more information check --help
 #
 # Xonotic Server Tools by It'sMe is released under the following License:
 # Attribution-NonCommercial-ShareAlike 3.0 Unported (CC BY-NC-SA 3.0)
