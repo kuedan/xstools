@@ -275,9 +275,6 @@ done
 function server_start_specific() {
 server_first_config_check $1
 version_has_been_set=false
-for server_name in $@; do
-    server_config_check_and_set $server_name
-done
 while getopts ":rgi:" opt
 do
     case $opt in
@@ -286,6 +283,9 @@ do
     esac
 done
 shift $((OPTIND-1))
+for server_name in $@; do
+    server_config_check_and_set $server_name
+done
 if [[ $version_has_been_set == false ]]; then
     case $default_version in
         git) version_git_check_and_set && version_has_been_set=true;;
@@ -415,7 +415,7 @@ while [ $counter -lt ${#server_names[@]} ]; do
             server_names=( $(echo ${server_names[@]}) )
         else
             counter=$[$counter+1]
-            if [[ $counter -gt ${#server_names[@]} ]]; then
+            if [[ $counter -eq ${#server_names[@]} ]]; then
                 counter=0
             fi
         fi
@@ -444,7 +444,7 @@ while [ $counter -lt ${#server_names[@]} ]; do
 server_config_check_and_set ${server_names[$counter]}
     if pgrep_server &>/dev/null; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
-            echo -e "$print_info Sending 'quit_when empty 1' to '$server_name'"
+            echo -e "$print_info Sending 'quit_when_empty 1' to '$server_name'"
             tmux send -t $tmux_session:$tmux_window "quit_when_empty 1" C-m
         else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
@@ -475,7 +475,7 @@ while [ $counter -lt ${#server_names[@]} ]; do
             server_names=( $(echo ${server_names[@]}) )
         else
             counter=$[$counter+1]
-            if [[ $counter -gt ${#server_names[@]} ]]; then
+            if [[ $counter -eq ${#server_names[@]} ]]; then
                 counter=0
             fi
         fi
@@ -485,11 +485,10 @@ done
 
 # stop one or more servers
 function server_stop_specific() {
-while getopts ":cqs:ne" options; do
+while getopts ":cq:new" options; do
     case $options in
         c) send_countdown_=true;;
-        q) quit_and_redirect=true;;
-        s) quit_and_redirect=true; quit_and_redirect_custom=true; quit_and_redirect_to="$OPTARG";;
+        q) quit_and_redirect=true; quit_and_redirect_custom=true; quit_and_redirect_to="$OPTARG";;
         n) quit_and_redirect=true; quit_and_redirect_now=true;;
         e) quit_when_empty=true;;
         w) not_wait_for_quit=true;;
@@ -497,10 +496,10 @@ while getopts ":cqs:ne" options; do
 done
 shift $((OPTIND-1))
 if [[ -n $send_countdown_ && ( -n $quit_and_redirect || -n $quit_when_empty ) ]]; then
-    echo >&2 -e "$print_error You cannot use -c in combination with -e,-n,-q.-s,-w option."
+    echo >&2 -e "$print_error You cannot use -c in combination with -e,-n,-q, -w option."
     exit 1
 elif [[ -n $quit_and_redirect && -n $quit_when_empty ]]; then
-    echo >&2 -e "$print_error You cannot use -n,-q,-s in combination with -e option."
+    echo >&2 -e "$print_error You cannot use -n,-q in combination with -e option."
     exit 1
 fi
 for server_name in $@; do
@@ -533,13 +532,12 @@ fi
 
 # function to stop all servers
 function server_stop_all() {
-while getopts ":rgcqs:new" options; do
+while getopts ":rgcq:new" options; do
     case $options in
         r) grep_release=true;;
         g) grep_git=true;;
         c) send_countdown_=true;;
-        q) quit_and_redirect=true;;
-        s) quit_and_redirect=true; quit_and_redirect_custom=true; quit_and_redirect_to="$OPTARG";;
+        q) quit_and_redirect=true; quit_and_redirect_custom=true; quit_and_redirect_to="$OPTARG";;
         n) quit_and_redirect=true; quit_and_redirect_now=true;;
         e) quit_when_empty=true;;
         w) not_wait_for_quit=true;;
@@ -547,10 +545,10 @@ while getopts ":rgcqs:new" options; do
 done
 shift $((OPTIND-1))
 if [[ -n $send_countdown_ && ( -n $quit_and_redirect || -n $quit_when_empty ) ]]; then
-    echo >&2 -e "$print_error You cannot use -c in combination with -e,-n,-q.-s,-w option."
+    echo >&2 -e "$print_error You cannot use -c in combination with -e,-n, -s,-w option."
     exit 1
 elif [[ -n $quit_and_redirect && -n $quit_when_empty ]]; then
-    echo >&2 -e "$print_error You cannot use -n,-q,-s in combination with -e option."
+    echo >&2 -e "$print_error You cannot use -n,-q in combination with -e option."
     exit 1
 fi
 if [[ $grep_release == true && $grep_git != true ]]; then
@@ -714,11 +712,11 @@ fi
 
 # restart one or more servers
 function server_restart_specific() {
-while getopts ":cqs:n" options; do
+while getopts ":cq:sn" options; do
     case $options in
         c) send_countdown_=true;;
-        q) restart_and_redirect=true;;
-        s) restart_and_redirect=true; restart_and_redirect_custom=true; restart_and_redirect_to="$OPTARG";;
+        q) restart_and_redirect=true; restart_and_redirect_to="$OPTARG";;
+        s) restart_and_redirect=true; restart_and_redirect_to="self";;
         n) restart_and_redirect=true; restart_and_redirect_now=true;;
     esac
 done
@@ -730,10 +728,6 @@ fi
 for server_name in $@; do
     server_config_check_and_set $server_name
 done
-if [[ -z $restart_and_redirect_custom ]]; then
-    restart_and_redirect_to=self
-
-fi
 if [[ -n $send_countdown_ ]]; then
     message_[0]='Server will restart in 10min.'
     message_timer_[0]=300
@@ -759,13 +753,13 @@ fi
 
 # function to restart all servers
 function server_restart_all() {
-while getopts ":rgcqs:n" options; do
+while getopts ":rgcq:sn" options; do
     case $options in
         r) grep_release=true;;
         g) grep_git=true;;
         c) send_countdown_=true;;
-        q) restart_and_redirect=true;;
-        s) restart_and_redirect=true; restart_and_redirect_custom=true; restart_and_redirect_to="$OPTARG";;
+        q) restart_and_redirect=true; restart_and_redirect_to="$OPTARG";;
+        s) restart_and_redirect=true; restart_and_redirect_to="self";;
         n) restart_and_redirect=true; restart_and_redirect_now=true;;
     esac
 done
@@ -773,10 +767,6 @@ shift $((OPTIND-1))
 if [[ -n $send_countdown_ && -n $restart_and_redirect ]]; then
     echo >&2 "$print_error You cannot use -c in combination with -n,-q.-s option."
     exit 1
-fi
-if [[ -z $restart_and_redirect_custom ]]; then
-    restart_and_redirect_to=self
-
 fi
 if [[ $grep_release == true && $grep_git != true ]]; then
     pgrep_suffix=_release
@@ -895,6 +885,15 @@ fi
 } # end of send_notice()
 
 function server_update_git() {
+while getopts ":cq:sn" options; do
+    case $options in
+        c) send_countdown_=true;;
+        q) restart_and_redirect=true; restart_and_redirect_to="$OPTARG";;
+        s) restart_and_redirect=true; restart_and_redirect_to="self";;
+        n) restart_and_redirect=true; restart_and_redirect_now=true;;
+    esac
+done
+shift $((OPTIND-1))
 # git version...
 version_git_check_and_set
 # check options
@@ -913,8 +912,16 @@ elif [[ -z $git_update_date ]]; then
 fi
 # git servers only
 pgrep_suffix=_git
-# if we have -c as extra argument, then send countdown
-if [[ "$2" == "-c" ]]; then
+if [[ -n $send_countdown_ && -n $restart_and_redirect ]]; then
+    echo >&2 "$print_error You cannot use -c in combination with -n,-q.-s option."
+    exit 1
+fi
+if [[ $grep_release == true && $grep_git != true ]]; then
+    pgrep_suffix=_release
+elif [[ $grep_release != true && $grep_git == true ]]; then
+    pgrep_suffix=_git
+fi
+if [[ -n $send_countdown_ ]]; then
     message_[0]='Server will be updated in 10min.'
     message_timer_[0]=300
     message_[1]='Server will be updated in 5min.'
@@ -926,17 +933,19 @@ if [[ "$2" == "-c" ]]; then
     # all_servers is all git servers - due the defined suffix
     send_notice all_servers
 fi
-# close all servers
 # lock xstools, when update started 
 touch "$userdir/lock_update"
 # simply update
 update_git
-# restart all git servers
 # option -g need not to be set - due the defined suffix
-server_restart_all
+if [[ -n $restart_and_redirect ]]; then
+    send_notice all_servers
+    server_restart_redirect all_servers
+else
+    server_restart all_servers
+fi
 # unlock xstools 
 rm -f "$userdir/lock_update"
-echo "./all compile $git_compile_options"
 } # end of server_update_git()
 
 # }}}
@@ -955,7 +964,7 @@ if [[ "$tmux_help" == "true" ]]; then
     echo -e "            To scroll..."
     echo -e "            hold ctrl, then press b, release them, then press 'page up'."
     echo -e "            You can scroll with your arrow keys"
-    echo -e "            (Press enter to continue...)"
+    echo -e "            (Press enter to continue)"
     read # wait until info has been read
 fi
 for var in $@; do
@@ -1013,8 +1022,8 @@ if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
             echo >&2 -e "                 Use '--rcon2irc view $rcon2irc_name' to fix it."
         fi
     done
-else
-    echo -e "$print_info There are no bots/servers running."
+#else
+#    echo -e "$print_info There are no bots/servers running."
 fi
 } # end of xstools_list_all()
 
@@ -1080,7 +1089,7 @@ server_send_rescan
 # send rescan_pending 1 to servers to scan for new added pk3 packages
 function server_send_rescan() {
 echo -e "$print_info Servers will scan for new packages at endmatch."
-echo -e "       'rescan_pending 1' has been sent to server..."
+echo -e "       'rescan_pending 1' has been sent to server all servers"
 for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     server_config=${cfg##*/}
     if pgrep_server &>/dev/null; then
@@ -1122,7 +1131,7 @@ server_port=$(awk '/^port/ {print $2}' "$userdir"/configs/servers/$server_config
 # test if we have found a port... simply grep for a field of digits :)
 if ! echo $server_port | grep -E '[0-9]{4,5}' &>/dev/null; then
     echo >&2 -e "$print_error Could not find a port in $server_config"
-    echo >&2 -e "       No command has been sent to any server..."
+    echo >&2 -e "       No command has been sent to any server."
     exit 1
 elif ! pgrep_server &>/dev/null; then
     echo >&2 -e "$print_error Server '$server_name' is not running."
@@ -1136,14 +1145,14 @@ if [[ $search_in_configs == "true" ]]; then
     # test if we have found a rcon_password.... simply test if rcon_password is NOT empty
     if [[ $rcon_password == "" ]]; then
         echo >&2 -e "$print_error Could not find a rcon password in $server_config"
-        echo >&2 -e "       No command has been sent to any server..."
+        echo >&2 -e "       No command has been sent to any server."
         exit 1
     fi
     all_rcon_passwords="$all_rcon_passwords $rcon_password"
 else
     if [[ $single_rcon_password == "" ]]; then
         echo >&2 -e "$print_error Could not find a rcon password in your passwords file."
-        echo >&2 -e "       No command has been sent to any server..."
+        echo >&2 -e "       No command has been sent to any server."
         exit 1
     fi
 all_rcon_passwords="$all_rcon_passwords $single_rcon_password"
@@ -1158,7 +1167,7 @@ a_port=( $all_server_ports )
 a_pass=( $all_rcon_passwords )
 counter=0
 while [ "$counter" -lt "${#a_name[@]}" ]; do
-    echo -e "$print_info Sending command to server '${a_name[$counter]}'..."
+    echo -e "$print_info Sending command to server '${a_name[$counter]}'."
     echo
     rcon_address=127.0.0.1:${a_port[$counter]} rcon_password=${a_pass[$counter]} $rcon_script "$my_command"
     echo 
@@ -1204,7 +1213,7 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
             echo >&2 -e "        You have to fix this on your own."
         fi
     fi
-done        
+done
 if [[ $1 == '-c' ]]; then
     shift
 fi
@@ -1386,7 +1395,7 @@ if ! echo "$map_pk3" | grep ".pk3" >/dev/null 2>&1; then
     continue
 elif [[ ! -f $map_pk3 ]]; then
     echo -e "$print_error Could not find ${map_pk3##*/}"
-    continue        
+    continue
 fi
 } # end of server_mapinfo_check()
 
@@ -1443,14 +1452,14 @@ for map_pk3 in "$@"; do
     map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9#._+-]+\.mapinfo' |tr "\n" " ")
     if [[ -z $map_infos ]]; then
         echo -e "$print_attention $(basename $map_pk3) does not contain a mapinfo file."
-        echo -e "            Cannot compare..."
+        echo -e "            Cannot compare."
         continue
     fi
     for map_info in $map_infos; do
         if [[ -f "$userdir"/data/maps/$map_info ]]; then
             echo -e "$print_info Difference of data/maps/$map_info and $map_pk3:"
             diff "$userdir"/data/maps/$map_info <(unzip -pq $map_pk3 maps/$map_info) &&
-            echo "       No Difference..."
+            echo "       No Difference."
         else
             echo -e "$print_attention Cannot compare files: "$userdir"/data/maps/$map_info does not exist"
         fi
@@ -1509,14 +1518,14 @@ done
 # reduce server console errors messages 
 # replace type 'type' with 'gametype', copy autogenerated mapinfo files
 function server_mapinfo_fix() {
-echo -e "$print_info Fix mapinfos in data/maps..."
+echo -e "$print_info Fix mapinfos in data/maps"
 for map_info_l in "$userdir"/data/maps/*.mapinfo; do
     sed -i 's/^type /gametype /g' $map_info_l &>/dev/null
     sed -i 's/^gametype freezetag/gametype ft/g' $map_info_l &>/dev/null
     sed -i 's/^gametype keepaway/gametype ka/g' $map_info_l &>/dev/null
     sed -i 's/^gametype nexball/gametype nb/g' $map_info_l &>/dev/null
 done
-echo -e "$print_info Scanning pk3 packages and fix them..."
+echo -e "$print_info Scanning pk3 packages and fix them"
 echo -e "       Existing mapinfos are not overwritten."
 package_folders=$(find "$userdir"/packages -type d)
 for folder in $package_folders; do
@@ -1540,7 +1549,7 @@ for folder in $package_folders; do
         done
     done
 done
-echo -e "$print_info Move autogenerated maps into data/maps..."
+echo -e "$print_info Move autogenerated maps into data/maps"
 mv "$userdir"/data/data/maps/autogenerated/*.mapinfo "$userdir"/data/maps/ &>/dev/null
 } # end of server_mapinfo_fix()
 # }}}
@@ -1577,7 +1586,7 @@ else
     echo >&2 -e "$print_error Starting rcon2irc '$rcon2irc_name' failed."
     echo >&2 -e "        Use '--rcon2irc view $rcon2irc_name' to check window status/error message"
 fi
-} # end of rcon2irc_check_start()       
+} # end of rcon2irc_check_start()
 
 function rcon2irc_start() {
 rcon2irc_first_config_check $1
@@ -1637,7 +1646,7 @@ rcon2irc_config_check_and_set $var
     if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep ) ]]; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             rcon_pid=$(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $2}')
-            echo -e "$print_info Stopping rcon2irc '$rcon2irc_name'..."
+            echo -e "$print_info Stopping rcon2irc '$rcon2irc_name'"
             kill -9 $rcon_pid
             sleep 1
             tmux send -t $tmux_session:$tmux_window "exit" C-m 
@@ -1660,7 +1669,7 @@ for conf in $(ls "$userdir"/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
     if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep ) ]]; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             rcon_pid=$(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $2}')
-            echo -e "$print_info Stopping rcon2irc '$rcon2irc_name'..."
+            echo -e "$print_info Stopping rcon2irc '$rcon2irc_name'"
             kill -9 $rcon_pid
             sleep 1
             tmux send -t $tmux_session:$tmux_window "exit" C-m 
@@ -1684,7 +1693,7 @@ rcon2irc_config_check_and_set $var
     if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep ) ]]; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             rcon_pid=$(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $2}')
-            echo -e "$print_info Restarting rcon2irc '$rcon2irc_name'..."
+            echo -e "$print_info Restarting rcon2irc '$rcon2irc_name'"
             kill -9 $rcon_pid
             sleep 1
             tmux send -t $tmux_session:$tmux_window "perl $rcon2irc_script $rcon2irc_config" C-m
@@ -1711,7 +1720,7 @@ for conf in $(ls $userdir/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
     if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null |grep -v grep) ]]; then
         if [[ $(tmux list-windows -t $tmux_session| grep -E "$tmux_window" 2>/dev/null) ]]; then
             rcon_pid=$(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $2}')
-            echo -e "$print_info Restarting rcon2irc '$rcon2irc_name'..."
+            echo -e "$print_info Restarting rcon2irc '$rcon2irc_name'"
             kill -9 $rcon_pid
             sleep 1
             tmux send -t $tmux_session:$tmux_window "perl $rcon2irc_script $rcon2irc_config" C-m
@@ -1763,31 +1772,31 @@ function xstools_help() {
 cat << EOF
 -- Commands --
 xstools
-    --install-git                  - download xonotic git into basedir
+    --install-git                   - download xonotic git into basedir
 
-    --start-all <-rg>              - start all servers
-    --start <-rg> <server(s)>      - start servers
-    --stop-all <-ecqns>            - stop all servers
-    --stop <-rgecnqs> <server(s)>  - stop servers
-    --restart-all <-rgcqns>        - restart all servers
-    --restart <-cnqs> <server(s)>  - restart-servers
+    --start-all <-rg>               - start all servers
+    --start <-rg> <server(s)>       - start servers
+    --stop-all <-rgceqnw>           - stop all servers
+    --stop <-ceqnw> <server(s)>     - stop servers
+    --restart-all <-rgcnqs>         - restart all servers
+    --restart <-cnqs> <server(s)>   - restart-servers
 
-    --update-git                - update git and restart git servers
-                                  use option '-c' to send countdown   
-    --list                      - list running servers/rcon2irc bots
-    --list-configs              - list server and rcon2irc configs
-    --view <server(s)>          - view server console
-    --add-pk3 <url(s)>          - add pk3 files from given urls
-    --rescan                    - rescan for new added packages
-    --send-all <command>        - send a command to all servers
-    --send <server(s)>  -c ...  - send a command to given server(s)
-    --logs 'set' or 'del'       - set a new log file for all servers
-                                - or delete log files older than given days
-    --maplist                   - create maplist for all gametypes or use regex
+    --update-git <-cnqs>             - update git and restart git servers
+    --list                           - list running servers/rcon2irc bots
+    --list-configs                   - list server and rcon2irc configs
+    --view <server(s)>               - view server console
+    --add-pk3 <url(s)>               - add pk3 files from given urls
+    --rescan                         - rescan for new added packages
+    --send-all <command>             - send a command to all servers
+    --send <server(s)> -c <command>  - send a command to given server(s)
+    --logs set/ del                  - set a new log file for all servers,
+                                       delete log files older than given days
+    --maplist                        - create maplist for all gametypes or use
+                                       a regex
 
     --mapinfo                   syntax: --rcon2irc command <pk3(s)>
-        extract                 - extract mapinfo files of given pk3 package
-        extract-all             - extract all mapinfo files of pk3 packages
+        extract                 - extract mapinfo files of given pk3 packages
+        extract-all             - extract all mapinfo files of all pk3 packages
         diff                    - show difference between data/maps/*.mapinfo
                                   and mapinfo file in pk3 package.
         diff-all                - show the difference of all mapinfo files
@@ -1836,23 +1845,54 @@ Exampe: Congiguration file: my-bot.rcon.cfg
 --install-git           Download Xonotic Git and save it in the given basedir
                         folder. Check xtools.conf to adjust this.
 
+
 --start-all             Start all servers whose configuration files are placed
                         in 'configs/servers'.
+  Options:   -r         Start all servers as release servers.
+             -g         Start all servers as git servers.
+                        (otherwise use default)
 
 --start <server(s)>     Start specific server(s).
+  Options:   -r         Start given servers as release servers.
+             -g         Start given servers as git servers.
+                        (otherwise use default)
 
 --stop-all              Stop all running servers..
+  Options:  -r          command only affects release servers.
+            -g          command only affects git servers.
+                        (otherwise command affects all servers)
 
 --stop <server(s)>      Stop specific server(s).
 
+  Options for both stop functions:
+            -c          Send a countdown of 10min before quit.
+            -q <server> Quit server at endmatch and redirect all players
+                        to given server (hostname+port).
+            -n          Optional parameter in combination with -q. Directly
+                        quit, do not wait for endmatch.
+            -e          Quit server when empty and next level starts.
+            -w          Optional parameter in combination with -q. xstools
+
 --restart-all           Restart all running server(s).
+  Options:  -r          command only affects release servers.
+            -g          command only affects git servers.
+                        (otherwise command affects all servers)
 
 --restart <server(s)>   Restart specific server(s).
 
-
--------------------------------------------------------------------------------
+  Options for both restart functions:
+            -c          Send a countdown of 10min before restart.
+            -q <server> Restart server at endmatch and redirect all players
+                        to given server (hostname+port).
+            -s          Restart server at endmatch at let all players reconnect.
+            -n          Optional parameter in combination with -q or -s.
+                        Directly restart, do not wait for endmatch.
 
 --update-git            Update Xonotic git and restart all servers.
+  Options:  -c          Send a countdown of 10min before restart.
+            -s          Restart at endmatch and let all players reconnect.
+            -n          Optional parameter in combination with -s.
+                        Directly restart, do not wait for endmatch.
 
 --list                  List all running servers and bots.
 
@@ -2002,7 +2042,7 @@ case $1 in
  --stop|stop)                        basic_config_check; shift && server_stop_specific "$@";;
  --restart-all|restart-all)          basic_config_check; shift && server_restart_all "$@";;
  --restart|restart)                  basic_config_check; shift && server_restart_specific "$@";;
- --update-git|update-git)            basic_config_check; server_update_git "$@";;
+ --update-git|update-git)            basic_config_check; shift && server_update_git "$@";;
  --list|list|ls)                     basic_config_check; xstools_list_all;;
  --list-configs|list-configs)        basic_config_check; xstools_list_configs;;
  --view|view)                        basic_config_check; shift && server_view "$@";;
