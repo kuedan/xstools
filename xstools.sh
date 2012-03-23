@@ -358,30 +358,51 @@ esac
 } # end of server_stop()
 
 function server_stop_redirect() {
-server_names=( $@ )
+case $1 in
+    defined_servers)
+        shift
+        server_names=( $@ );;
+    all_servers)
+        all_servers=
+        for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
+            server_config_check_and_set $(basename ${cfg%.cfg})
+            if pgrep_server$pgrep_suffix &>/dev/null; then
+                all_servers="$all_servers $server_name"
+            fi
+        done
+        server_names=( $all_servers );;
+esac
 counter=0
 while [ $counter -lt ${#server_names[@]} ]; do
 server_config_check_and_set ${server_names[$counter]}
+echo DEBUG: $?
     if pgrep_server &>/dev/null; then
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             echo -e "$print_info Sending 'quit_and_redirect $quit_and_redirect_to' to '$server_name'..."
-            tmux send -t $tmux_session:$tmux_window "quit_and_redirect ${quit_and_redirect_to};" C-m
-            if [[ -n $quit_and_redirect_now ]]; then
-            tmux send -t $tmux_session:$tmux_window "endmatch;" C-m
+            tmux send -t $tmux_session:$tmux_window "quit_and_redirect ${quit_and_redirect_to}" C-m
+            if [[ -n $restart_and_redirect_now ]]; then
+                tmux send -t $tmux_session:$tmux_window "endmatch" C-m
+                sleep 0.5
+                tmux send -t $tmux_session:$tmux_window "exit" C-m
+                echo -e "       Server '$server_name' has been stopped."
             fi
-        else
+    else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
             echo >&2 -e "        You have to fix this on your own."
-            # delete the entry from field
             unset server_names[$counter]
         fi
     else
         echo >&2 -e "$print_error Server '$server_name' is not running, cannot stop."
-        # delete the entry from field
         unset server_names[$counter]
     fi
     counter=$[$counter+1] # ((counter++))
 done
+if [[ -n $not_wait_for_quit ]]; then
+    echo -e "$print_info Server(s) will be stopped when empty."
+    echo -e "       Please close the tmux windows, when servers have been stopped."
+    exit
+fi
+if [[ -z $quit_and_redirect_now ]]; then
 # get the new field of server names
 server_names=( $(echo ${server_names[@]}) )
 sleep 0.5
@@ -401,10 +422,24 @@ while [ $counter -lt ${#server_names[@]} ]; do
         fi
     sleep 2
 done
+fi
 } # end of server_stop_redirect
 
 function server_stop_empty() {
-server_names=( $@ )
+case $1 in
+    defined_servers)
+        shift
+        server_names=( $@ );;
+    all_servers)
+        all_servers=
+        for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
+            server_config_check_and_set $(basename ${cfg%.cfg})
+            if pgrep_server$pgrep_suffix &>/dev/null; then
+                all_servers="$all_servers $server_name"
+            fi
+        done
+        server_names=( $all_servers );;
+esac
 counter=0
 while [ $counter -lt ${#server_names[@]} ]; do
 server_config_check_and_set ${server_names[$counter]}
@@ -412,22 +447,22 @@ server_config_check_and_set ${server_names[$counter]}
         if [[ $(tmux list-windows -t $tmux_session| grep "$tmux_window " 2>/dev/null) ]]; then
             echo -e "$print_info Sending 'quit_when empty 1' to '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit_when_empty 1;" C-m
-            if [[ -n $quit_and_redirect_now ]]; then
-            tmux send -t $tmux_session:$tmux_window "endmatch;" C-m
-            fi
         else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
             echo >&2 -e "        You have to fix this on your own."
-            # delete the entry from field
             unset server_names[$counter]
         fi
     else
         echo >&2 -e "$print_error Server '$server_name' is not running, cannot stop."
-        # delete the entry from field
         unset server_names[$counter]
     fi
     counter=$[$counter+1] # ((counter++))
 done
+if [[ -n $not_wait_for_quit ]]; then
+    echo -e "$print_info Server(s) will be stopped when empty."
+    echo -e "       Please close the tmux windows, when servers have been stopped."
+    exit
+fi
 # get the new field of server names
 server_names=( $(echo ${server_names[@]}) )
 sleep 0.5
@@ -455,20 +490,18 @@ while getopts ":cqs:ne" options; do
     case $options in
         c) send_countdown_=true;;
         q) quit_and_redirect=true;;
-        s) quit_and_redirect_to="$OPTARG";;
-        n) quit_and_redirect_now=true;;
+        s) quit_and_redirect=true; quit_and_redirect_custom=true; quit_and_redirect_to="$OPTARG";;
+        n) quit_and_redirect=true; quit_and_redirect_now=true;;
         e) quit_when_empty=true;;
+        w) not_wait_for_quit=true;;
     esac
 done
 shift $((OPTIND-1))
-if [[ -n $send_countdown_ && -n $quit_and_redirect ]]; then
-    echo >&2 "$print_error You cannot use -c and -q option."
-    exit 1
-elif [[ -n $send_countdown_ && -n $quit_when_empty ]]; then
-    echo >&2 "$print_error You cannot use -c and -e option."
+if [[ -n $send_countdown_ && ( -n $quit_and_redirect || -n $quit_when_empty ]]; then
+    echo >&2 "$print_error You cannot use -c in combination with -e,-n,-q.-s,-w option."
     exit 1
 elif [[ -n $quit_and_redirect && -n $quit_when_empty ]]; then
-    echo >&2 "$print_error You cannot use -q and -e option."
+    echo >&2 "$print_error You cannot use -n,-q,-s in combination with -e option."
     exit 1
 fi
 for server_name in $@; do
@@ -501,25 +534,24 @@ fi
 
 # function to stop all servers
 function server_stop_all() {
-while getopts ":rgcqs:ne" options; do
+while getopts ":rgcqs:new" options; do
     case $options in
         r) grep_release=true;;
+        g) grep_git=true;;
         c) send_countdown_=true;;
         q) quit_and_redirect=true;;
-        s) quit_and_redirect_to="$OPTARG";;
-        n) quit_and_redirect_now=true;;
+        s) quit_and_redirect=true; quit_and_redirect_custom=true; quit_and_redirect_to="$OPTARG";;
+        n) quit_and_redirect=true; quit_and_redirect_now=true;;
         e) quit_when_empty=true;;
+        w) wait_to_exit=true;;
     esac
 done
 shift $((OPTIND-1))
-if [[ -n $send_countdown_ && -n $quit_and_redirect ]]; then
-    echo >&2 "$print_error You cannot use -c and -q option."
-    exit 1
-elif [[ -n $send_countdown_ && -n $quit_when_empty ]]; then
-    echo >&2 "$print_error You cannot use -c and -e option."
+if [[ -n $send_countdown_ && ( -n $quit_and_redirect || -n $quit_when_empty ]]; then
+    echo >&2 "$print_error You cannot use -c in combination with -e,-n,-q.-s,-w option."
     exit 1
 elif [[ -n $quit_and_redirect && -n $quit_when_empty ]]; then
-    echo >&2 "$print_error You cannot use -q and -e option."
+    echo >&2 "$print_error You cannot use -n,-q,-s in combination with -e option."
     exit 1
 fi
 if [[ $grep_release == true && $grep_git != true ]]; then
@@ -648,12 +680,10 @@ echo DEBUG: $?
     else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
             echo >&2 -e "        You have to fix this on your own."
-            # delete the entry from field
             unset server_names[$counter]
         fi
     else
         echo >&2 -e "$print_error Server '$server_name' is not running, cannot stop."
-        # delete the entry from field
         unset server_names[$counter]
     fi
     counter=$[$counter+1] # ((counter++))
@@ -697,13 +727,13 @@ while getopts ":cqs:n" options; do
     case $options in
         c) send_countdown_=true;;
         q) restart_and_redirect=true;;
-        s) restart_and_redirect_custom=true; restart_and_redirect_to="$OPTARG";;
-        n) restart_and_redirect_now=true; restart_and_redirect=true;;
+        s) restart_and_redirect=true; restart_and_redirect_custom=true; restart_and_redirect_to="$OPTARG";;
+        n) restart_and_redirect=true; restart_and_redirect_now=true;;
     esac
 done
 shift $((OPTIND-1))
 if [[ -n $send_countdown_ && -n $restart_and_redirect ]]; then
-    echo >&2 "$print_error You cannot use -c and -q option."
+    echo >&2 "$print_error You cannot use -c in combination with -n,-q.-s option."
     exit 1
 fi
 for server_name in $@; do
@@ -742,15 +772,16 @@ function server_restart_all() {
 while getopts ":rgcqs:n" options; do
     case $options in
         r) grep_release=true;;
+        g) grep_git=true;;
         c) send_countdown_=true;;
         q) restart_and_redirect=true;;
-        s) restart_and_redirect_custom=true; restart_and_redirect_to="$OPTARG";;
-        n) restart_and_redirect_now=true; restart_and_redirect=true;;
+        s) restart_and_redirect=true; restart_and_redirect_custom=true; restart_and_redirect_to="$OPTARG";;
+        n) restart_and_redirect=true; restart_and_redirect_now=true;;
     esac
 done
 shift $((OPTIND-1))
 if [[ -n $send_countdown_ && -n $restart_and_redirect ]]; then
-    echo >&2 "$print_error You cannot use -c and -q option."
+    echo >&2 "$print_error You cannot use -c in combination with -n,-q.-s option."
     exit 1
 fi
 if [[ -z $restart_and_redirect_custom ]]; then
