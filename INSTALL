@@ -16,8 +16,9 @@ The name of this folder is user-defined and can be named as you like.
 
 INSTALLATION:
 
-1)  Extract the .zip file and move this folder to a location you like and name 
-    this folder as you like. (Do not forget: This is your xonotic user directory)
+1) Extract the .zip file of xstools (https://nodeload.github.com/itsme-/xstools/zipball/master)
+   and move this folder to a location you like and name this folder as you like.
+   (Do not forget: This is your xonotic user directory)
 
 2) Open xstools.conf in the subfolder 'scripts/' and define the location of your 
    Xonotic 'user directory' and your 'basedirs'.
@@ -41,3 +42,5 @@ INSTALLATION:
    xstools 'arguments'
    eg: xstools --help 
 
+
+   For more information check docs/
