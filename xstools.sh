@@ -206,9 +206,9 @@ function pgrep_server_git() {
 
 # basic function to start servers
 function server_start() {
-if [[ -f "$userdir/configs/server_paths.conf" ]]; then
+if [[ -f "$xstool_dir/configs/server_paths.conf" ]]; then
     echo -e "$print_info xstools uses server_paths.conf"
-    source "$userdir/configs/server_paths.conf"
+    source "$xstool_dir/configs/server_paths.conf"
     function_get_dp_default_arguments=true
 fi
 for var in $@; do
