@@ -26,7 +26,7 @@ INSTALLATION:
    Next to those folder variables there is an option to set the default version
    you are going to host. Set it to 'release' or 'git'
    Please download the release version on your own and move it to the 'basedir'
-   you have set for 'release'. (http://www.xonotic.org/download/)
+   location you have set for 'release'. (http://www.xonotic.org/download/)
    If you want to host git servers, you must clone Xonotic git. Therefore you
    can run './xstools.sh --install-git' (after you have set userdir and basedir
    for git servers in xstools.conf) ATTENTION: A compiler and libraries are needed.
