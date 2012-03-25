@@ -1081,7 +1081,7 @@ server_send_rescan
 # send rescan_pending 1 to servers to scan for new added pk3 packages
 function server_send_rescan() {
 echo -e "$print_info Servers will scan for new packages at endmatch."
-echo -e "       'rescan_pending 1' has been sent to server all servers"
+echo -e "       'rescan_pending 1' has been sent to"
 for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     server_config=${cfg##*/}
     if pgrep_server &>/dev/null; then
