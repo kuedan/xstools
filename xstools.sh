@@ -2011,7 +2011,7 @@ case $1 in
  --stop-all|stop-all)           rcon2irc_stop_all;;
  --start-all|start-all)         rcon2irc_start_all;;
  --restart-all|restart-all)     rcon2irc_restart_all;;
- --attach|attach)               shift && rcon2irc_attach $@;;
+ --attach|attach|att)           shift && rcon2irc_attach $@;;
  ""|*)               {
                      echo -e "$print_error Command is invalid or missing."
                      echo "        Use --rcon2irc with one of this arguments:"
