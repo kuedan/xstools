@@ -19,7 +19,7 @@ All adjustments can be made in the basic configuration file: **xstools.conf**.
     --update-git <-cnqs>             - update git and restart git servers
     --list                           - list running servers/rcon2irc bots
     --list-configs                   - list server and rcon2irc configs
-    --view <server(s)>               - view server console
+    --attach <server(s)>             - attach server console
     --add-pk3 <url(s)>               - add pk3 files from given urls
     --rescan                         - rescan for new added packages
     --send-all <command>             - send a command to all servers
@@ -45,7 +45,7 @@ All adjustments can be made in the basic configuration file: **xstools.conf**.
         stop <bot(s)>           - stop rcon2irc bots
         restart-all             - restart all rcon2irc bots
         restart <bot(s)>        - restart rcon2irc bots
-        view <bot(s)>           - view rcon2irc console
+        attach <bot(s)>         - attach rcon2irc console
 
     --help                      - print full help
     -h                          - print this help
