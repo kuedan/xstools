@@ -248,7 +248,7 @@ for var in $@; do
     # -> print error and continue with for loop
     elif [[ $(tmux list-windows -t $tmux_session 2>/dev/null | grep "$tmux_window " ) ]]; then
         echo &>2 -e "$print_error Server '$server_name' does not run, but tmux window '$tmux_window' exists."
-        echo &>2 -e "          Use '--view $server_name' to check window status."
+        echo &>2 -e "          Use '--attach $server_name' to check window status."
         continue
     else
     # option 4; server is not running, tmux session exists, window does not exists 
@@ -944,7 +944,7 @@ rm -f "$userdir/lock_update"
 # {{{
 
 # function to attach user to tmux window of give server
-function server_view() {
+function server_attach() {
 server_first_config_check $1
 if [[ "$tmux_help" == "true" ]]; then
     echo -e "$print_info You will be attached to a server window."
@@ -967,7 +967,7 @@ for var in $@; do
         echo -e "          Use '--list' to list all servers running servers." >&2
     fi
 done
-} # end of server_view()
+} # end of server_attach()
 
 # list all running servers and rcon2irc bots
 function xstools_list_all() {
@@ -997,7 +997,7 @@ if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
             printf "%-30s%-s\n" "       - $server_name" "${server_players}${server_version}"
         else
             echo >&2 -e "       - $print_error window: '$tmux_window' has no running server"
-            echo >&2 -e "                 Use '--view $server_name' to fix it."
+            echo >&2 -e "                 Use '--attach $server_name' to check window status."
         fi
     done
     # same for rcon2irc bots
@@ -1013,7 +1013,7 @@ if [[ $(tmux list-windows -t $tmux_session 2>/dev/null) ]]; then
             echo -e "       - $rcon2irc_name"
         else
             echo >&2 -e "       - $print_error window: '$tmux_window' has no running rcon2irc bot"
-            echo >&2 -e "                 Use '--rcon2irc view $rcon2irc_name' to fix it."
+            echo >&2 -e "                 Use '--rcon2irc attach $rcon2irc_name' to check window status."
         fi
     done
 fi
@@ -1569,14 +1569,14 @@ fi
 } # end of rcon2irc_config_check_and_set()
 
 function rcon2irc_check_start() {
-# check if rcon2irc has been started successfull othewise tell 'Use --rcon2irc view...'
+# check if rcon2irc has been started successfull othewise tell 'Use --rcon2irc attach...'
 # it seems that we need a small time periode until process is in process list ps -af
 sleep 1
 if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config" 2>/dev/null |grep -v grep ) ]]; then
     echo -e "$print_info rcon2irc '$rcon2irc_name' has been started."
 else
     echo >&2 -e "$print_error Starting rcon2irc '$rcon2irc_name' failed."
-    echo >&2 -e "        Use '--rcon2irc view $rcon2irc_name' to check window status/error message"
+    echo >&2 -e "        Use '--rcon2irc attach $rcon2irc_name' to check window status."
 fi
 } # end of rcon2irc_check_start()
 
@@ -1609,7 +1609,7 @@ rcon2irc_config_check_and_set $var
     # in this case: print error and continue with for loop
     elif [[ $(tmux list-windows -t $tmux_session 2>/dev/null | grep "$tmux_window " ) ]]; then
         echo >&2 -e "$print_error rcon2irc '$rcon2irc_name' does not run, but tmux window '$tmux_window' exists."
-        echo >&2 -e "        Use '--rcon2irc view $rcon2irc_name' to check window status."
+        echo >&2 -e "        Use '--rcon2irc attach $rcon2irc_name' to check window status."
         continue
     else
     # option 4; rcon2irc is not running, tmux session exists, window does not exists 
@@ -1694,7 +1694,7 @@ rcon2irc_config_check_and_set $var
                 echo -e "       rcon2irc '$rcon2irc_name' has been restarted."
             else
                 echo >&2 -e "$print_error Starting rcon2irc '$rcon2irc_name' failed."
-                echo >&2 -e "        Use '--rcon2irc view $rcon2irc_name' to check window status/error message"
+                echo >&2 -e "        Use '--rcon2irc attach $rcon2irc_name' to check window status."
             fi
         else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$rcon2irc_name' is running."
@@ -1721,7 +1721,7 @@ for conf in $(ls $userdir/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
                 echo -e "       rcon2irc '$rcon2irc_name' has been restarted."
             else
                 echo >&2 -e "$print_error Starting rcon2irc '$rcon2irc_name' failed."
-                echo >&2 -e "        Use '--rcon2irc view $rcon2irc_name' to check window status/error message"
+                echo >&2 -e "        Use '--rcon2irc attach $rcon2irc_name' to check window status."
             fi
         else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$rcon2irc_name' is running."
@@ -1731,7 +1731,7 @@ for conf in $(ls $userdir/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
 done
 } # end of rcon2irc_restart_all() {
 
-function rcon2irc_view() {
+function rcon2irc_attach() {
 rcon2irc_first_config_check $1
 echo -e "$print_info You will be attached to a rcon2irc window:"
 if [[ "$tmux_help" == "true" ]]; then
@@ -1754,7 +1754,7 @@ rcon2irc_config_check_and_set $var
         echo >&2 -e "        Use '--list' to list all running bots."
     fi
 done
-} # end of rcon2irc_view
+} # end of rcon2irc_attach
 # }}}
 
 
@@ -1776,7 +1776,7 @@ xstools
     --update-git <-cnqs>             - update git and restart git servers
     --list                           - list running servers/rcon2irc bots
     --list-configs                   - list server and rcon2irc configs
-    --view <server(s)>               - view server console
+    --attach <server(s)>             - attach server console
     --add-pk3 <url(s)>               - add pk3 files from given urls
     --rescan                         - rescan for new added packages
     --send-all <command>             - send a command to all servers
@@ -1802,7 +1802,7 @@ xstools
         stop <bot(s)>           - stop rcon2irc bots
         restart-all             - restart all rcon2irc bots
         restart <bot(s)>        - restart rcon2irc bots
-        view <bot(s)>           - view rcon2irc console
+        attach <bot(s)>         - attach rcon2irc console
 
     --help                      - print full help
     -h                          - print this help
@@ -1890,7 +1890,7 @@ Exampe: Congiguration file: my-bot.rcon.cfg
 
 --list-configs          List all server and rcon2irc configuration files.
 
---view <server(s)>      Attach a tmux window and show server console of
+--attach <server(s)>    Attach a tmux window and show server console of
                         server(s).
 
 --add-pk3 <url(s)>      Add .pk3 files to 'packages' from given urls and rescan
@@ -1958,7 +1958,7 @@ Exampe: Congiguration file: my-bot.rcon.cfg
 
       restart <bot(s)>  Restart rcon2irc specific bot(s).
 
-      view <bot(s)>     Attach a tmux window and show bot console of bot(s).
+      attach <bot(s)>   Attach a tmux window and show bot console of bot(s).
 
 
 --help                  print this help
@@ -1985,7 +1985,7 @@ case $1 in
     -da|da|--diff-all|diff-all)             server_mapinfo_diff_all;;
     -f|f|--fix|fix)                         server_mapinfo_fix "$@";;
     -s|s|--show|show)                       shift && server_mapinfo_show "$@";; 
-    ""|*)            {    
+    ""|*)            {
                      echo -e "$print_error Command is invalid or missing."
                      echo "        Use --mapinfo with one of this arguments:"
                      echo "            x|extract"
@@ -2011,7 +2011,7 @@ case $1 in
  --stop-all|stop-all)           rcon2irc_stop_all;;
  --start-all|start-all)         rcon2irc_start_all;;
  --restart-all|restart-all)     rcon2irc_restart_all;;
- --view|view)                   shift && rcon2irc_view $@;;
+ --attach|attach)               shift && rcon2irc_attach $@;;
  ""|*)               {
                      echo -e "$print_error Command is invalid or missing."
                      echo "        Use --rcon2irc with one of this arguments:"
@@ -2021,7 +2021,7 @@ case $1 in
                      echo "            stop <bots>"
                      echo "            restart-all"
                      echo "            restart <bot(s)>"
-                     echo "            view <bot(s)>"
+                     echo "            attach <bot(s)>"
                      } >&2; exit 1;;
 esac
 }
@@ -2037,7 +2037,7 @@ case $1 in
  --update-git|update-git)            basic_config_check; shift && server_update_git "$@";;
  --list|list|ls)                     basic_config_check; xstools_list_all;;
  --list-configs|list-configs)        basic_config_check; xstools_list_configs;;
- --view|view)                        basic_config_check; shift && server_view "$@";;
+ --attach|attach|att)                basic_config_check; shift && server_attach "$@";;
  --add-pk3|add-pk3)                  basic_config_check; shift && server_add_pk3 "$@";;
  --rescan|rescan)                    basic_config_check; server_send_rescan;;
  --send|send)                        basic_config_check; shift && server_send_command "$@";;
