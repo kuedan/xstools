@@ -239,7 +239,7 @@ for var in $@; do
         if [[ -f $HOME/.tmux.conf ]]; then
             TMUX=`which tmux`
         else
-            TMUX="`which tmux` -f $xstool_dir/conf/.tmux.conf"
+            TMUX="`which tmux` -f $xstool_dir/configs/.tmux.conf"
         fi
         $TMUX new-session -d -n $tmux_window -s $tmux_session
         tmux send -t $tmux_session:$tmux_window "$server_command $dp_default_arguments +set serverconfig $server_config $log_dp_argument" C-m 
@@ -1600,7 +1600,7 @@ rcon2irc_config_check_and_set $var
         if [[ -f $HOME/.tmux.conf ]]; then
             TMUX=`which tmux`
         else
-            TMUX="`which tmux` -f $xstool_dir/conf/.tmux.conf"
+            TMUX="`which tmux` -f $xstool_dir/configs/.tmux.conf"
         fi
         $TMUX new-session -d -n $tmux_window -s $tmux_session
         tmux send -t $tmux_session:$tmux_window "cd $rcon2irc_config_folder && perl $rcon2irc_script $rcon2irc_config" C-m 
