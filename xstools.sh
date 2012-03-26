@@ -236,7 +236,7 @@ for var in $@; do
     # option 2: server is not running, tmux session does not exist
     # -> start a new tmux session with new window and start server
     if ! tmux list-sessions 2>/dev/null |grep "$tmux_session:" &>/dev/null; then
-        if [[ -f $HOME/.tmux.conf ]]; then
+        if [[ -f $HOME/.tmux.conf && -z $xstools_tmux ]]; then
             TMUX=`which tmux`
         else
             TMUX="`which tmux` -f $xstool_dir/configs/.tmux.conf"
@@ -1597,7 +1597,7 @@ rcon2irc_config_check_and_set $var
     # option 2: rcon2irc is not running, tmux session does not exist
     # in this case: start a new tmux session, with new window and start rcon2irc
     if ! tmux list-sessions 2>/dev/null| grep "$tmux_session:" &>/dev/null; then
-        if [[ -f $HOME/.tmux.conf ]]; then
+        if [[ -f $HOME/.tmux.conf && -z $xstools_tmux ]]; then
             TMUX=`which tmux`
         else
             TMUX="`which tmux` -f $xstool_dir/configs/.tmux.conf"
