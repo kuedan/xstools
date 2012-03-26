@@ -1884,7 +1884,7 @@ Example: Congiguration file: my-bot.rcon.cfg
             -q <server> Restart server at endmatch and redirect all players
                         to given server (hostname+port).
             -s          Restart at endmatch and let all players reconnect.
-            -n          Optional parameter in combination with -s.
+            -n          Optional parameter in combination with -q or -s.
                         Directly restart, do not wait for endmatch.
 
 --list                  List all running servers and bots.
