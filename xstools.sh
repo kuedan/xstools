@@ -337,7 +337,7 @@ case $1 in
                     tmux send -t $tmux_session:$tmux_window "endmatch; quit" C-m
                     sleep 0.5
                     tmux send -t $tmux_session:$tmux_window "exit" C-m
-                    echo -e "       Server '$server_name' has been stopped."
+                    echo -e "$print_info Server '$server_name' has been stopped."
                 else
                     echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
                     echo >&2 -e "        You have to fix this on your own."
@@ -1638,11 +1638,10 @@ rcon2irc_config_check_and_set $var
     if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep ) ]]; then
         if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
             rcon_pid=$(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $2}')
-            echo -e "$print_info Stopping rcon2irc '$rcon2irc_name'"
             kill -9 $rcon_pid
             sleep 1
             tmux send -t $tmux_session:$tmux_window "exit" C-m 
-            echo -e "       rcon2irc '$rcon2irc_name' has been stopped."
+            echo -e "$print_info rcon2irc '$rcon2irc_name' has been stopped."
         else
             echo -e >&2 "$print_error tmux window '$tmux_window' does not exists, but rcon2irc '$rcon2irc_name' is running."
             echo -e >&2 "        You have to fix this on your own."
@@ -1661,11 +1660,10 @@ for conf in $(ls "$userdir"/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
     if [[ $(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep ) ]]; then
         if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
             rcon_pid=$(ps -af | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $2}')
-            echo -e "$print_info Stopping rcon2irc '$rcon2irc_name'"
             kill -9 $rcon_pid
             sleep 1
             tmux send -t $tmux_session:$tmux_window "exit" C-m 
-            echo -e "       rcon2irc '$rcon2irc_name' has been stopped."
+            echo -e "$print_info rcon2irc '$rcon2irc_name' has been stopped."
         else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but rcon2irc '$rcon2irc_name' is running."
             echo >&2 -e "        You have to fix this on your own."
