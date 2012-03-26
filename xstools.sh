@@ -1881,6 +1881,8 @@ Example: Congiguration file: my-bot.rcon.cfg
 --update-git            Update Xonotic git repository and restart all
                         git servers.
   Options:  -c          Send a countdown of 10min before restart.
+            -q <server> Restart server at endmatch and redirect all players
+                        to given server (hostname+port).
             -s          Restart at endmatch and let all players reconnect.
             -n          Optional parameter in combination with -s.
                         Directly restart, do not wait for endmatch.
