@@ -74,14 +74,14 @@ Use the following extenstions for your configs:
 
 ## Dependencies
 
-- Required Software: tmux, gawk
+- Required Software: A linux or unix based operating system, bash, tmux, gawk
 
 - Optional Software: perl, git, qstat
 
 
-## Wiki
+## Documentation
 
-Check the [Wiki](http://lcbx.dyndns.org/xonotic/xstools).
+Check this [Documentation](http://lcbx.dyndns.org/xonotic/xstools).
 
 For any questions or help, join [#xstools, quakenet](http://webchat.quakenet.org/?channels=xstools) (IRC).
 
