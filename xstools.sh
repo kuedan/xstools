@@ -1826,8 +1826,8 @@ rcon2irc configuration files  are recogized by the extension .rcon2irc.conf
 and must be placed in 'configs/rcon2irc'. The name of the rcon2irc bot is
 created by without extension. That is "config_file%\.rcon2irc.conf".
 The name of the tmux window has a prefix "rcon2irc-".
-Exampe: Congiguration file: my-bot.rcon.cfg
-        rcon2irc bot name: my-bot    Window name: rcon2irc-my-bot
+Example: Congiguration file: my-bot.rcon.cfg
+         rcon2irc bot name: my-bot    Window name: rcon2irc-my-bot
 
 
 ----- Functions
