@@ -712,7 +712,7 @@ while getopts ":cq:sn" options; do
 done
 shift $((OPTIND-1))
 if [[ -n $send_countdown_ && -n $restart_and_redirect ]]; then
-    echo >&2 "$print_error You cannot use -c in combination with -n,-q.-s option."
+    echo >&2 -e "$print_error You cannot use -c in combination with -n,-q.-s option."
     exit 1
 fi
 for server_name in $@; do
@@ -755,7 +755,7 @@ while getopts ":rgcq:sn" options; do
 done
 shift $((OPTIND-1))
 if [[ -n $send_countdown_ && -n $restart_and_redirect ]]; then
-    echo >&2 "$print_error You cannot use -c in combination with -n,-q.-s option."
+    echo >&2 -e "$print_error You cannot use -c in combination with -n,-q.-s option."
     exit 1
 fi
 if [[ $grep_release == true && $grep_git != true ]]; then
@@ -903,7 +903,7 @@ fi
 # git servers only
 pgrep_suffix=_git
 if [[ -n $send_countdown_ && -n $restart_and_redirect ]]; then
-    echo >&2 "$print_error You cannot use -c in combination with -n,-q.-s option."
+    echo >&2 -e "$print_error You cannot use -c in combination with -n,-q.-s option."
     exit 1
 fi
 if [[ $grep_release == true && $grep_git != true ]]; then
