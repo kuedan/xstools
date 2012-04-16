@@ -1856,7 +1856,7 @@ Example: Congiguration file: my-bot.rcon.cfg
 
   Options for both stop functions:
             -c          Send a countdown of 10min before quit.
-            -q <server> Quit server at endmatch and redirect all players
+            -q          Quit server at endmatch and redirect all players
                         to given server (hostname+port).
             -n          Optional parameter in combination with -q. Directly
                         quit, do not wait for endmatch.
@@ -1872,7 +1872,7 @@ Example: Congiguration file: my-bot.rcon.cfg
 
   Options for both restart functions:
             -c          Send a countdown of 10min before restart.
-            -q <server> Restart server at endmatch and redirect all players
+            -q          Restart server at endmatch and redirect all players
                         to given server (hostname+port).
             -s          Restart server at endmatch at let all players reconnect.
             -n          Optional parameter in combination with -q or -s.
@@ -1881,7 +1881,7 @@ Example: Congiguration file: my-bot.rcon.cfg
 --update-git            Update Xonotic git repository and restart all
                         git servers.
   Options:  -c          Send a countdown of 10min before restart.
-            -q <server> Restart server at endmatch and redirect all players
+            -q          Restart server at endmatch and redirect all players
                         to given server (hostname+port).
             -s          Restart at endmatch and let all players reconnect.
             -n          Optional parameter in combination with -q or -s.
