@@ -195,13 +195,13 @@ fi
 } # end of server_config_check_and_set()
 
 function pgrep_server() {
-    ps uf | grep "+set serverconfig $server_config" |grep -v grep
+    ps uf | grep "xonotic.* +set serverconfig $server_config" |grep -v grep
 }
 function pgrep_server_release() {
-    ps uf |grep "xonotic-linux.*dedicated .* +set serverconfig $server_config" |grep -v grep
+    ps uf |grep "xonotic-linux.*dedicated.* +set serverconfig $server_config" |grep -v grep
 }
 function pgrep_server_git() {
-    ps uf | grep "darkplaces/darkplaces-dedicated -xonotic .* +set serverconfig $server_config" |grep -v /bin/sh |grep -v grep
+    ps uf | grep "darkplaces/darkplaces-dedicated -xonotic.* +set serverconfig $server_config" |grep -v /bin/sh |grep -v grep
 }
 
 # basic function to start servers
