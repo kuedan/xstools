@@ -195,7 +195,7 @@ fi
 } # end of server_config_check_and_set()
 
 function pgrep_server() {
-    ps o cmd | grep "xonotic.* +set serverconfig $server_config" |grep -v grep
+    ps o cmd | grep "+set serverconfig $server_config" |grep -v grep
 }
 function pgrep_server_release() {
     ps o cmd |grep "xonotic-linux.*dedicated.* +set serverconfig $server_config" |grep -v grep
