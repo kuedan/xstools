@@ -6,4 +6,4 @@
 # You need to fix the path.
 # Fix 'please-fix-me' to the real location of xstools.sh.
 
-bash /please-fix-me/xstools.sh $@
+/please-fix-me/xstools.sh $@
