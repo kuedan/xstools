@@ -976,7 +976,7 @@ if ! tmux list-sessions | cut -d: -f1 | grep $tmux_session &>/dev/null; then
     exit 1
 fi
 if tmux list-windows -t $tmux_session &>/dev/null; then
-    activ_server_windows=$(tmux list-windows -t $tmux_session |awk -F\  '$2 ~ /server-.*/ {print $2}' |cut -f2- -d- |sort)
+    activ_server_windows=$(tmux list-windows -t $tmux_session |awk -F\  '$2 ~ /server-.*/ {print $2}' |cut -f2- -d- |sort -f)
     if [[ -z $activ_server_windows ]]; then
         echo -e "$print_info No servers are running."
     else
@@ -1001,7 +1001,7 @@ if tmux list-windows -t $tmux_session &>/dev/null; then
         fi
     done
     # same for rcon2irc bots
-    activ_rcon2irc_windows=$(tmux list-windows -t $tmux_session |awk -F\  '$2 ~ /rcon2irc-.*/ {print $2}' |cut -f2- -d- |sort)
+    activ_rcon2irc_windows=$(tmux list-windows -t $tmux_session |awk -F\  '$2 ~ /rcon2irc-.*/ {print $2}' |cut -f2- -d- |sort -f)
     if [[ -z $activ_rcon2irc_windows ]]; then
         echo -e "$print_info No rcon2irc bots are running."
     else
@@ -1356,10 +1356,10 @@ if [[ -z $maplist ]]; then
     echo >&2 -e "$print_attention No maps for $@"
 elif [[ $@ == "" ]]; then
     echo -e "$print_info Maplist for all gametypes:"
-    echo $maplist |tr " " "\n" |sort |uniq |tr "\n" " "
+    echo $maplist |tr " " "\n" |sort -f|uniq |tr "\n" " "
 else
     echo -e "$print_info Maplist for $@:"
-    echo $maplist |tr " " "\n" |sort |uniq |tr "\n" " "
+    echo $maplist |tr " " "\n" |sort -f|uniq |tr "\n" " "
 fi
 } # end of server_maplist()
 
