@@ -189,7 +189,7 @@ if [[ -f "$userdir/configs/servers/$1.cfg"  ]]; then
         log_dp_argument=""
     fi
 else
-    echo >&2 -e "$print_error No config file available for '$server_name'"
+    echo >&2 -e "$print_error No config file available for '$1'"
     exit 1
 fi
 } # end of server_config_check_and_set()
