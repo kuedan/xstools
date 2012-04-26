@@ -1512,10 +1512,10 @@ done
 function server_mapinfo_fix() {
 echo -e "$print_info Fix mapinfos in data/maps"
 for map_info_l in "$userdir"/data/maps/*.mapinfo; do
-    sed -i 's/^type /gametype /g' $map_info_l &>/dev/null
-    sed -i 's/^gametype freezetag/gametype ft/g' $map_info_l &>/dev/null
-    sed -i 's/^gametype keepaway/gametype ka/g' $map_info_l &>/dev/null
-    sed -i 's/^gametype nexball/gametype nb/g' $map_info_l &>/dev/null
+    sed -i -e 's/^type /gametype /g'\
+           -e 's/^gametype freezetag/gametype ft/g'\
+           -e 's/^gametype keepaway/gametype ka/g'\
+           -e 's/^gametype nexball/gametype nb/g' $map_info_l &>/dev/null
 done
 echo -e "$print_info Scanning pk3 packages and fix them"
 echo -e "       Existing mapinfos are not overwritten."
@@ -1533,10 +1533,10 @@ for folder in $package_folders; do
                 continue
             elif unzip -qp $map_pk3 maps/$map_info |grep -E '(^type )|(^gametype (freezetag)|(keepaway)|(nexball))' &>/dev/null; then
                 unzip -qjn -d "$userdir"/data/maps/ $map_pk3 maps/$map_info 
-                sed -i 's/^type /gametype /g' $map_info_l &>/dev/null
-                sed -i 's/^gametype freezetag/gametype ft/g' "$userdir"/data/maps/$map_info &>/dev/null
-                sed -i 's/^gametype keepaway/gametype ka/g' "$userdir"/data/maps/$map_info &>/dev/null
-                sed -i 's/^gametype nexball/gametype nb/g' "$userdir"/data/maps/$map_info &>/dev/null
+                sed -i -e 's/^type /gametype /g'\
+                       -e 's/^gametype freezetag/gametype ft/g'\
+                       -e 's/^gametype keepaway/gametype ka/g'\
+                       -e 's/^gametype nexball/gametype nb/g' $map_info_l &>/dev/null
             fi
         done
     done
