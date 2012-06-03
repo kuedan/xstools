@@ -251,7 +251,7 @@ for var in $@; do
         echo &>2 -e "          Use '--attach $server_name' to check window status."
         continue
     else
-    # option 4; server is not running, tmux session exists, window does not exists 
+    # option 4; server is not running, tmux session exists, window does not exist 
     # -> start a new window in tmux session and start server
         tmux new-window -d -n $tmux_window -t $tmux_session
         tmux send -t $tmux_session:$tmux_window "$server_command $dp_default_arguments +set serverconfig $server_config $log_dp_argument" C-m 
@@ -322,7 +322,7 @@ case $1 in
                     tmux send -t $tmux_session:$tmux_window "exit" C-m
                     echo -e "$print_info Server '$server_name' has been stopped."
                 else
-                    echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+                    echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but server '$server_name' is running."
                     echo >&2 -e "        You have to fix this on your own."
                 fi
             else
@@ -339,7 +339,7 @@ case $1 in
                     tmux send -t $tmux_session:$tmux_window "exit" C-m
                     echo -e "$print_info Server '$server_name' has been stopped."
                 else
-                    echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+                    echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but server '$server_name' is running."
                     echo >&2 -e "        You have to fix this on your own."
                 fi
             fi
@@ -376,7 +376,7 @@ server_config_check_and_set ${server_names[$counter]}
                 echo -e "       Server '$server_name' has been stopped."
             fi
     else
-            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but server '$server_name' is running."
             echo >&2 -e "        You have to fix this on your own."
             unset server_names[$counter]
         fi
@@ -437,7 +437,7 @@ server_config_check_and_set ${server_names[$counter]}
             echo -e "$print_info Sending 'quit_when_empty 1' to '$server_name'"
             tmux send -t $tmux_session:$tmux_window "quit_when_empty 1" C-m
         else
-            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but server '$server_name' is running."
             echo >&2 -e "        You have to fix this on your own."
             unset server_names[$counter]
         fi
@@ -591,7 +591,7 @@ case $1 in
                     fi
                     echo -e "       Server '$server_name' has been restarted."
                 else
-                    echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+                    echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but server '$server_name' is running."
                     echo >&2 -e "        You have to fix this on your own."
                 fi
                 else
@@ -615,7 +615,7 @@ case $1 in
                     fi
                     echo -e "       Server '$server_name' has been restarted."
                 else
-                    echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+                    echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but server '$server_name' is running."
                     echo >&2 -e "        You have to fix this on your own."
                 fi
             fi
@@ -661,7 +661,7 @@ server_config_check_and_set ${server_names[$counter]}
         echo -e "       Server '$server_name' has been restarted."
     fi
     else
-            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but server '$server_name' is running."
             echo >&2 -e "        You have to fix this on your own."
             unset server_names[$counter]
         fi
@@ -971,10 +971,6 @@ done
 
 # list all running servers and rcon2irc bots
 function xstools_list_all() {
-if ! tmux list-sessions | cut -d: -f1 | grep $tmux_session &>/dev/null; then
-    echo >&2 -e "$print_error tmux session '$tmux_session' not activ"
-    exit 1
-fi
 if tmux list-windows -t $tmux_session &>/dev/null; then
     activ_server_windows=$(tmux list-windows -t $tmux_session |awk -F\  '$2 ~ /server-.*/ {print $2}' |cut -f2- -d- |sort -f)
     if [[ -z $activ_server_windows ]]; then
@@ -1016,6 +1012,10 @@ if tmux list-windows -t $tmux_session &>/dev/null; then
             echo >&2 -e "                 Use '--rcon2irc attach $rcon2irc_name' to check window status."
         fi
     done
+fi
+if ! tmux list-sessions | cut -d: -f1 | grep $tmux_session &>/dev/null; then
+    echo >&2 -e "$print_error tmux session '$tmux_session' not activ"
+    exit 1
 fi
 } # end of xstools_list_all()
 
@@ -1090,7 +1090,7 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
             tmux send -t $tmux_session:$tmux_window "rescan_pending 1" C-m
             echo -e "       - $server_name"
         else
-            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but server '$server_name' is running."
             echo >&2 -e "        You have to fix this on your own."
         fi
     fi
@@ -1201,7 +1201,7 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
         if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
         server_send_set_ports_and_pws
         else
-            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but server '$server_name' is running."
             echo >&2 -e "        You have to fix this on your own."
         fi
     fi
@@ -1226,7 +1226,7 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
             tmux send -t $tmux_session:$tmux_window "log_file \"$log_format\"" C-m
             echo -e "       - $server_name"
         else
-            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$server_name' is running."
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but server '$server_name' is running."
             echo >&2 -e "        You have to fix this on your own."
         fi
     fi
@@ -1499,7 +1499,7 @@ for map_pk3 in "$@"; do
             echo -e "$print_info data/maps/$map_info:"
             cat "$userdir/data/maps/$map_info"
         else
-            echo -e "$print_info data/maps/$map_info does not exists."
+            echo -e "$print_info data/maps/$map_info does not exist."
         fi
         echo -e "$print_info ${map_pk3##*/} - $map_info:"
         unzip -pq $map_pk3 maps/$map_info
@@ -1612,7 +1612,7 @@ rcon2irc_config_check_and_set $var
         echo >&2 -e "        Use '--rcon2irc attach $rcon2irc_name' to check window status."
         continue
     else
-    # option 4; rcon2irc is not running, tmux session exists, window does not exists 
+    # option 4; rcon2irc is not running, tmux session exists, window does not exist 
     # in this case: start a new window in tmux session and start rcon2irc
         tmux new-window -d -n $tmux_window -t $tmux_session
         tmux send -t $tmux_session:$tmux_window "cd $rcon2irc_config_folder && perl $rcon2irc_script $rcon2irc_config" C-m 
@@ -1643,7 +1643,7 @@ rcon2irc_config_check_and_set $var
             tmux send -t $tmux_session:$tmux_window "exit" C-m 
             echo -e "$print_info rcon2irc '$rcon2irc_name' has been stopped."
         else
-            echo -e >&2 "$print_error tmux window '$tmux_window' does not exists, but rcon2irc '$rcon2irc_name' is running."
+            echo -e >&2 "$print_error tmux window '$tmux_window' does not exist, but rcon2irc '$rcon2irc_name' is running."
             echo -e >&2 "        You have to fix this on your own."
         fi  
     else
@@ -1665,7 +1665,7 @@ for conf in $(ls "$userdir"/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
             tmux send -t $tmux_session:$tmux_window "exit" C-m 
             echo -e "$print_info rcon2irc '$rcon2irc_name' has been stopped."
         else
-            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but rcon2irc '$rcon2irc_name' is running."
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but rcon2irc '$rcon2irc_name' is running."
             echo >&2 -e "        You have to fix this on your own."
         fi  
     fi  
@@ -1695,7 +1695,7 @@ rcon2irc_config_check_and_set $var
                 echo >&2 -e "        Use '--rcon2irc attach $rcon2irc_name' to check window status."
             fi
         else
-            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$rcon2irc_name' is running."
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but server '$rcon2irc_name' is running."
             echo >&2 -e "        You have to fix this on your own."
         fi
     else
@@ -1722,7 +1722,7 @@ for conf in $(ls $userdir/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
                 echo >&2 -e "        Use '--rcon2irc attach $rcon2irc_name' to check window status."
             fi
         else
-            echo >&2 -e "$print_error tmux window '$tmux_window' does not exists, but server '$rcon2irc_name' is running."
+            echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but server '$rcon2irc_name' is running."
             echo >&2 -e "        You have to fix this on your own."
         fi
     fi
