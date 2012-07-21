@@ -1277,7 +1277,7 @@ done
 
 function server_maplist_release() {
 echo -e "$print_info Checking release mapinfos."
-map_infos=$(unzip -l "$basedir_release"/data/xonotic-*-maps.pk3 |grep -Eo '[A-Za-z0-9#._+-]+\.mapinfo' |tr "\n" " ")
+map_infos=$(unzip -l "$basedir_release"/data/xonotic-*-maps*.pk3 |grep -Eo '[A-Za-z0-9#._+-]+\.mapinfo' |tr "\n" " ")
 for map_info in $map_infos; do
     map_name=${map_info%.mapinfo}
     if [[ -f $userdir/data/maps/$map_info ]]; then
@@ -1286,7 +1286,7 @@ for map_info in $map_infos; do
 #   elif [[ pk3 has been copied to packages... ]]; then
 #       continue
     fi
-    unzip -p "$basedir_release"/data/xonotic-*-maps.pk3 maps/$map_info | grep -Eo "^(gametype|type) $@" >/dev/null &&
+    unzip -p "$basedir_release"/data/xonotic-*-maps*.pk3 maps/$map_info | grep -Eo "^(gametype|type) $@" >/dev/null &&
     maplist="$map_name $maplist"
 done
 }
