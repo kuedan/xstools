@@ -180,7 +180,7 @@ if [[ -f "$userdir/configs/servers/$1.cfg"  ]]; then
     # log file settings
     if [[ "$set_logs" == "true" ]]; then
         if [[ "$logs_date" == "true" ]]; then
-            log_format="logs/${server_name}_$(date +"%Y%m%d").log"
+            log_format="logs/${server_name}_$(date +%F).log"
             log_dp_argument="+set log_file $log_format"
         else
             log_dp_argument="+set log_file logs/$server_name.log"
@@ -1221,7 +1221,7 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     if pgrep_server &>/dev/null; then
         server_config_check_and_set ${server_config%.cfg}
         if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
-            log_format="logs/${server_name}_$(date +"%Y%m%d").log"
+            log_format="logs/${server_name}_$(date +%F).log"
             tmux send -t $tmux_session:$tmux_window "log_file \"$log_format\"" C-m
             echo -e "       - $server_name"
         else
