@@ -50,6 +50,11 @@ which tmux &>/dev/null || {
     exit 1
 }
 
+which gawk &>/dev/null || {
+    echo >&2 -e "$print_error Couln't find gawk, which is required."
+    exit 1
+}
+
 if [[ "$enable_quakestat" == "true" ]]; then
     which quakestat &>/dev/null || {
     echo >&2 -e "$print_error Couldn't find quakestat, which is required."
