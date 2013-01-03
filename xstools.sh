@@ -1698,33 +1698,16 @@ xstools
         restart <bot(s)>        - restart rcon2irc bots
         attach <bot(s)>         - attach rcon2irc console
 
-    --help                      - print full help
+    --help                      - print full help for functions
     -h                          - print this help
 EOF
 }
 
 function xstools_more_help() {
 cat << EOF
+
 Xonotic Server Tools is a collection of functions to manage your Xonotic
-servers by loading every single server in a seperate tmux window. You can
-easily control those servers by their names. This script supports 'release'
-and 'git' servers.
-
------ Important Usage Notes
-
-Server configuration files in are recognized by the extension .cfg and
-must be placed in 'configs/servers'. The name of the server is created by
-the file name without extension. That is "config_file%\.cfg".
-The name of the tmux window has a prefix "server-".
-Example: Configuration file: my-server.cfg
-         Server name: my-server      Window name: server-my-server
-rcon2irc configuration files  are recogized by the extension .rcon2irc.conf
-and must be placed in 'configs/rcon2irc'. The name of the rcon2irc bot is
-created by without extension. That is "config_file%\.rcon2irc.conf".
-The name of the tmux window has a prefix "rcon2irc-".
-Example: Congiguration file: my-bot.rcon.cfg
-         rcon2irc bot name: my-bot    Window name: rcon2irc-my-bot
-
+servers. Check Wiki for complete help.
 
 ----- Functions
 
@@ -1940,7 +1923,7 @@ case $1 in
  --maplist|maplist)                  basic_config_check; shift && server_maplist "$@";;
  --mapinfo|mapinfo)                  basic_config_check; shift && server_mapinfo_control "$@";;
  --rcon2irc|rcon2irc)                basic_config_check; shift && rcon2irc_control "$@";;
- --help|--usage|help|usage)          xstools_more_help;;
+ --help|--usage|help|usage)          xstools_more_help | less;;
  -h|h)                               xstools_help;;
  "")                                 echo >&2 "xstools needs an argument, check -h or --help"; exit 1;;
  *)                                  echo >&2 "This is not a valid argument! Check -h or --help"; exit 1;;
