@@ -480,9 +480,8 @@ done
 
 # stop one or more servers
 function server_stop_specific() {
-while getopts ":cq:new" options; do
+while getopts ":q:new" options; do
     case $options in
-        c) send_countdown_=true;;
         q) quit_and_redirect=true; quit_and_redirect_custom=true; quit_and_redirect_to="$OPTARG";;
         n) quit_and_redirect=true; quit_and_redirect_now=true;;
         e) quit_when_empty=true;;
@@ -490,32 +489,14 @@ while getopts ":cq:new" options; do
     esac
 done
 shift $((OPTIND-1))
-if [[ -n $send_countdown_ && ( -n $quit_and_redirect || -n $quit_when_empty ) ]]; then
-    echo >&2 -e "$print_error You cannot use -c in combination with -e,-n,-q, -w option."
-    exit 1
-elif [[ -n $quit_and_redirect && -n $quit_when_empty ]]; then
+if [[ -n $quit_and_redirect && -n $quit_when_empty ]]; then
     echo >&2 -e "$print_error You cannot use -n,-q in combination with -e option."
     exit 1
 fi
 for server_name in $@; do
     server_config_check_and_set $server_name
 done
-if [[ -n $send_countdown_ ]]; then
-    message_[0]='Server will shutdown in 10min.'
-    message_timer_[0]=300
-    message_[1]='Server will shutdown in 5min.'
-    message_timer_[1]=240
-    message_[2]='Server will shutdown in 1min.'
-    message_timer_[2]=55
-    message_[3]='Server will shutdown now.'
-    message_timer_[3]=5
-    send_notice defined_servers $@
-    server_stop defined_servers $@
-#elif [[ -n $quit_and_redirect && -z $quit_and_redirect_to ]]; then
-#    #TODO: server cvar has to be checked... HOSTNAME or ip + port
-#    echo >&2 -e "$print_error Please define the server to redirect to."
-#    exit 1
-elif [[ -n $quit_and_redirect ]]; then
+if [[ -n $quit_and_redirect ]]; then
     send_notice defined_servers $@
     server_stop_redirect defined_servers $@
 elif [[ -n $quit_when_empty ]]; then
@@ -527,11 +508,10 @@ fi
 
 # function to stop all servers
 function server_stop_all() {
-while getopts ":rgcq:new" options; do
+while getopts ":rgq:new" options; do
     case $options in
         r) grep_release=true;;
         g) grep_git=true;;
-        c) send_countdown_=true;;
         q) quit_and_redirect=true; quit_and_redirect_custom=true; quit_and_redirect_to="$OPTARG";;
         n) quit_and_redirect=true; quit_and_redirect_now=true;;
         e) quit_when_empty=true;;
@@ -539,10 +519,7 @@ while getopts ":rgcq:new" options; do
     esac
 done
 shift $((OPTIND-1))
-if [[ -n $send_countdown_ && ( -n $quit_and_redirect || -n $quit_when_empty ) ]]; then
-    echo >&2 -e "$print_error You cannot use -c in combination with -e,-n, -s,-w option."
-    exit 1
-elif [[ -n $quit_and_redirect && -n $quit_when_empty ]]; then
+if [[ -n $quit_and_redirect && -n $quit_when_empty ]]; then
     echo >&2 -e "$print_error You cannot use -n,-q in combination with -e option."
     exit 1
 fi
@@ -551,22 +528,7 @@ if [[ $grep_release == true && $grep_git != true ]]; then
 elif [[ $grep_release != true && $grep_git == true ]]; then
     pgrep_suffix=_git
 fi
-if [[ -n $send_countdown_ ]]; then
-    message_[0]='Server will shutdown in 10min.'
-    message_timer_[0]=300
-    message_[1]='Server will shutdown in 5min.'
-    message_timer_[1]=240
-    message_[2]='Server will shutdown in 1min.'
-    message_timer_[2]=55
-    message_[3]='Server will shutdown now.'
-    message_timer_[3]=5
-    send_notice all_servers $@
-    server_stop all_servers $@
-#elif [[ -n $quit_and_redirect && -z $quit_and_redirect_to ]]; then
-#    #TODO: server cvar has to be checked... HOSTNAME or ip + port
-#    echo >&2 -e "$print_error Please define the server to redirect to."
-#    exit 1
-elif [[ -n $quit_and_redirect ]]; then
+if [[ -n $quit_and_redirect ]]; then
     send_notice all_servers $@
     server_stop_redirect all_servers $@
 elif [[ -n $quit_when_empty ]]; then
@@ -709,38 +671,18 @@ fi
 
 # restart one or more servers
 function server_restart_specific() {
-while getopts ":cq:sn" options; do
+while getopts ":q:sn" options; do
     case $options in
-        c) send_countdown_=true;;
         q) restart_and_redirect=true; restart_and_redirect_to="$OPTARG";;
         s) restart_and_redirect=true; restart_and_redirect_to="self";;
         n) restart_and_redirect=true; restart_and_redirect_now=true;;
     esac
 done
 shift $((OPTIND-1))
-if [[ -n $send_countdown_ && -n $restart_and_redirect ]]; then
-    echo >&2 -e "$print_error You cannot use -c in combination with -n,-q.-s option."
-    exit 1
-fi
 for server_name in $@; do
     server_config_check_and_set $server_name
 done
-if [[ -n $send_countdown_ ]]; then
-    message_[0]='Server will restart in 10min.'
-    message_timer_[0]=300
-    message_[1]='Server will restart in 5min.'
-    message_timer_[1]=240
-    message_[2]='Server will restart in 1min.'
-    message_timer_[2]=55
-    message_[3]='Server will restart now.'
-    message_timer_[3]=5
-    send_notice defined_servers $@
-    server_restart defined_servers $@
-#elif [[ -n $restart_and_redirect && -z $restart_and_redirect_to ]]; then
-#    #TODO: server cvar has to be checked... HOSTNAME or ip + port
-#    echo >&2 -e "$print_error Please define the server to redirect to."
-#    exit 1
-elif [[ -n $restart_and_redirect ]]; then
+if [[ -n $restart_and_redirect ]]; then
     send_notice defined_servers $@
     server_restart_redirect defined_servers $@
 else
@@ -750,42 +692,22 @@ fi
 
 # function to restart all servers
 function server_restart_all() {
-while getopts ":rgcq:sn" options; do
+while getopts ":rgq:sn" options; do
     case $options in
         r) grep_release=true;;
         g) grep_git=true;;
-        c) send_countdown_=true;;
         q) restart_and_redirect=true; restart_and_redirect_to="$OPTARG";;
         s) restart_and_redirect=true; restart_and_redirect_to="self";;
         n) restart_and_redirect=true; restart_and_redirect_now=true;;
     esac
 done
 shift $((OPTIND-1))
-if [[ -n $send_countdown_ && -n $restart_and_redirect ]]; then
-    echo >&2 -e "$print_error You cannot use -c in combination with -n,-q.-s option."
-    exit 1
-fi
 if [[ $grep_release == true && $grep_git != true ]]; then
     pgrep_suffix=_release
 elif [[ $grep_release != true && $grep_git == true ]]; then
     pgrep_suffix=_git
 fi
-if [[ -n $send_countdown_ ]]; then
-    message_[0]='Server will restart in 10min.'
-    message_timer_[0]=300
-    message_[1]='Server will restart in 5min.'
-    message_timer_[1]=240
-    message_[2]='Server will restart in 1min.'
-    message_timer_[2]=55
-    message_[3]='Server will restart now.'
-    message_timer_[3]=5
-    send_notice all_servers
-    server_restart all_servers
-#elif [[ -n $restart_and_redirect && -z $restart_and_redirect_to ]]; then
-#    #TODO: server cvar has to be checked... HOSTNAME or ip + port
-#    echo >&2 -e "$print_error Please define the server to redirect to."
-#    exit 1
-elif [[ -n $restart_and_redirect ]]; then
+if [[ -n $restart_and_redirect ]]; then
     send_notice all_servers
     server_restart_redirect all_servers
 else
@@ -818,22 +740,7 @@ case $1 in
         done;;
 
 esac
-if [[ -n $send_countdown_ ]]; then
-    # send countdown to servers
-    counter=0
-    while [ "$counter" -lt "${#message_[@]}" ]; do
-        echo "Sending: ${message_[$counter]}"
-        for tmux_window in ${send_notice_to}; do
-            tmux send -t $tmux_session:$tmux_window "
-            set sv_adminnick_bak \"\${sv_adminnick}\";
-            set sv_adminnick \"^1Server System^3\";
-            say ${message_[$counter]};
-            wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
-        done
-        sleep ${message_timer_[$counter]}
-        counter=$[$counter+1]
-    done
-elif [[ -n $restart_and_redirect_now && $restart_and_redirect_to == "self" ]]; then
+if [[ -n $restart_and_redirect_now && $restart_and_redirect_to == "self" ]]; then
     for tmux_window in ${send_notice_to}; do
         tmux send -t $tmux_session:$tmux_window "
         set sv_adminnick_bak \"\${sv_adminnick}\";
@@ -882,9 +789,8 @@ fi
 } # end of send_notice()
 
 function server_update_git() {
-while getopts ":cq:sn" options; do
+while getopts ":q:sn" options; do
     case $options in
-        c) send_countdown_=true;;
         q) restart_and_redirect=true; restart_and_redirect_to="$OPTARG";;
         s) restart_and_redirect=true; restart_and_redirect_to="self";;
         n) restart_and_redirect=true; restart_and_redirect_now=true;;
@@ -909,26 +815,10 @@ elif [[ -z $git_update_date ]]; then
 fi
 # git servers only
 pgrep_suffix=_git
-if [[ -n $send_countdown_ && -n $restart_and_redirect ]]; then
-    echo >&2 -e "$print_error You cannot use -c in combination with -n,-q.-s option."
-    exit 1
-fi
 if [[ $grep_release == true && $grep_git != true ]]; then
     pgrep_suffix=_release
 elif [[ $grep_release != true && $grep_git == true ]]; then
     pgrep_suffix=_git
-fi
-if [[ -n $send_countdown_ ]]; then
-    message_[0]='Server will be updated in 10min.'
-    message_timer_[0]=300
-    message_[1]='Server will be updated in 5min.'
-    message_timer_[1]=240
-    message_[2]='Server will be updated in 1min.'
-    message_timer_[2]=55
-    message_[3]='Server will be updated now: Server restarts in a few.'
-    message_timer_[3]=5
-    # all_servers is all git servers - due the defined suffix
-    send_notice all_servers
 fi
 # lock xstools, when update started 
 touch "$userdir/lock_update"
@@ -1772,10 +1662,10 @@ xstools
 
     --start-all <-rg>               - start all servers
     --start <-rg> <server(s)>       - start servers
-    --stop-all <-rgceqnw>           - stop all servers
-    --stop <-ceqnw> <server(s)>     - stop servers
-    --restart-all <-rgcnqs>         - restart all servers
-    --restart <-cnqs> <server(s)>   - restart-servers
+    --stop-all <-rgeqnw>            - stop all servers
+    --stop <-eqnw> <server(s)>      - stop servers
+    --restart-all <-rgnqs>          - restart all servers
+    --restart <-nqs> <server(s)>    - restart-servers
 
     --update-git <-cnqs>             - update git and restart git servers
     --list                           - list running servers/rcon2irc bots
@@ -1861,7 +1751,6 @@ Example: Congiguration file: my-bot.rcon.cfg
 --stop <server(s)>      Stop specific server(s).
 
   Options for both stop functions:
-            -c          Send a countdown of 10min before quit.
             -q          Quit server at endmatch and redirect all players
                         to given server (hostname+port).
             -n          Optional parameter in combination with -q. Directly
@@ -1877,7 +1766,6 @@ Example: Congiguration file: my-bot.rcon.cfg
 --restart <server(s)>   Restart specific server(s).
 
   Options for both restart functions:
-            -c          Send a countdown of 10min before restart.
             -q          Restart server at endmatch and redirect all players
                         to given server (hostname+port).
             -s          Restart server at endmatch at let all players reconnect.
@@ -1886,8 +1774,7 @@ Example: Congiguration file: my-bot.rcon.cfg
 
 --update-git            Update Xonotic git repository and restart all
                         git servers.
-  Options:  -c          Send a countdown of 10min before restart.
-            -q          Restart server at endmatch and redirect all players
+  Options:  -q          Restart server at endmatch and redirect all players
                         to given server (hostname+port).
             -s          Restart at endmatch and let all players reconnect.
             -n          Optional parameter in combination with -q or -s.
