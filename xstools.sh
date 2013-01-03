@@ -655,7 +655,9 @@ server_config_check_and_set ${server_names[$counter]}
             tmux send -t $tmux_session:$tmux_window "endmatch" C-m
             fi
     if [[ -n $restart_and_redirect_now ]]; then
-    sleep 1
+        while pgrep_server &>/dev/null; do
+            sleep 1
+        done
         if [[ "$logs_date" == "true" ]]; then
             tmux send -t $tmux_session:$tmux_window 'last_command="!!"' C-m
             tmux send -t $tmux_session:$tmux_window "log_dp_argument=\"$log_dp_argument\"" C-m
