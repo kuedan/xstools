@@ -740,7 +740,15 @@ case $1 in
         done;;
 
 esac
-if [[ -n $restart_and_redirect_now && $restart_and_redirect_to == "self" ]]; then
+if [[ -n $update_git ]]; then
+    for tmux_window in ${send_notice_to}; do
+        tmux send -t $tmux_session:$tmux_window "
+        set sv_adminnick_bak \"\${sv_adminnick}\";
+        set sv_adminnick \"^1Server System^3\";
+        say Git update process started (will force restart when finished);
+        wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
+    done
+elif [[ -n $restart_and_redirect_now && $restart_and_redirect_to == "self" ]]; then
     for tmux_window in ${send_notice_to}; do
         tmux send -t $tmux_session:$tmux_window "
         set sv_adminnick_bak \"\${sv_adminnick}\";
@@ -822,8 +830,13 @@ elif [[ $grep_release != true && $grep_git == true ]]; then
 fi
 # lock xstools, when update started 
 touch "$userdir/lock_update"
+# use update_git variable for send_notice function
+update_git=true
+# option -g need not to be set - due the defined suffix
+send_notice all_servers
 # simply update
 update_git
+unset update_git
 # option -g need not to be set - due the defined suffix
 if [[ -n $restart_and_redirect ]]; then
     send_notice all_servers
@@ -1933,3 +1946,4 @@ esac
 # }}}
 
 # vim: foldmethod=marker:foldmarker={{{,}}}:foldlevel=0
+
