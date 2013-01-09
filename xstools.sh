@@ -1680,7 +1680,7 @@ xstools
     --restart-all <-rgnqs>          - restart all servers
     --restart <-nqs> <server(s)>    - restart-servers
 
-    --update-git <-cnqs>             - update git and restart git servers
+    --update-git <-nqs>             - update git and restart git servers
     --list                           - list running servers/rcon2irc bots
     --list-configs                   - list server and rcon2irc configs
     --attach <server(s)>             - attach server console
