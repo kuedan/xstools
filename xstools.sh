@@ -1168,7 +1168,7 @@ echo -e "$print_info Log files older than $mdays days deleted."
 function server_logs() {
 case $1 in
     "set") server_set_logs;;
-    "del") server_del_logs;;
+    "del") shift; server_del_logs "$@";;
     ""|*)  
         echo >&2 -e "$print_error Argument invalid or missing."
         echo >&2 -e "        Use --send 'set' or 'del'."
