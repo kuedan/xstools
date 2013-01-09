@@ -1161,7 +1161,7 @@ if [[ ! -d "$folder" ]]; then
     exit 1
 fi
 folder=$(echo $folder|sed 's#/$##g')
-find "$folder"/*.log -type f -mtime +$mdays -exec rm -f {} \;
+find "$folder"/*.log -type f -mtime +$mdays -exec rm -f {} \; 2>/dev/null
 echo -e "$print_info Log files older than $mdays days deleted."
 } # end of server_del_logs
 
