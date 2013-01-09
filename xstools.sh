@@ -270,7 +270,7 @@ done
 function server_start_specific() {
 server_first_config_check $1
 version_has_been_set=false
-while getopts ":rgi:" opt
+while getopts ":rg" opt
 do
     case $opt in
         g) version_git_check_and_set && version_has_been_set=true;;
@@ -294,7 +294,7 @@ server_start "$@"
 # start all servers 
 function server_start_all() {
 version_has_been_set=false
-while getopts ":rgi:" opt
+while getopts ":rg" opt
 do
     case $opt in
         g) version_git_check_and_set && version_has_been_set=true;;
@@ -1663,7 +1663,6 @@ rcon2irc_config_check_and_set $var
 done
 } # end of rcon2irc_attach
 # }}}
-
 
 ### --- help functions
 # {{{
