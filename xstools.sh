@@ -1216,7 +1216,7 @@ while getopts ":rgd:p:" options; do
         r) version_release==true; _version=release;;
         g) version_git=true;      _version=git;;
         d) data_dirname="$OPTARG";;
-        p) package_folders="$OPTARG";;
+        p) package_folders="$package_folders $OPTARG";;
     esac
 done
 shift $((OPTIND-1))
