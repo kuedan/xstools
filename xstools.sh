@@ -1149,7 +1149,19 @@ if [[ $mdays == "" ]]; then
     echo >&2 -e "        Check xstools.conf"
     exit 1
 fi
-find "$userdir"/logs/*.log -type f -mtime +$mdays -exec rm -f {} \;
+while getopts ":f:" options; do
+    case $options in
+        f) folder="$OPTARG";;
+    esac
+done
+shift $((OPTIND-1))
+[ -z $folder ] && folder="$userdir/data/logs"
+if [[ ! -d "$folder" ]]; then
+    echo -e >&2 "$print_error Folder $folder does not exist."
+    exit 1
+fi
+folder=$(echo $folder|sed 's#/$##g')
+find "$folder"/*.log -type f -mtime +$mdays -exec rm -f {} \;
 echo -e "$print_info Log files older than $mdays days deleted."
 } # end of server_del_logs
 
@@ -1711,8 +1723,9 @@ xstools
     --rescan                         - rescan for new added packages
     --send-all <command>             - send a command to all servers
     --send <server(s)> -c <command>  - send a command to given server(s)
-    --logs set/ del                  - set a new log file for all servers,
-                                       delete log files older than given days
+    --logs set/ del <-f>             - set a new log file for all servers,
+                                       delete log files in 'folder' (by -f)
+                                       older than given days
     --maplist <-grdp>                - create maplist for all gametypes based on
                                        data (by -d) and package folder (by -p),
                                        also supports regex.
@@ -1822,8 +1835,10 @@ servers. Check Wiki for complete help.
                         'serverconfig.date.log', where 'serverconfig' is the
                         server name  and 'date' is 'YearMonthDay'. 
 
---logs del              Delete older log files in 'logs/' than given time in
+--logs del              Delete older log files than given time in
                         days. Check xstools.conf to adjust this.
+  Options: -f           Set the folder where logs are located.
+                        (default data/logs)
 
 --maplist               Create a maplist for all gamtypes or use a regex.
   Options:  -g/-r       Scan release or git basedir.
