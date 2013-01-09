@@ -1333,9 +1333,22 @@ fi
 
 # extract mapinfo files of given pk3 into data/maps
 function server_mapinfo_extract() {
+while getopts ":f:" options; do
+    case $options in
+        f) folder="$OPTARG";;
+    esac
+done
+shift $((OPTIND-1))
+[ -z $folder ] && folder="$userdir/data/maps"
+if [[ ! -d "$folder" ]]; then
+    echo -e >&2 "$print_error Folder $folder does not exist."
+    exit 1
+fi
 server_mapinfo_check_first $1
-echo -e "$print_info Extract all mapinfo files of given pk3 files."
+echo -e "$print_info Extract mapinfo files of pk3 files to:"
+echo -e "       $folder"
 echo -e "       No mapinfo file will be overwritten."
+folder=$(echo $folder|sed 's#/$##g')
 for map_pk3 in "$@"; do
     server_mapinfo_check $map_pk3
     echo $map_pk3 | grep '.pk3' &>/dev/null || echo -e "$print_error ${map_pk3##/*} is not a pk3 file." >&2
@@ -1345,35 +1358,15 @@ for map_pk3 in "$@"; do
         continue
     fi
     for map_info in $map_infos; do
-        if [[ -f $userdir/data/maps/$map_info ]]; then
-            echo -e "$print_info data/maps/$map_info already exists."
+        if [[ -f "$folder/$map_info" ]]; then
+            echo -e "$print_info $map_info already exists."
         else
             echo -e "$print_info Extract $map_info of ${map_pk3##/*}."
-            unzip -qn -d "$userdir"/data $map_pk3 maps/$map_info
+            unzip -qnj -d $folder  $map_pk3 maps/$map_info
         fi
     done
 done
 } # end of server_mapinfo_extract()
-
-# extract all mapinfo files from pk3 packages
-function server_mapinfo_extract_all() {
-echo -e "$print_info Extract all mapinfo files of pk3 files in 'packages'."
-echo -e "       No mapinfo file will be overwritten."
-package_folders=$(find $userdir/packages -type d)
-for folder in $package_folders; do
-    # no mapinfo in this directory.. then continue with next one
-    ls $folder/*.pk3 &>/dev/null || continue
-    for map_pk3 in $folder/*.pk3; do
-        map_infos=$(unzip -l $map_pk3 |grep -v MACOSX| grep -Eo '[A-Za-z0-9#._+-]+\.mapinfo' |tr "\n" " ")
-        if [[ -z $map_infos ]]; then
-            continue
-        fi
-        for map_info in $map_infos; do
-            unzip -qn -d "$userdir"/data $map_pk3 maps/$map_info
-        done
-    done
-done
-} # end of server_mapinfo_extract_all()
 
 # show the difference of a mapinfo file in pk3 package and in data/maps 
 function server_mapinfo_diff() {
@@ -1724,8 +1717,8 @@ xstools
                                        data (by -d) and package folder (by -p),
                                        also supports regex.
     --mapinfo                   syntax: --rcon2irc command <pk3(s)>
-        extract                 - extract mapinfo files of given pk3 packages
-        extract-all             - extract all mapinfo files of all pk3 packages
+        extract <-f>            - extract mapinfo files of given pk3 packages to 
+                                  'folder' (by -f)
         diff                    - show difference between data/maps/*.mapinfo
                                   and mapinfo file in pk3 package.
         diff-all                - show the difference of all mapinfo files
@@ -1848,10 +1841,8 @@ servers. Check Wiki for complete help.
                         command is one of the following options:
 
         extract <pk3(s)>    Extract mapinfo files of given pk3 package(s)
-                            to 'data/maps/'.
-
-        extract-all     Extract all mapinfo files of pk3 packages in 'packages'
-                        and its subfolders to 'data/maps/'.
+                            to 'folder' (set by -f).
+        Options: -f         Set the folder to extract to.
 
         diff <pk3(s)>   Show difference between pk3 package mapinfo
                         and mapinfo file in 'data/maps/'.
@@ -1909,7 +1900,6 @@ EOF
 function server_mapinfo_control() {
 case $1 in
     -x|x|--extract|extract)                 shift && server_mapinfo_extract "$@";;
-    -xa|xa|--extract-all|extract-all)       server_mapinfo_extract_all "$@";;
     -d|d|--diff|diff)                       shift && server_mapinfo_diff "$@";;
     -da|da|--diff-all|diff-all)             server_mapinfo_diff_all;;
     -f|f|--fix|fix)                         server_mapinfo_fix "$@";;
@@ -1918,7 +1908,6 @@ case $1 in
                      echo -e "$print_error Command is invalid or missing."
                      echo "        Use --mapinfo with one of this arguments:"
                      echo "            x|extract"
-                     echo "            xa|extract-all"
                      echo "            d|diff"
                      echo "            da|diff-all"
                      echo "            f|fix"
