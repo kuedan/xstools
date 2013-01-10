@@ -956,6 +956,15 @@ if [[ "$http_server" == "true"  ]]; then
         exit 1
     fi
 fi
+# set target folder
+while getopts ":p:" options; do
+    case $options in
+        p)  [ ! -d $OPTARG ] && echo -e >&2 "$print_error Folder $OPTARG does not exist." && exit 1;
+            package_folder="$OPTARG";;
+    esac
+done
+shift $((OPTIND-1))
+[  "x$package_folder" = x ] && package_folder="$userdir/packages"
 # check urls now
 for var in $@; do
     echo "$var" | grep -E 'http://.+\.pk3' &>/dev/null || {
@@ -968,20 +977,20 @@ done
 for var in $@; do
     pk3file_name=$(basename $var |sed 's/%23/#/g' )
     # do not download already existing pk3 packages
-    if [[ -f "$userdir"/packages/$pk3file_name ]]; then 
+    if [[ -f "$package_folder/$pk3file_name" ]]; then 
         echo -e "$print_info $pk3file_name already exists."
         continue
     fi 
-    wget --directory-prefix="$userdir/packages" -N $var
+    wget --directory-prefix="$package_folder" -N $var
     # create copy/symlink/hardlink for http server       
     if [[ "$http_server" == "true" ]]; then
         case $http_server_option in
             copy)
-                cp "$userdir"/packages/$pk3file_name "$http_server_folder"/$pk3file_name;;
+                cp "$package_folder/$pk3file_name" "$http_server_folder"/$pk3file_name;;
             hardlink)
-                ln "$userdir"/packages/$pk3file_name "$http_server_folder"/$pk3file_name;;
+                ln "$package_folder/$pk3file_name" "$http_server_folder"/$pk3file_name;;
             symlink)
-                ln -s "$userdir"/packages/$pk3file_name "$http_server_folder"/$pk3file_name;;
+                ln -s "$package_folder/$pk3file_name" "$http_server_folder"/$pk3file_name;;
         esac
     fi
 done
@@ -1149,19 +1158,23 @@ if [[ $mdays == "" ]]; then
     echo >&2 -e "        Check xstools.conf"
     exit 1
 fi
-while getopts ":f:" options; do
+while getopts ":d:" options; do
     case $options in
-        f) folder="$OPTARG";;
+        d) data_dirname="$OPTARG";;
     esac
 done
 shift $((OPTIND-1))
-[ -z $folder ] && folder="$userdir/data/logs"
-if [[ ! -d "$folder" ]]; then
+[ -z $data_dirname ] && data_dirname=data || data_dirname=$(echo $data_dirname|sed 's#/$##g')
+if [[ ! -d "$userdir/$data_dirname" ]]; then
+     echo -e >&2 "$print_error Data folder $data_dirname does not exist."
+     exit 1
+fi
+if [[ ! -d "$userdir/$data_dirname" ]]; then
     echo -e >&2 "$print_error Folder $folder does not exist."
     exit 1
 fi
 folder=$(echo $folder|sed 's#/$##g')
-find "$folder"/*.log -type f -mtime +$mdays -exec rm -f {} \; 2>/dev/null
+find "$userdir/$data_dirname"/logs/*.log -type f -mtime +$mdays -exec rm -f {} \; 2>/dev/null
 echo -e "$print_info Log files older than $mdays days deleted."
 } # end of server_del_logs
 
@@ -1228,7 +1241,8 @@ while getopts ":rgd:p:" options; do
         r) version_release==true; _version=release;;
         g) version_git=true;      _version=git;;
         d) data_dirname="$OPTARG";;
-        p) package_folders="$package_folders $OPTARG";;
+        p) [ ! -d $OPTARG ] && echo -e >&2 "$print_error Folder $OPTARG does not exist." && exit 1;
+           package_folders="$package_folders $OPTARG";;
     esac
 done
 shift $((OPTIND-1))
@@ -1238,7 +1252,11 @@ if [[ -n $version_release && -n $version_git ]]; then
     exit 1
 fi
 
-[ -z $data_dirname ] && data_dirname=data
+[ -z $data_dirname ] && data_dirname=data || data_dirname=$(echo $data_dirname|sed 's#/$##g')
+if [[ ! -d "$userdir/$data_dirname" ]]; then
+     echo -e >&2 "$print_error Data folder $data_dirname does not exist."
+     exit 1
+fi
 [  "x$package_folders" = x ] && package_folders="$userdir/packages"
 
 echo -e "$print_info Options:"
@@ -1262,10 +1280,6 @@ echo -e "$print_info Checking user added .pk3 packages."
 echo
 # users may add sublevel folders to packages
 for folder in $package_folders; do
-    if  [[ ! -d $folder ]]; then
-        echo -e >&2 "$print_attention Folder $folder does not exist"
-        exit 1
-    fi
     # remove trailing slash
     folder=$(echo $folder|sed 's#/$##g')
     # no mapinfo in this directory.. then continue with next one
@@ -1345,22 +1359,26 @@ fi
 
 # extract mapinfo files of given pk3 into data/maps
 function server_mapinfo_extract() {
-while getopts ":f:" options; do
+while getopts ":d:" options; do
     case $options in
-        f) folder="$OPTARG";;
+        d) data_dirname="$OPTARG";;
     esac
 done
 shift $((OPTIND-1))
-[ -z $folder ] && folder="$userdir/data/maps"
-if [[ ! -d "$folder" ]]; then
+if [[ ! -d "$userdir/$data_dirname" ]]; then
     echo -e >&2 "$print_error Folder $folder does not exist."
     exit 1
 fi
 server_mapinfo_check_first $1
+[ -z $data_dirname ] && data_dirname=data || data_dirname=$(echo $data_dirname|sed 's#/$##g')
+if [[ ! -d "$userdir/$data_dirname" ]]; then
+     echo -e >&2 "$print_error Data folder $data_dirname does not exist."
+     exit 1
+fi
 echo -e "$print_info Extract mapinfo files of pk3 files to:"
-echo -e "       $folder"
+echo -e "       $userdir/$data_dirname/maps"
 echo -e "       No mapinfo file will be overwritten."
-folder=$(echo $folder|sed 's#/$##g')
+mkdir "$userdir/$data_dirname/maps" &>/dev/null
 for map_pk3 in "$@"; do
     server_mapinfo_check $map_pk3
     echo $map_pk3 | grep '.pk3' &>/dev/null || echo -e "$print_error ${map_pk3##/*} is not a pk3 file." >&2
@@ -1382,7 +1400,22 @@ done
 
 # show the difference of a mapinfo file in pk3 package and in data/maps 
 function server_mapinfo_diff() {
+while getopts ":d:" options; do
+    case $options in
+        d) data_dirname="$OPTARG";;
+    esac
+done
+shift $((OPTIND-1))
+if [[ ! -d "$userdir/$data_dirname" ]]; then
+    echo -e >&2 "$print_error Folder $folder does not exist."
+    exit 1
+fi
 server_mapinfo_check_first $1
+[ -z $data_dirname ] && data_dirname=data || data_dirname=$(echo $data_dirname|sed 's#/$##g')
+if [[ ! -d "$userdir/$data_dirname" ]]; then
+     echo -e >&2 "$print_error Data folder $data_dirname does not exist."
+     exit 1
+fi
 for map_pk3 in "$@"; do
     server_mapinfo_check $map_pk3
     echo $map_pk3 | grep '.pk3' &>/dev/null || echo -e "$print_error ${map_pk##*/} is not a pk3 file." >&2
@@ -1393,12 +1426,12 @@ for map_pk3 in "$@"; do
         continue
     fi
     for map_info in $map_infos; do
-        if [[ -f "$userdir"/data/maps/$map_info ]]; then
-            echo -e "$print_info Difference of data/maps/$map_info and $map_pk3:"
-            diff "$userdir"/data/maps/$map_info <(unzip -pq $map_pk3 maps/$map_info) &&
+        if [[ -f "$userdir/$data_dirname"/maps/$map_info ]]; then
+            echo -e "$print_info Difference of "$data_dirname/maps/$map_info" and $map_pk3:"
+            diff "$userdir/$data_dirname"/maps/$map_info <(unzip -pq $map_pk3 maps/$map_info) &&
             echo "       No Difference."
         else
-            echo -e "$print_attention Cannot compare files: "$userdir"/data/maps/$map_info does not exist"
+            echo -e "$print_attention Cannot compare files: "$userdir/$data_dirname"/maps/$map_info does not exist"
         fi
     done
 done
@@ -1406,7 +1439,20 @@ done
 
 # show the difference of all mapinfo files in pk3 package and in data/maps 
 function server_mapinfo_diff_all() {
-package_folders=$(find "$userdir"/packages -type d)
+while getopts ":rgd:p:" options; do
+    case $options in
+        d) data_dirname="$OPTARG";;
+        p) [ ! -d $OPTARG ] && echo -e >&2 "$print_error Folder $OPTARG does not exist." && exit 1;
+           package_folders="$package_folders $OPTARG";;
+    esac
+done
+shift $((OPTIND-1))
+[ -z $data_dirname ] && data_dirname=data || data_dirname=$(echo $data_dirname|sed 's#/$##g')
+if [[ ! -d "$userdir/$data_dirname" ]]; then
+     echo -e >&2 "$print_error Data folder $data_dirname does not exist."
+     exit 1
+fi
+[  "x$package_folders" = x ] && package_folders="$userdir/packages"
 for folder in $package_folders; do
     # no mapinfo in this directory.. then continue with next one
     ls $folder/*.pk3 &>/dev/null || continue
@@ -1417,9 +1463,9 @@ for folder in $package_folders; do
             continue
         fi
         for map_info in $map_infos; do
-            if [[ -f "$userdir"/data/maps/$map_info ]]; then
-                if ! diff $userdir/data/maps/$map_info <(unzip -pq $map_pk3 maps/$map_info) &>/dev/null; then
-                    echo -e "$print_info Difference of data/maps/$map_info and $map_pk3:"
+            if [[ -f "$userdir/$data_dirname/maps/$map_info" ]]; then
+                if ! diff "$userdir/$data_dirname/maps/$map_info" <(unzip -pq $map_pk3 maps/$map_info) &>/dev/null; then
+                    echo -e "$print_info Difference of $data_dirname/maps/$map_info and $map_pk3:"
                     diff $userdir/data/maps/$map_info <(unzip -pq $map_pk3 maps/$map_info) 
                 fi
             fi
@@ -1428,8 +1474,19 @@ for folder in $package_folders; do
 done
 } # end of server_mapinfo_diff_all()
 
-# show mapinfo files of pk3 packages and if exists in data/maps
+# show mapinfo files of pk3 packages and if exists in $data_dirname/maps
 function server_mapinfo_show() {
+while getopts ":d:" options; do
+    case $options in
+        d) data_dirname="$OPTARG";;
+    esac
+done
+shift $((OPTIND-1))
+[ -z $data_dirname ] && data_dirname=data || data_dirname=$(echo $data_dirname|sed 's#/$##g')
+if [[ ! -d "$userdir/$data_dirname" ]]; then
+     echo -e >&2 "$print_error Data folder $data_dirname does not exist."
+     exit 1
+fi
 server_mapinfo_check_first $1
 for map_pk3 in "$@"; do
     server_mapinfo_check $map_pk3
@@ -1440,11 +1497,11 @@ for map_pk3 in "$@"; do
         continue
     fi
     for map_info in $map_infos; do
-        if [[ -f $userdir/data/maps/$map_info ]]; then
-            echo -e "$print_info data/maps/$map_info:"
-            cat "$userdir/data/maps/$map_info"
+        if [[ -f "$userdir/$data_dirname/maps/$map_info" ]]; then
+            echo -e "$print_info $data_dirname/maps/$map_info:"
+            cat "$userdir/$data_dirname/maps/$map_info"
         else
-            echo -e "$print_info data/maps/$map_info does not exist."
+            echo -e "$print_info $data_dirname/maps/$map_info does not exist."
         fi
         echo -e "$print_info ${map_pk3##*/} - $map_info:"
         unzip -pq $map_pk3 maps/$map_info
@@ -1455,8 +1512,22 @@ done
 # reduce server console errors messages 
 # replace type 'type' with 'gametype', copy autogenerated mapinfo files
 function server_mapinfo_fix() {
-echo -e "$print_info Fix mapinfos in data/maps"
-for map_info_l in "$userdir"/data/maps/*.mapinfo; do
+while getopts ":rgd:p:" options; do
+    case $options in
+        d) data_dirname="$OPTARG";;
+        p) [ ! -d $OPTARG ] && echo -e >&2 "$print_error Folder $OPTARG does not exist." && exit 1;
+           package_folders="$package_folders $OPTARG";;
+    esac
+done
+shift $((OPTIND-1))
+[ -z $data_dirname ] && data_dirname=data || data_dirname=$(echo $data_dirname|sed 's#/$##g')
+if [[ ! -d "$userdir/$data_dirname" ]]; then
+     echo -e >&2 "$print_error Data folder $data_dirname does not exist."
+     exit 1
+fi
+[  "x$package_folders" = x ] && package_folders="$userdir/packages"
+echo -e "$print_info Fix mapinfos in $data_dirname/maps"
+for map_info_l in "$userdir/$data_dirname/maps/*.mapinfo"; do
     sed -i -e 's/^type /gametype /g'\
            -e 's/^gametype freezetag/gametype ft/g'\
            -e 's/^gametype keepaway/gametype ka/g'\
@@ -1464,7 +1535,6 @@ for map_info_l in "$userdir"/data/maps/*.mapinfo; do
 done
 echo -e "$print_info Scanning pk3 packages and fix them"
 echo -e "       Existing mapinfos are not overwritten."
-package_folders=$(find "$userdir"/packages -type d)
 for folder in $package_folders; do
     # no pk3 files in this directory.. then continue with next one
     ls $folder/*.pk3 &>/dev/null || continue
@@ -1474,10 +1544,10 @@ for folder in $package_folders; do
             continue
         fi
         for map_info in $map_infos; do
-            if [[ -f "$userdir"/data/maps/$map_info ]]; then
+            if [[ -f "$userdir/$data_dirname/maps/$map_info" ]]; then
                 continue
             elif unzip -qp $map_pk3 maps/$map_info |grep -E '(^type )|(^gametype (freezetag)|(keepaway)|(nexball))' &>/dev/null; then
-                unzip -qjn -d "$userdir"/data/maps/ $map_pk3 maps/$map_info 
+                unzip -qjn -d "$userdir/$data_dirname/maps/" $map_pk3 maps/$map_info 
                 sed -i -e 's/^type /gametype /g'\
                        -e 's/^gametype freezetag/gametype ft/g'\
                        -e 's/^gametype keepaway/gametype ka/g'\
@@ -1486,8 +1556,10 @@ for folder in $package_folders; do
         done
     done
 done
-echo -e "$print_info Move autogenerated maps into data/maps"
-mv "$userdir"/data/data/maps/autogenerated/*.mapinfo "$userdir"/data/maps/ &>/dev/null
+if [[ -d "$userdir/$data_dirname/data/maps/autogenerated" ]]; then
+    echo -e "$print_info Move autogenerated maps into $data_dirname/maps"
+    mv "$userdir/$data_dirname/data/maps/autogenerated/*.mapinfo" "$userdir/$data_dirname/maps/" &>/dev/null
+fi
 } # end of server_mapinfo_fix()
 # }}}
 
@@ -1719,23 +1791,26 @@ xstools
     --list                           - list running servers/rcon2irc bots
     --list-configs                   - list server and rcon2irc configs
     --attach <server(s)>             - attach server console
-    --add-pk3 <url(s)>               - add pk3 files from given urls
+    --add-pk3 <-p> <url(s)>          - add pk3 files from given urls
     --rescan                         - rescan for new added packages
     --send-all <command>             - send a command to all servers
     --send <server(s)> -c <command>  - send a command to given server(s)
-    --logs set/ del <-f>             - set a new log file for all servers,
-                                       delete log files in 'folder' (by -f)
+    --logs set/ del <-d>             - set a new log file for all servers,
+                                       delete log files in data folder (-d)
                                        older than given days
-    --maplist <-grdp>                - create maplist for all gametypes based on
-                                       data (by -d) and package folder (by -p),
+    --maplist <-grdp>                - create maplist for all gametypes based
+                                       on data (-d) and package folder (-p),
                                        also supports regex.
-    --mapinfo                   syntax: --rcon2irc command <pk3(s)>
-        extract <-f>            - extract mapinfo files of given pk3 packages to 
-                                  'folder' (by -f)
-        diff                    - show difference between data/maps/*.mapinfo
-                                  and mapinfo file in pk3 package.
-        diff-all                - show the difference of all mapinfo files
-        fix                     - fix server console warnings by mapinfo files
+    --mapinfo                   syntax: --rcon2irc command <options> <pk3(s)>
+        extract <-d>            - extract mapinfo files of given pk3 packages
+                                  to data folder (-d)
+        diff <-d>               - show difference between mapinfo in pk3 and
+                                  data folder (-d)
+        diff-all <-dp>          - show the difference between mapinfo in pk3s
+                                  in package folder (-p) and data folder (-d)
+        fix <-dp>               - fix server console warnings by mapinfo files
+                                  in data folder (-d) and in pk3s of package
+                                  folders (-d)
         show                    - show mapinfo files of given pk3 package
 
     --rcon2irc                  syntax: --rcon2irc command <bot(s)>
@@ -1802,7 +1877,7 @@ servers. Check Wiki for complete help.
   Options for both restart functions:
             -q          Restart server at endmatch and redirect all players
                         to given server (hostname+port).
-            -s          Restart server at endmatch at let all players reconnect.
+            -s          Restart server at endmatch at let all players reconnect
             -n          Optional parameter in combination with -q or -s.
                         Directly restart, do not wait for endmatch.
 
@@ -1821,8 +1896,11 @@ servers. Check Wiki for complete help.
 --attach <server(s)>    Attach a tmux window and show server console of
                         server(s).
 
---add-pk3 <url(s)>      Add .pk3 files to 'packages' from given urls and rescan
-                        for them at endmatch with every server.
+--add-pk3 <url(s)>      Add .pk3 files to packages folder (set by -p) from
+                        given urls and rescan for them at endmatch with
+                        every server.
+  Options: -p           Set the package folder (full path)
+                        (if not set, default is used: packages)
 
 --rescan                Rescan for new added packages at endmatch, every server
 
@@ -1843,36 +1921,49 @@ servers. Check Wiki for complete help.
 --maplist               Create a maplist for all gamtypes or use a regex.
   Options:  -g/-r       Scan release or git basedir.
                         to given server (hostname+port).
-            -d          Define the data folder - default is data.
-            -p          Define the package folders 
+            -d          Define the name of data folder - default is data.
+            -p          Define the package folders (full path).
                         - default is packages.
                         Examples:
                         ctf          --maplist ctf
                         ctf,lms,dm   --maplist '(ctf|lms|\bdm)'
                         Several package folders:
-                        xst --mapinfo -p folder1 -p folder2 -p ...
+                        xst --mapinfo -p folder1 -p folder2 ...
 
---mapinfo               Syntax: --mapinfo command <pk3(s)>
+--mapinfo               Syntax: --mapinfo command <options> <pk3(s)>
                         command is one of the following options:
 
         extract <pk3(s)>    Extract mapinfo files of given pk3 package(s)
-                            to 'folder' (set by -f).
-        Options: -f         Set the folder to extract to.
+                            to data folder name (set by -d).
+          Options: -d       Set the name data folder to extract to.
 
-        diff <pk3(s)>   Show difference between pk3 package mapinfo
-                        and mapinfo file in 'data/maps/'.
+        diff <pk3(s)>   Show difference between pk3 mapinfo
+                        and mapinfo file in data folder (set by -d).
+          Options: -d   Set the data folder name to compare with.
 
-        diff-all        Same as 'diff' but for all pk3 packages in 'packages' 
-                       and its subdirs. No output if comparing was not possible
+        diff-all        Same as 'diff' but for all pk3 packages in package 
+                        folders (set by -p) and mapinfos in data folder 
+                        (set by -d).
+                        No output if comparing was not possible
                         No output if mapinfo files are the same.
+          Options: -d   Set the data folder name to compare with.
+                        -p   Set the package folders with pk3 files (full path).
 
         fix             Fix server console warnings by mapinfo files:
                         Replace 'type' with 'gametype'
                         Replace long gametype names with short ones
-                        and copy autogenerated mapinfo files to 'data/maps/'.
+                        and move the autogenerated mapinfo files.
+         Options: -d    Set the data folder name.
+                  -p    Set the package folders (full path).
 
         show <pk3(s)>   Show mapinfo file of given pk3 package and mapinfo file
-                        in 'data/maps/'.
+                        in data folder (set by -d).
+          Options: -d   Set the data folder name.
+
+-d and -p are optional. If options are not used default is set: 
+    data folder:    data
+    package folder: /\$userdir/packages
+To set several package folders use: xst --mapinfo -p folder1 -p folder2 ...
 
 --rcon2irc              Syntax: --rcon2irc command <bot(s)>
                         command is one of the following options:
@@ -1916,8 +2007,8 @@ function server_mapinfo_control() {
 case $1 in
     -x|x|--extract|extract)                 shift && server_mapinfo_extract "$@";;
     -d|d|--diff|diff)                       shift && server_mapinfo_diff "$@";;
-    -da|da|--diff-all|diff-all)             server_mapinfo_diff_all;;
-    -f|f|--fix|fix)                         server_mapinfo_fix "$@";;
+    -da|da|--diff-all|diff-all)             shift && server_mapinfo_diff_all "$@";;
+    -f|f|--fix|fix)                         shift && server_mapinfo_fix "$@";;
     -s|s|--show|show)                       shift && server_mapinfo_show "$@";; 
     ""|*)            {
                      echo -e "$print_error Command is invalid or missing."
