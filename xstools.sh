@@ -1455,7 +1455,7 @@ for folder in $package_folders; do
             if [[ -f "$userdir/$data_dirname/maps/$map_info" ]]; then
                 if ! diff "$userdir/$data_dirname/maps/$map_info" <(unzip -pq $map_pk3 maps/$map_info) &>/dev/null; then
                     echo -e "$print_info Difference of $data_dirname/maps/$map_info and $map_pk3:"
-                    diff $userdir/data/maps/$map_info <(unzip -pq $map_pk3 maps/$map_info) 
+                    diff "$userdir/$data_dirname/maps/$map_info" <(unzip -pq $map_pk3 maps/$map_info) 
                 fi
             fi
         done
