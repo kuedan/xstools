@@ -7,35 +7,39 @@ All adjustments can be made in the basic configuration file: **xstools.conf**.
 ## Commands
 
 ```
---install-git                   - download xonotic git into basedir
+    --install-git                   - download xonotic git into basedir
 
     --start-all <-rg>               - start all servers
     --start <-rg> <server(s)>       - start servers
-    --stop-all <-rgceqnw>           - stop all servers
-    --stop <-ceqnw> <server(s)>     - stop servers
-    --restart-all <-rgcnqs>         - restart all servers
-    --restart <-cnqs> <server(s)>   - restart-servers
+    --stop-all <-rgeqnw>            - stop all servers
+    --stop <-eqnw> <server(s)>      - stop servers
+    --restart-all <-rgnqs>          - restart all servers
+    --restart <-nqs> <server(s)>    - restart-servers
 
-    --update-git <-cnqs>             - update git and restart git servers
+    --update-git <-nqs>             - update git and restart git servers
     --list                           - list running servers/rcon2irc bots
     --list-configs                   - list server and rcon2irc configs
     --attach <server(s)>             - attach server console
-    --add-pk3 <url(s)>               - add pk3 files from given urls
+    --add-pk3 <-p> <url(s)>          - add pk3 files from given urls
     --rescan                         - rescan for new added packages
     --send-all <command>             - send a command to all servers
     --send <server(s)> -c <command>  - send a command to given server(s)
-    --logs set/ del                  - set a new log file for all servers,
-                                       delete log files older than given days
-    --maplist                        - create maplist for all gametypes or use
-                                       a regex
-
-    --mapinfo                   syntax: --rcon2irc command <pk3(s)>
-        extract                 - extract mapinfo files of given pk3 packages
-        extract-all             - extract all mapinfo files of all pk3 packages
-        diff                    - show difference between data/maps/*.mapinfo
-                                  and mapinfo file in pk3 package.
-        diff-all                - show the difference of all mapinfo files
-        fix                     - fix server console warnings by mapinfo files
+    --logs set/ del <-d>             - set a new log file for all servers,
+                                       delete log files in data folder (-d)
+                                       older than given days
+    --maplist <-grdp>                - create maplist for all gametypes based
+                                       on data (-d) and package folder (-p),
+                                       also supports regex.
+    --mapinfo                   syntax: --rcon2irc command <options> <pk3(s)>
+        extract <-d>            - extract mapinfo files of given pk3 packages
+                                  to data folder (-d)
+        diff <-d>               - show difference between mapinfo in pk3 and
+                                  data folder (-d)
+        diff-all <-dp>          - show the difference between mapinfo in pk3s
+                                  in package folder (-p) and data folder (-d)
+        fix <-dp>               - fix server console warnings by mapinfo files
+                                  in data folder (-d) and in pk3s of package
+                                  folders (-d)
         show                    - show mapinfo files of given pk3 package
 
     --rcon2irc                  syntax: --rcon2irc command <bot(s)>
@@ -47,7 +51,7 @@ All adjustments can be made in the basic configuration file: **xstools.conf**.
         restart <bot(s)>        - restart rcon2irc bots
         attach <bot(s)>         - attach rcon2irc console
 
-    --help                      - print full help
+    --help                      - print full help for functions
     -h                          - print this help
 
 ```
