@@ -1160,20 +1160,15 @@ if [[ $mdays == "" ]]; then
 fi
 while getopts ":d:" options; do
     case $options in
-        d) data_dirname="$OPTARG";;
+        d) data_dirname="${OPTARG%/}";;
     esac
 done
 shift $((OPTIND-1))
-[ -z $data_dirname ] && data_dirname=data || data_dirname=$(echo $data_dirname|sed 's#/$##g')
+[ -z $data_dirname ] && data_dirname=data
 if [[ ! -d "$userdir/$data_dirname" ]]; then
      echo -e >&2 "$print_error Data folder $data_dirname does not exist."
      exit 1
 fi
-if [[ ! -d "$userdir/$data_dirname" ]]; then
-    echo -e >&2 "$print_error Folder $folder does not exist."
-    exit 1
-fi
-folder=$(echo $folder|sed 's#/$##g')
 find "$userdir/$data_dirname"/logs/*.log -type f -mtime +$mdays -exec rm -f {} \; 2>/dev/null
 echo -e "$print_info Log files older than $mdays days deleted."
 } # end of server_del_logs
@@ -1240,9 +1235,9 @@ while getopts ":rgd:p:" options; do
     case $options in
         r) version_release==true; _version=release;;
         g) version_git=true;      _version=git;;
-        d) data_dirname="$OPTARG";;
-        p) [ ! -d $OPTARG ] && echo -e >&2 "$print_error Folder $OPTARG does not exist." && exit 1;
-           package_folders="$package_folders $OPTARG";;
+        d) data_dirname="${OPTARG%/}";;
+        p) [ ! -d $OPTARG ] && echo -e >&2 "$print_error Folder ${OPTARG%/} does not exist." && exit 1;
+           package_folders="$package_folders ${OPTARG%/}";;
     esac
 done
 shift $((OPTIND-1))
@@ -1252,7 +1247,7 @@ if [[ -n $version_release && -n $version_git ]]; then
     exit 1
 fi
 
-[ -z $data_dirname ] && data_dirname=data || data_dirname=$(echo $data_dirname|sed 's#/$##g')
+[ -z $data_dirname ] && data_dirname=data
 if [[ ! -d "$userdir/$data_dirname" ]]; then
      echo -e >&2 "$print_error Data folder $data_dirname does not exist."
      exit 1
@@ -1280,8 +1275,6 @@ echo -e "$print_info Checking user added .pk3 packages."
 echo
 # users may add sublevel folders to packages
 for folder in $package_folders; do
-    # remove trailing slash
-    folder=$(echo $folder|sed 's#/$##g')
     # no mapinfo in this directory.. then continue with next one
     ls $folder/*.pk3 &>/dev/null || continue
     for map_pk3 in $folder/*.pk3; do
@@ -1361,16 +1354,12 @@ fi
 function server_mapinfo_extract() {
 while getopts ":d:" options; do
     case $options in
-        d) data_dirname="$OPTARG";;
+        d) data_dirname="${OPTARG%/}";;
     esac
 done
 shift $((OPTIND-1))
-if [[ ! -d "$userdir/$data_dirname" ]]; then
-    echo -e >&2 "$print_error Folder $folder does not exist."
-    exit 1
-fi
 server_mapinfo_check_first $1
-[ -z $data_dirname ] && data_dirname=data || data_dirname=$(echo $data_dirname|sed 's#/$##g')
+[ -z $data_dirname ] && data_dirname=data
 if [[ ! -d "$userdir/$data_dirname" ]]; then
      echo -e >&2 "$print_error Data folder $data_dirname does not exist."
      exit 1
@@ -1402,7 +1391,7 @@ done
 function server_mapinfo_diff() {
 while getopts ":d:" options; do
     case $options in
-        d) data_dirname="$OPTARG";;
+        d) data_dirname="${OPTARG%/}";;
     esac
 done
 shift $((OPTIND-1))
@@ -1411,7 +1400,7 @@ if [[ ! -d "$userdir/$data_dirname" ]]; then
     exit 1
 fi
 server_mapinfo_check_first $1
-[ -z $data_dirname ] && data_dirname=data || data_dirname=$(echo $data_dirname|sed 's#/$##g')
+[ -z $data_dirname ] && data_dirname=data
 if [[ ! -d "$userdir/$data_dirname" ]]; then
      echo -e >&2 "$print_error Data folder $data_dirname does not exist."
      exit 1
@@ -1441,8 +1430,8 @@ done
 function server_mapinfo_diff_all() {
 while getopts ":rgd:p:" options; do
     case $options in
-        d) data_dirname="$OPTARG";;
-        p) [ ! -d $OPTARG ] && echo -e >&2 "$print_error Folder $OPTARG does not exist." && exit 1;
+        d) data_dirname="${OPTARG%/}";;
+        p) [ ! -d $OPTARG ] && echo -e >&2 "$print_error Folder ${OPTARG%/} does not exist." && exit 1;
            package_folders="$package_folders $OPTARG";;
     esac
 done
@@ -1478,11 +1467,11 @@ done
 function server_mapinfo_show() {
 while getopts ":d:" options; do
     case $options in
-        d) data_dirname="$OPTARG";;
+        d) data_dirname="${OPTARG%/}";;
     esac
 done
 shift $((OPTIND-1))
-[ -z $data_dirname ] && data_dirname=data || data_dirname=$(echo $data_dirname|sed 's#/$##g')
+[ -z $data_dirname ] && data_dirname=data
 if [[ ! -d "$userdir/$data_dirname" ]]; then
      echo -e >&2 "$print_error Data folder $data_dirname does not exist."
      exit 1
@@ -1514,13 +1503,13 @@ done
 function server_mapinfo_fix() {
 while getopts ":rgd:p:" options; do
     case $options in
-        d) data_dirname="$OPTARG";;
-        p) [ ! -d $OPTARG ] && echo -e >&2 "$print_error Folder $OPTARG does not exist." && exit 1;
+        d) data_dirname="${OPTARG%/}";;
+        p) [ ! -d $OPTARG ] && echo -e >&2 "$print_error Folder ${OPTARG%/} does not exist." && exit 1;
            package_folders="$package_folders $OPTARG";;
     esac
 done
 shift $((OPTIND-1))
-[ -z $data_dirname ] && data_dirname=data || data_dirname=$(echo $data_dirname|sed 's#/$##g')
+[ -z $data_dirname ] && data_dirname=data
 if [[ ! -d "$userdir/$data_dirname" ]]; then
      echo -e >&2 "$print_error Data folder $data_dirname does not exist."
      exit 1
