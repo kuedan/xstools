@@ -1432,7 +1432,7 @@ while getopts ":rgd:p:" options; do
     case $options in
         d) data_dirname="${OPTARG%/}";;
         p) [ ! -d $OPTARG ] && echo -e >&2 "$print_error Folder ${OPTARG%/} does not exist." && exit 1;
-           package_folders="$package_folders $OPTARG";;
+           package_folders="$package_folders ${OPTARG%/}";;
     esac
 done
 shift $((OPTIND-1))
@@ -1505,7 +1505,7 @@ while getopts ":rgd:p:" options; do
     case $options in
         d) data_dirname="${OPTARG%/}";;
         p) [ ! -d $OPTARG ] && echo -e >&2 "$print_error Folder ${OPTARG%/} does not exist." && exit 1;
-           package_folders="$package_folders $OPTARG";;
+           package_folders="$package_folders ${OPTARG%/}";;
     esac
 done
 shift $((OPTIND-1))
