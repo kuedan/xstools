@@ -1366,7 +1366,6 @@ if [[ ! -d "$userdir/$data_dirname" ]]; then
 fi
 echo -e "$print_info Extract mapinfo files of pk3 files to:"
 echo -e "       $userdir/$data_dirname/maps"
-echo -e "       No mapinfo file will be overwritten."
 mkdir "$userdir/$data_dirname/maps" &>/dev/null
 for map_pk3 in "$@"; do
     server_mapinfo_check $map_pk3
