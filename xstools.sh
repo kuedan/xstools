@@ -1994,19 +1994,19 @@ EOF
 # {{{
 function server_mapinfo_control() {
 case $1 in
-    -x|x|--extract|extract)                 shift && server_mapinfo_extract "$@";;
-    -d|d|--diff|diff)                       shift && server_mapinfo_diff "$@";;
-    -da|da|--diff-all|diff-all)             shift && server_mapinfo_diff_all "$@";;
-    -f|f|--fix|fix)                         shift && server_mapinfo_fix "$@";;
-    -s|s|--show|show)                       shift && server_mapinfo_show "$@";; 
+    --extract|extract)                 shift && server_mapinfo_extract "$@";;
+    --diff|diff)                       shift && server_mapinfo_diff "$@";;
+    --diff-all|diff-all)               shift && server_mapinfo_diff_all "$@";;
+    --fix|fix)                         shift && server_mapinfo_fix "$@";;
+    --show|show)                       shift && server_mapinfo_show "$@";;
     ""|*)            {
                      echo -e "$print_error Command is invalid or missing."
                      echo "        Use --mapinfo with one of this arguments:"
-                     echo "            x|extract"
-                     echo "            d|diff"
-                     echo "            da|diff-all"
-                     echo "            f|fix"
-                     echo "            s|show"
+                     echo "        --extract <-d>"
+                     echo "        --diff <-d>"
+                     echo "        --diff-all <-dp>"
+                     echo "        --fix <-dp>"
+                     echo "        --show"
                      } >&2; exit 1;;
 esac
 }
