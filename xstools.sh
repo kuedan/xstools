@@ -967,8 +967,8 @@ shift $((OPTIND-1))
 [  "x$package_folder" = x ] && package_folder="$userdir/packages"
 # check urls now
 for var in $@; do
-    echo "$var" | grep -E 'http://.+\.pk3' &>/dev/null || {
-    echo >&2 -e "$print_error xstools only accepts pk3 files from a http url."
+    echo "$var" | grep -E 'https?://.+\.pk3' &>/dev/null || {
+    echo >&2 -e "$print_error xstools only accepts pk3 files from a http/https url."
     echo >&2 -e "        No files have been added. Please add them on your own to 'packages'"
     exit 1 
 }
