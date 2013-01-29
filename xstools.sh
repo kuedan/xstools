@@ -1466,10 +1466,11 @@ while getopts ":d:" options; do
     esac
 done
 shift $((OPTIND-1))
-[ -z $data_dirname ] && data_dirname=data
-if [[ ! -d "$userdir/$data_dirname" ]]; then
+if [[ -n $data_dirname && ! -d "$userdir/$data_dirname" ]]; then
      echo -e >&2 "$print_error Data folder $data_dirname does not exist."
      exit 1
+else
+    data_dirname=data
 fi
 server_mapinfo_check_first $1
 for map_pk3 in "$@"; do
@@ -1481,11 +1482,13 @@ for map_pk3 in "$@"; do
         continue
     fi
     for map_info in $map_infos; do
-        if [[ -f "$userdir/$data_dirname/maps/$map_info" ]]; then
-            echo -e "$print_info $data_dirname/maps/$map_info:"
-            cat "$userdir/$data_dirname/maps/$map_info"
-        else
-            echo -e "$print_info $data_dirname/maps/$map_info does not exist."
+        if [[ -d "$userdir/$data_dirname" ]]; then
+            if [[ -f "$userdir/$data_dirname/maps/$map_info" ]]; then
+                echo -e "$print_info $data_dirname/maps/$map_info:"
+                cat "$userdir/$data_dirname/maps/$map_info"
+            else
+                echo -e "$print_info $data_dirname/maps/$map_info does not exist."
+            fi
         fi
         echo -e "$print_info ${map_pk3##*/} - $map_info:"
         unzip -pq $map_pk3 maps/$map_info
