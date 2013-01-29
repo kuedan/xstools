@@ -1358,12 +1358,12 @@ while getopts ":d:" options; do
     esac
 done
 shift $((OPTIND-1))
-server_mapinfo_check_first $1
 [ -z $data_dirname ] && data_dirname=data
 if [[ ! -d "$userdir/$data_dirname" ]]; then
      echo -e >&2 "$print_error Data folder $data_dirname does not exist."
      exit 1
 fi
+server_mapinfo_check_first $1
 echo -e "$print_info Extract mapinfo files of pk3 files to:"
 echo -e "       $userdir/$data_dirname/maps"
 mkdir "$userdir/$data_dirname/maps" &>/dev/null
@@ -1394,16 +1394,12 @@ while getopts ":d:" options; do
     esac
 done
 shift $((OPTIND-1))
-if [[ ! -d "$userdir/$data_dirname" ]]; then
-    echo -e >&2 "$print_error Folder $folder does not exist."
-    exit 1
-fi
-server_mapinfo_check_first $1
 [ -z $data_dirname ] && data_dirname=data
 if [[ ! -d "$userdir/$data_dirname" ]]; then
      echo -e >&2 "$print_error Data folder $data_dirname does not exist."
      exit 1
 fi
+server_mapinfo_check_first $1
 for map_pk3 in "$@"; do
     server_mapinfo_check $map_pk3
     echo $map_pk3 | grep '.pk3' &>/dev/null || echo -e "$print_error ${map_pk##*/} is not a pk3 file." >&2
