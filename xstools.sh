@@ -114,8 +114,10 @@ function version_autobuild_check_and_set() {
         exit 1
     fi
     # make sure we are able to differ release and autobuild executable
-    [[ -x "$basedir_autbuild/$executable-autobuild" ]] ||\
-        ln "$basedir_autobuild/$executable" "$basedir_autbuild/$executable-autobuild"
+    if [[ -z $update_autobuild ]]; then
+        [[ -x "$basedir_autobuild/$executable-autobuild" ]] ||\
+            ln -f "$basedir_autobuild/$executable" "$basedir_autobuild/$executable-autobuild"
+    fi
     server_command="cd \"$basedir_autobuild\" && ./$executable-autobuild"
 } # end of version_release_check_and_set()
 
@@ -143,7 +145,7 @@ echo "// this file defines the last update date of your Xonotic autobuild
 // everytime you run an update the date of the update_autobuild variable changes
 // you can define the date format in configs/xstools.conf
 set update_autobuild \"$(date +"$autobuild_update_date")\"" > "$userdir/configs/servers/common/update_autobuild.cfg" &&
-./$autobuild_update_script
+$autobuild_update_script
 }
 
 function update_git() {
@@ -844,6 +846,9 @@ elif [[ ! -x "$autobuild_update_script" ]]; then
     echo >&2 -e "        Please fix this."
     exit 1
 fi
+# use update_git variable for send_notice function
+# avoid creating symlink via version_autobuild_check_and_set
+update_autobuild=true
 # autobuild version...
 version_autobuild_check_and_set
 # check options
@@ -856,12 +861,13 @@ fi
 pgrep_suffix=_autobuild
 # lock xstools, when update started
 touch "$userdir/lock_update"
-# use update_git variable for send_notice function
-update_autobuild=true
 # option -a need not to be set - due the defined suffix
 send_notice all_servers
 # simply update
 update_autobuild
+# recreate link
+ln -f "$basedir_autobuild/$executable" "$basedir_autobuild/$executable-autobuild"
+
 unset update_autobuild
 # option -g need not to be set - due the defined suffix
 if [[ -n $restart_and_redirect ]]; then
