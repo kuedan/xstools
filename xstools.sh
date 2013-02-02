@@ -108,14 +108,14 @@ function version_autobuild_check_and_set() {
     x86_64)   executable="xonotic-linux64-dedicated";;
     *)        executable="xonotic-linux32-dedicated";;
     esac
-    if [[ ! -x "$basedir_release/$executable" ]]; then
+    if [[ ! -x "$basedir_autobuild/$executable" ]]; then
         echo >&2 -e "$print_error $executable is not marked as executable."
         echo >&2 -e "        Please fix this."
         exit 1
     fi
     # make sure we are able to differ release and autobuild executable
-    [[ -x "$basedir_release/$executable-autobuild" ]] ||\
-        ln "$basedir_release/$executable" "$basedir_release/$executable-autobuild"
+    [[ -x "$basedir_autbuild/$executable-autobuild" ]] ||\
+        ln "$basedir_autobuild/$executable" "$basedir_autbuild/$executable-autobuild"
     server_command="cd \"$basedir_autobuild\" && ./$executable-autobuild"
 } # end of version_release_check_and_set()
 
@@ -139,16 +139,11 @@ function version_git_check_and_set() {
 # {{{
 
 function update_autobuild() {
-    if [[ ! -x "$autobuild_update_script" ]]; then
-        echo >&2 -e "$print_error Could not execute autobuild update script."
-        echo >&2 -e "        Please fix this."
-    else
 echo "// this file defines the last update date of your Xonotic autobuild
 // everytime you run an update the date of the update_autobuild variable changes
 // you can define the date format in configs/xstools.conf
 set update_autobuild \"$(date +"$autobuild_update_date")\"" > "$userdir/configs/servers/common/update_autobuild.cfg" &&
-        ./$autobuild_update_script
-    fi
+./$autobuild_update_script
 }
 
 function update_git() {
@@ -544,9 +539,9 @@ fi
 function server_stop_all() {
 while getopts ":agrq:new" options; do
     case $options in
-        a) [ -z $pgrep_suffix ] && pgrep_suffx=_autobuild || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
-        g) [ -z $pgrep_suffix ] && pgrep_suffx=_git       || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
-        r) [ -z $pgrep_suffix ] && pgrep_suffx=__release  || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
+        a) [ -z $pgrep_suffix ] && pgrep_suffix=_autobuild || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
+        g) [ -z $pgrep_suffix ] && pgrep_suffix=_git       || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
+        r) [ -z $pgrep_suffix ] && pgrep_suffix=__release  || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
         q) quit_and_redirect=true; quit_and_redirect_custom=true; quit_and_redirect_to="$OPTARG";;
         n) quit_and_redirect=true; quit_and_redirect_now=true;;
         e) quit_when_empty=true;;
@@ -724,9 +719,9 @@ fi
 function server_restart_all() {
 while getopts ":agrq:sn" options; do
     case $options in
-        a) [ -z $pgrep_suffix ] && pgrep_suffx=_autobuild || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
-        g) [ -z $pgrep_suffix ] && pgrep_suffx=_git       || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
-        r) [ -z $pgrep_suffix ] && pgrep_suffx=__release  || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
+        a) [ -z $pgrep_suffix ] && pgrep_suffix=_autobuild || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
+        g) [ -z $pgrep_suffix ] && pgrep_suffix=_git       || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
+        r) [ -z $pgrep_suffix ] && pgrep_suffix=__release  || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
         q) restart_and_redirect=true; restart_and_redirect_to="$OPTARG";;
         s) restart_and_redirect=true; restart_and_redirect_to="self";;
         n) restart_and_redirect=true; restart_and_redirect_now=true;;
@@ -839,7 +834,12 @@ while getopts ":q:sn" options; do
     esac
 done
 shift $((OPTIND-1))
-# git version...
+if [[ ! -x "$autobuild_update_script" ]]; then
+    echo >&2 -e "$print_error Could not execute autobuild update script."
+    echo >&2 -e "        Please fix this."
+    exit 1
+fi
+# autobuild version...
 version_autobuild_check_and_set
 # check options
 if [[ -z $autobuild_update_date ]]; then
