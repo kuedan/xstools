@@ -10,14 +10,14 @@
 # Attribution-NonCommercial-ShareAlike 3.0 Unported (CC BY-NC-SA 3.0)
 # http://creativecommons.org/licenses/by-nc-sa/3.0/
 #
-# THIS SOFTWARE IS DISTRIBUTED IN THE HOPE THAT IT WILL BE USEFUL, BUT WITHOUT 
-# ANY WARRANTY. IT IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
-# EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
-# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE ENTIRE RISK 
+# THIS SOFTWARE IS DISTRIBUTED IN THE HOPE THAT IT WILL BE USEFUL, BUT WITHOUT
+# ANY WARRANTY. IT IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
+# EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE ENTIRE RISK
 # AS TO THE QUALITY AND PERFORMANCE OF THIS SOFTWARE IS WITH YOU.
 # -----------------------------------------------------------------------------
 #
-# DO NOT EDIT THIS SCRIPT TO CONFIGURE!! 
+# DO NOT EDIT THIS SCRIPT TO CONFIGURE!!
 # Please use the configuration file: xstools.conf
 # -----------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ xstool_dir="$( cd "$( dirname "$0" )" && pwd )"
 # check if config is available
 if [[ -f "$xstool_dir/configs/xstools.conf" ]]; then
     source "$xstool_dir/configs/xstools.conf"
-else 
+else
     echo >&2 "xstools.conf not found."
     exit 1
 fi
@@ -135,7 +135,7 @@ function version_git_check_and_set() {
 
 # }}}
 
-### --- install/update functions 
+### --- install/update functions
 # {{{
 
 function update_autobuild() {
@@ -143,7 +143,7 @@ function update_autobuild() {
         echo >&2 -e "$print_error Could not execute autobuild update script."
         echo >&2 -e "        Please fix this."
     else
-echo "// this file defines the last update date of your Xonotic autobuild 
+echo "// this file defines the last update date of your Xonotic autobuild
 // everytime you run an update the date of the update_autobuild variable changes
 // you can define the date format in configs/xstools.conf
 set update_autobuild \"$(date +"$autobuild_update_date")\"" > "$userdir/configs/servers/common/update_autobuild.cfg" &&
@@ -153,7 +153,7 @@ set update_autobuild \"$(date +"$autobuild_update_date")\"" > "$userdir/configs/
 
 function update_git() {
 cd "$basedir_git"
-echo "// this file defines the last update date of your Xonotic git repo 
+echo "// this file defines the last update date of your Xonotic git repo
 // everytime you run an update the date of the update_git variable changes
 // you can define the date format in configs/xstools.conf
 set update_git \"$(date +"$git_update_date")\"" > "$userdir/configs/servers/common/update_git.cfg" &&
@@ -186,7 +186,7 @@ which git &>/dev/null || {
         exit
     else
         echo >&2 "Abort."
-        exit 1 
+        exit 1
     fi
 }
 
@@ -277,7 +277,7 @@ for var in $@; do
             TMUX="`which tmux` -f $xstool_dir/configs/.tmux.conf"
         fi
         $TMUX new-session -d -n $tmux_window -s $tmux_session
-        tmux send -t $tmux_session:$tmux_window "$server_command $dp_default_arguments +set serverconfig $server_config $log_dp_argument" C-m 
+        tmux send -t $tmux_session:$tmux_window "$server_command $dp_default_arguments +set serverconfig $server_config $log_dp_argument" C-m
         echo -e "$print_info Server '$server_name' has been started."
     # option 3: server is not running; tmux session exists, and window already exists
     # -> print error and continue with for loop
@@ -286,17 +286,17 @@ for var in $@; do
         echo &>2 -e "          Use '--attach $server_name' to check window status."
         continue
     else
-    # option 4; server is not running, tmux session exists, window does not exist 
+    # option 4; server is not running, tmux session exists, window does not exist
     # -> start a new window in tmux session and start server
         tmux new-window -d -n $tmux_window -t $tmux_session
-        tmux send -t $tmux_session:$tmux_window "$server_command $dp_default_arguments +set serverconfig $server_config $log_dp_argument" C-m 
+        tmux send -t $tmux_session:$tmux_window "$server_command $dp_default_arguments +set serverconfig $server_config $log_dp_argument" C-m
         echo -e "$print_info Server '$server_name' has been started."
 fi
 dp_default_arguments="$dp_default_arguments_bak"
 done
 } # end of server_start()
 
-# start one or more servers 
+# start one or more servers
 function server_start_specific() {
 server_first_config_check $1
 version_has_been_set=false
@@ -323,7 +323,7 @@ fi
 server_start "$@"
 } # end of server_start_specific()
 
-# start all servers 
+# start all servers
 function server_start_all() {
 version_has_been_set=false
 while getopts ":agr" opt
@@ -383,7 +383,7 @@ case $1 in
                 fi
             fi
         done;;
-esac  
+esac
 } # end of server_stop()
 
 function server_stop_redirect() {
@@ -617,7 +617,7 @@ case $1 in
                 fi
             fi
         done;;
-esac 
+esac
 } # end of server_restart
 
 function server_restart_redirect() {
@@ -754,7 +754,7 @@ case $1 in
                 fi
             fi
         done;;
-    all_servers) 
+    all_servers)
         for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
         server_config_check_and_set $(basename ${cfg%.cfg})
         # search for servers and save them in a field
@@ -788,7 +788,7 @@ elif [[ -n $restart_and_redirect_now && $restart_and_redirect_to == "self" ]]; t
         set sv_adminnick_bak \"\${sv_adminnick}\";
         set sv_adminnick \"^1Server System^3\";
         say Server will restart now;
-        say You will reconnect automatically; 
+        say You will reconnect automatically;
         wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
     done
 elif [[ -n $restart_and_redirect_now && -n $restart_and_redirect_to ]]; then
@@ -797,7 +797,7 @@ elif [[ -n $restart_and_redirect_now && -n $restart_and_redirect_to ]]; then
         set sv_adminnick_bak \"\${sv_adminnick}\";
         set sv_adminnick \"^1Server System^3\";
         say Server will restart now;
-        say You will be redirected to another server; 
+        say You will be redirected to another server;
         wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
     done
 elif [[ -n $restart_and_redirect && $restart_and_redirect_to == "self" ]]; then
@@ -806,7 +806,7 @@ elif [[ -n $restart_and_redirect && $restart_and_redirect_to == "self" ]]; then
         set sv_adminnick_bak \"\${sv_adminnick}\";
         set sv_adminnick \"^1Server System^3\";
         say Server will restart at endmatch;
-        say You will reconnect automatically; 
+        say You will reconnect automatically;
         wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
     done
 elif [[ -n $restart_and_redirect && -n $restart_and_redirect_to ]]; then
@@ -815,7 +815,7 @@ elif [[ -n $restart_and_redirect && -n $restart_and_redirect_to ]]; then
         set sv_adminnick_bak \"\${sv_adminnick}\";
         set sv_adminnick \"^1Server System^3\";
         say Server will restart at endmatch;
-        say You will be redirected to another server; 
+        say You will be redirected to another server;
         wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
     done
 elif [[ -n $quit_and_redirect && -n $quit_and_redirect_to ]]; then
@@ -824,7 +824,7 @@ elif [[ -n $quit_and_redirect && -n $quit_and_redirect_to ]]; then
         set sv_adminnick_bak \"\${sv_adminnick}\";
         set sv_adminnick \"^1Server System^3\";
         say Server will stop at endmatch;
-        say You will be redirected to another server; 
+        say You will be redirected to another server;
         wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
     done
 fi
@@ -849,7 +849,7 @@ if [[ -z $autobuild_update_date ]]; then
 fi
 # autobuild servers only
 pgrep_suffix=_autobuild
-# lock xstools, when update started 
+# lock xstools, when update started
 touch "$userdir/lock_update"
 # use update_git variable for send_notice function
 update_autobuild=true
@@ -865,7 +865,7 @@ if [[ -n $restart_and_redirect ]]; then
 else
     server_restart all_servers
 fi
-# unlock xstools 
+# unlock xstools
 rm -f "$userdir/lock_update"
 } # end of server_update_autobuild()
 
@@ -901,7 +901,7 @@ if [[ $grep_release == true && $grep_git != true ]]; then
 elif [[ $grep_release != true && $grep_git == true ]]; then
     pgrep_suffix=_git
 fi
-# lock xstools, when update started 
+# lock xstools, when update started
 touch "$userdir/lock_update"
 # use update_git variable for send_notice function
 update_git=true
@@ -917,7 +917,7 @@ if [[ -n $restart_and_redirect ]]; then
 else
     server_restart all_servers
 fi
-# unlock xstools 
+# unlock xstools
 rm -f "$userdir/lock_update"
 } # end of server_update_git()
 
@@ -1007,11 +1007,11 @@ function xstools_list_configs() {
 echo -e "$print_info Server config files in 'configs/servers'"
 for cfg in $(ls "$userdir"/configs/servers/*.cfg); do
     echo "       - ${cfg##*/}"
-done 
+done
 echo -e "$print_info Rcon2irc config files in 'configs/rcon2irc'"
 for conf in $(ls "$userdir"/configs/rcon2irc/*.rcon2irc.conf); do
     echo "       - ${conf##*/}"
-done 
+done
 } # end of xstools_list_configs
 
 function server_add_pk3() {
@@ -1043,19 +1043,19 @@ for var in $@; do
     echo "$var" | grep -E 'https?://.+\.pk3' &>/dev/null || {
     echo >&2 -e "$print_error xstools only accepts pk3 files from a http/https url."
     echo >&2 -e "        No files have been added. Please add them on your own to 'packages'"
-    exit 1 
+    exit 1
 }
 done
 # download all files
 for var in $@; do
     pk3file_name=$(basename $var |sed 's/%23/#/g' )
     # do not download already existing pk3 packages
-    if [[ -f "$package_folder/$pk3file_name" ]]; then 
+    if [[ -f "$package_folder/$pk3file_name" ]]; then
         echo -e "$print_info $pk3file_name already exists."
         continue
-    fi 
+    fi
     wget --directory-prefix="$package_folder" -N $var
-    # create copy/symlink/hardlink for http server       
+    # create copy/symlink/hardlink for http server
     if [[ "$http_server" == "true" ]]; then
         case $http_server_option in
             copy)
@@ -1089,7 +1089,7 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
 done
 } # end of server_send_rescan()
 
-# check files and config for sending commands to servers via rcon 
+# check files and config for sending commands to servers via rcon
 function server_send_check() {
 if [[ ! -x "$rcon_script" ]]; then
     echo >&2 -e "$print_error Could not find rcon script."
@@ -1100,12 +1100,12 @@ elif [[ "$password_file" == "configs" ]]; then
 elif [[ -f "$password_file" ]]; then
     search_in_configs="false"
     single_rcon_password=$(awk '/^rcon_password/ {print $2}' $password_file)
-else 
+else
     echo >&2 -e "$print_error Could not find rcon password(s)."
     echo >&2 -e "        Check xstools.conf."
     exit 1
 fi
-} # end of server_send_check() 
+} # end of server_send_check()
 
 # set ports and passwords for every server and save them in a variable
 # used in for statements
@@ -1154,7 +1154,7 @@ while [ "$counter" -lt "${#a_name[@]}" ]; do
     echo -e "$print_info Sending command to server '${a_name[$counter]}'."
     echo
     rcon_address=127.0.0.1:${a_port[$counter]} rcon_password=${a_pass[$counter]} $rcon_script "$my_command"
-    echo 
+    echo
     counter=$[$counter+1]
 done
 } # end of server_send_command_now()
@@ -1250,7 +1250,7 @@ function server_logs() {
 case $1 in
     "set") server_set_logs;;
     "del") shift; server_del_logs "$@";;
-    ""|*)  
+    ""|*)
         echo >&2 -e "$print_error Argument invalid or missing."
         echo >&2 -e "        Use --send 'set' or 'del'."
         exit 1
@@ -1334,14 +1334,14 @@ echo -e "       package folder(s): $package_folders"
 echo
 
 case ${_version:-$default_version} in
-    git) 
+    git)
     version_git_check_and_set
     server_maplist_git "$@"
-        ;;   
+        ;;
     release)
     version_release_check_and_set
     server_maplist_release "$@"
-        ;;   
+        ;;
 esac
 
 echo -e "$print_info Checking user added .pk3 packages."
@@ -1356,7 +1356,7 @@ for folder in $package_folders; do
         # check if pk3 package contains a bsp, if not continue
         if [[ -z $map_bsps ]]; then
             continue
-        fi  
+        fi
         # get the mapname of every bsp
         for map_bsp in $map_bsps; do
             map_name=${map_bsp%.bsp}
@@ -1371,11 +1371,11 @@ for folder in $package_folders; do
                 unzip -p ${map_pk3} maps/$map_name.mapinfo | grep -Eo "^(gametype|type) $@" >/dev/null &&
                 maplist="$map_name $maplist"
                 continue
-                # last chance an autogenerated one 
+                # last chance an autogenerated one
             elif [[ -f "$userdir/$data_dirname/data/maps/autogenerated/$map_name.mapinfo" ]]; then
                 grep -Eo "^(gametype|type) $@" "$userdir/$data_dirname/data/maps/autogenerated/$map_name.mapinfo" >/dev/null &&
                 maplist="$map_name $maplist"
-                continue    
+                continue
             else
                 echo >&2 -e "$print_error No $map_name.mapinfo file found!"
                 echo >&2 -e "        ... ${map_pk3##*/}"
@@ -1459,7 +1459,7 @@ for map_pk3 in "$@"; do
 done
 } # end of server_mapinfo_extract()
 
-# show the difference of a mapinfo file in pk3 package and in data/maps 
+# show the difference of a mapinfo file in pk3 package and in data/maps
 function server_mapinfo_diff() {
 while getopts ":d:" options; do
     case $options in
@@ -1494,7 +1494,7 @@ for map_pk3 in "$@"; do
 done
 } # end of server_mapinfo_diff()
 
-# show the difference of all mapinfo files in pk3 package and in data/maps 
+# show the difference of all mapinfo files in pk3 package and in data/maps
 function server_mapinfo_diff_all() {
 while getopts ":rgd:p:" options; do
     case $options in
@@ -1523,7 +1523,7 @@ for folder in $package_folders; do
             if [[ -f "$userdir/$data_dirname/maps/$map_info" ]]; then
                 if ! diff "$userdir/$data_dirname/maps/$map_info" <(unzip -pq $map_pk3 maps/$map_info) &>/dev/null; then
                     echo -e "$print_info Difference of $data_dirname/maps/$map_info and $map_pk3:"
-                    diff "$userdir/$data_dirname/maps/$map_info" <(unzip -pq $map_pk3 maps/$map_info) 
+                    diff "$userdir/$data_dirname/maps/$map_info" <(unzip -pq $map_pk3 maps/$map_info)
                 fi
             fi
         done
@@ -1569,7 +1569,7 @@ for map_pk3 in "$@"; do
 done
 } # end of server_mapinfo_show()
 
-# reduce server console errors messages 
+# reduce server console errors messages
 # replace type 'type' with 'gametype', mv autogenerated mapinfo files
 function server_mapinfo_fix() {
 while getopts ":rgd:p:" options; do
@@ -1607,7 +1607,7 @@ for folder in $package_folders; do
             if [[ -f "$userdir/$data_dirname/maps/$map_info" ]]; then
                 continue
             elif unzip -qp $map_pk3 maps/$map_info |grep -E '(^type )|(^gametype (freezetag)|(keepaway)|(nexball))' &>/dev/null; then
-                unzip -qjn -d "$userdir/$data_dirname/maps/" $map_pk3 maps/$map_info 
+                unzip -qjn -d "$userdir/$data_dirname/maps/" $map_pk3 maps/$map_info
                 sed -i -e 's/^type /gametype /g'\
                        -e 's/^gametype freezetag/gametype ft/g'\
                        -e 's/^gametype keepaway/gametype ka/g'\
@@ -1681,8 +1681,8 @@ rcon2irc_config_check_and_set $var
             TMUX="`which tmux` -f $xstool_dir/configs/.tmux.conf"
         fi
         $TMUX new-session -d -n $tmux_window -s $tmux_session
-        tmux send -t $tmux_session:$tmux_window "cd $rcon2irc_config_folder && perl $rcon2irc_script $rcon2irc_config" C-m 
-        rcon2irc_check_start 
+        tmux send -t $tmux_session:$tmux_window "cd $rcon2irc_config_folder && perl $rcon2irc_script $rcon2irc_config" C-m
+        rcon2irc_check_start
     # option 3: rcon2irc is not running; tmux session exists, and window already exists
     # in this case: print error and continue with for loop
     elif tmux list-windows -t $tmux_session | grep "$tmux_window " &>/dev/null; then
@@ -1690,10 +1690,10 @@ rcon2irc_config_check_and_set $var
         echo >&2 -e "        Use '--rcon2irc attach $rcon2irc_name' to check window status."
         continue
     else
-    # option 4; rcon2irc is not running, tmux session exists, window does not exist 
+    # option 4; rcon2irc is not running, tmux session exists, window does not exist
     # in this case: start a new window in tmux session and start rcon2irc
         tmux new-window -d -n $tmux_window -t $tmux_session
-        tmux send -t $tmux_session:$tmux_window "cd $rcon2irc_config_folder && perl $rcon2irc_script $rcon2irc_config" C-m 
+        tmux send -t $tmux_session:$tmux_window "cd $rcon2irc_config_folder && perl $rcon2irc_script $rcon2irc_config" C-m
         rcon2irc_check_start
     fi
 done
@@ -1718,15 +1718,15 @@ rcon2irc_config_check_and_set $var
             rcon_pid=$(ps o pid,cmd | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $1}')
             kill -9 $rcon_pid
             sleep 1
-            tmux send -t $tmux_session:$tmux_window "exit" C-m 
+            tmux send -t $tmux_session:$tmux_window "exit" C-m
             echo -e "$print_info rcon2irc '$rcon2irc_name' has been stopped."
         else
             echo -e >&2 "$print_error tmux window '$tmux_window' does not exist, but rcon2irc '$rcon2irc_name' is running."
             echo -e >&2 "        You have to fix this on your own."
-        fi  
+        fi
     else
         echo -e "$print_attention rcon2irc '$rcon2irc_name' was not found."
-    fi  
+    fi
 done
 } # end of rcon2irc_stop()
 
@@ -1740,13 +1740,13 @@ for conf in $(ls "$userdir"/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
             rcon_pid=$(ps o pid,cmd | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $1}')
             kill -9 $rcon_pid
             sleep 1
-            tmux send -t $tmux_session:$tmux_window "exit" C-m 
+            tmux send -t $tmux_session:$tmux_window "exit" C-m
             echo -e "$print_info rcon2irc '$rcon2irc_name' has been stopped."
         else
             echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but rcon2irc '$rcon2irc_name' is running."
             echo >&2 -e "        You have to fix this on your own."
-        fi  
-    fi  
+        fi
+    fi
 done
 } # end of rcon2irc_stop_all()
 
@@ -1977,9 +1977,9 @@ servers. Check Wiki for complete help.
 --send <server(s)>      Send a command to given servers and receive output.
       -c <command>      The beginning of command is defined by -c.
 
---logs set              Change the log file of all running servers to 
+--logs set              Change the log file of all running servers to
                         'serverconfig.date.log', where 'serverconfig' is the
-                        server name  and 'date' is 'YearMonthDay'. 
+                        server name  and 'date' is 'YearMonthDay'.
 
 --logs del              Delete older log files than given time in
                         days. Check xstools.conf to adjust this.
@@ -2009,8 +2009,8 @@ servers. Check Wiki for complete help.
                         and mapinfo file in data folder (set by -d).
           Options: -d   Set the data folder name to compare with.
 
-        diff-all        Same as 'diff' but for all pk3 packages in package 
-                        folders (set by -p) and mapinfos in data folder 
+        diff-all        Same as 'diff' but for all pk3 packages in package
+                        folders (set by -p) and mapinfos in data folder
                         (set by -d).
                         No output if comparing was not possible
                         No output if mapinfo files are the same.
@@ -2028,7 +2028,7 @@ servers. Check Wiki for complete help.
                         in data folder (set by -d).
           Options: -d   Set the data folder name.
 
--d and -p are optional. If options are not used default is set: 
+-d and -p are optional. If options are not used default is set:
     data folder:    data
     package folder: /\$userdir/packages
 To set several package folders use: xst --mapinfo -p folder1 -p folder2 ...
@@ -2037,13 +2037,13 @@ To set several package folders use: xst --mapinfo -p folder1 -p folder2 ...
                         command is one of the following options:
 
       start-all         Start all rcon2irc bots, whose configuration files
-                        are placed in 'configs/rcon2irc'. Those configuration 
+                        are placed in 'configs/rcon2irc'. Those configuration
                         files are recognized by their extenstion .rcon2irc.conf
 
       start <bot(s)>    same as --rcon-start-all, but you can specify bot(s)
 
       stop-all          Stop all currently running bots. Those servers must
-                        run in the defined tmux session. Otherwise xstools 
+                        run in the defined tmux session. Otherwise xstools
                         cannot stop them.
 
       stop <bot(s)>     Stop specific bot(s).
