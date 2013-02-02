@@ -1903,7 +1903,7 @@ servers. Check Wiki for complete help.
 
 --logs del              Delete older log files than given time in
                         days. Check xstools.conf to adjust this.
-  Options: -d           Set the data where logs are located.
+  Options: -d           Set the data folder where logs are located.
                         (default is data)
 
 --maplist               Create a maplist for all gamtypes or use a regex.
