@@ -143,6 +143,10 @@ function update_autobuild() {
         echo >&2 -e "$print_error Could not execute autobuild update script."
         echo >&2 -e "        Please fix this."
     else
+echo "// this file defines the last update date of your Xonotic autobuild 
+// everytime you run an update the date of the update_autobuild variable changes
+// you can define the date format in configs/xstools.conf
+set update_autobuild \"$(date +"$autobuild_update_date")\"" > "$userdir/configs/servers/common/update_autobuild.cfg" &&
         ./$autobuild_update_script
     fi
 }
@@ -150,9 +154,9 @@ function update_autobuild() {
 function update_git() {
 cd "$basedir_git"
 echo "// this file defines the last update date of your Xonotic git repo 
-// everytime you run an update the date of the builddate-git variable changes
+// everytime you run an update the date of the update_git variable changes
 // you can define the date format in configs/xstools.conf
-set builddate-git \"$(date +"$git_update_date")\"" > "$userdir/configs/servers/common/builddate-git.cfg" &&
+set update_git \"$(date +"$git_update_date")\"" > "$userdir/configs/servers/common/update_git.cfg" &&
 ./all update $git_update_options &&
 ./all compile $git_compile_options
 } # end of update_git()
@@ -826,6 +830,45 @@ elif [[ -n $quit_and_redirect && -n $quit_and_redirect_to ]]; then
 fi
 } # end of send_notice()
 
+function server_update_autobuild() {
+while getopts ":q:sn" options; do
+    case $options in
+        q) restart_and_redirect=true; restart_and_redirect_to="$OPTARG";;
+        s) restart_and_redirect=true; restart_and_redirect_to="self";;
+        n) restart_and_redirect=true; restart_and_redirect_now=true;;
+    esac
+done
+shift $((OPTIND-1))
+# git version...
+version_autobuild_check_and_set
+# check options
+if [[ -z $autobuild_update_date ]]; then
+    echo >&2 -e "$print_error 'autobuild_update_date' is empty"
+    echo >&2 -e "       date format: $(date +'%d %b %H:%M %Z') will be used for this update"
+    git_update_date='%d %b %H:%M %Z'
+fi
+# autobuild servers only
+pgrep_suffix=_autobuild
+# lock xstools, when update started 
+touch "$userdir/lock_update"
+# use update_git variable for send_notice function
+update_autobuild=true
+# option -a need not to be set - due the defined suffix
+send_notice all_servers
+# simply update
+update_autobuild
+unset update_autobuild
+# option -g need not to be set - due the defined suffix
+if [[ -n $restart_and_redirect ]]; then
+    send_notice all_servers
+    server_restart_redirect all_servers
+else
+    server_restart all_servers
+fi
+# unlock xstools 
+rm -f "$userdir/lock_update"
+} # end of server_update_autobuild()
+
 function server_update_git() {
 while getopts ":q:sn" options; do
     case $options in
@@ -847,7 +890,7 @@ elif [[ -z $git_update_options ]]; then
     echo >&2 -e "       '-l best' will be used for this update"
     git_update_options='-l best'
 elif [[ -z $git_update_date ]]; then
-    echo >&2 -e "$print_error 'git_update_options' is empty"
+    echo >&2 -e "$print_error 'git_update_date' is empty"
     echo >&2 -e "       date format: $(date +'%d %b %H:%M %Z') will be used for this update"
     git_update_date='%d %b %H:%M %Z'
 fi
@@ -1796,8 +1839,6 @@ function xstools_help() {
 cat << EOF
 -- Commands --
 xstools
-    --install-git                   - download xonotic git into basedir
-
     --start-all <-rg>               - start all servers
     --start <-rg> <server(s)>       - start servers
     --stop-all <-rgeqnw>            - stop all servers
@@ -1805,7 +1846,11 @@ xstools
     --restart-all <-rgnqs>          - restart all servers
     --restart <-nqs> <server(s)>    - restart-servers
 
+    --install-git                   - download xonotic git into basedir
     --update-git <-nqs>             - update git and restart git servers
+    --update-autobuild <-nqs>       - update autobuild and update
+                                      autobuild servers
+
     --list                           - list running servers/rcon2irc bots
     --list-configs                   - list server and rcon2irc configs
     --attach <server(s)>             - attach server console
@@ -1853,10 +1898,6 @@ servers. Check Wiki for complete help.
 
 ----- Functions
 
---install-git           Download Xonotic Git and save it in the given basedir
-                        folder. Check xtools.conf to adjust this.
-
-
 --start-all             Start all servers whose configuration files are placed
                         in 'configs/servers'.
   Options:   -r         Start all servers as release servers.
@@ -1899,13 +1940,22 @@ servers. Check Wiki for complete help.
             -n          Optional parameter in combination with -q or -s.
                         Directly restart, do not wait for endmatch.
 
+
+--install-git           Download Xonotic Git and save it in the given basedir
+                        folder. Check xtools.conf to adjust this.
+
 --update-git            Update Xonotic git repository and restart all
                         git servers.
-  Options:  -q          Restart server at endmatch and redirect all players
+--update-autobuild      Update Xonotic autobuild basedir and restart all
+                        autobuild servers.
+
+  Options for both update functions:
+            -q          Restart server at endmatch and redirect all players
                         to given server (hostname+port).
             -s          Restart at endmatch and let all players reconnect.
             -n          Optional parameter in combination with -q or -s.
                         Directly restart, do not wait for endmatch.
+
 
 --list                  List all running servers and bots.
 
@@ -2069,14 +2119,15 @@ esac
 }
 
 case $1 in
- --install-git|install-git)          basic_config_check; install_git;;
  --start-all|start-all)              basic_config_check; shift && server_start_all "$@";;
  --start|start)                      basic_config_check; shift && server_start_specific "$@";;
  --stop-all|stop-all)                basic_config_check; shift && server_stop_all "$@";;
  --stop|stop)                        basic_config_check; shift && server_stop_specific "$@";;
  --restart-all|restart-all)          basic_config_check; shift && server_restart_all "$@";;
  --restart|restart)                  basic_config_check; shift && server_restart_specific "$@";;
+ --install-git|install-git)          basic_config_check; install_git;;
  --update-git|update-git)            basic_config_check; shift && server_update_git "$@";;
+ --update-autobuild|update-autobuild basic_config_check; shift && server_update_autobuild "$@";;
  --list|list|ls)                     basic_config_check; xstools_list_all;;
  --list-configs|list-configs)        basic_config_check; xstools_list_configs;;
  --attach|attach|att)                basic_config_check; shift && server_attach "$@";;
