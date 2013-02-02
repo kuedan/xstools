@@ -835,7 +835,8 @@ while getopts ":q:sn" options; do
 done
 shift $((OPTIND-1))
 if [[ ! -x "$autobuild_update_script" ]]; then
-    echo >&2 -e "$print_error Could not execute autobuild update script."
+    echo >&2 -e "$print_error Cannot not execute autobuild update script."
+    echo >&2 -e "        Check if file exists and marked as executable."
     echo >&2 -e "        Please fix this."
     exit 1
 fi
