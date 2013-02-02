@@ -1,7 +1,7 @@
 # Xonotic Server Tools
 Created by: It'sMe
 
-Xonotic Server Tools is a collection of functions to manage several [Xonotic](http://www.xonotic.org) servers by loading each server in a seperate [tmux](http://tmux.sourceforge.net/) window. Server admins can call those servers by their name. The script supports *release* and *git* servers. Next to servers Xonotic Server Tools can manage rcon2irc bots, too. The script also offers a extended folder tree to organize your configuration files, logs and pk3 packages.
+Xonotic Server Tools is a collection of functions to manage several [Xonotic](http://www.xonotic.org) servers by loading each server in a seperate [tmux](http://tmux.sourceforge.net/) window. Server admins can call those servers by their name. The script supports *release*, *autobuild* and *git* servers. Next to servers Xonotic Server Tools can manage rcon2irc bots, too. The script also offers a extended folder tree to organize your configuration files, logs and pk3 packages.
 All adjustments can be made in the basic configuration file: **xstools.conf**.
 
 ## Commands
@@ -81,7 +81,7 @@ Use the following extenstions for your configs:
 
 - Required Software: A linux or unix based operating system, bash, tmux, gawk
 
-- Optional Software: perl, git, qstat
+- Optional Software: git, perl, qstat, rsync
 
 
 ## Documentation
