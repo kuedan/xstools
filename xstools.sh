@@ -834,7 +834,11 @@ while getopts ":q:sn" options; do
     esac
 done
 shift $((OPTIND-1))
-if [[ ! -x "$autobuild_update_script" ]]; then
+if [[ -n $update_autobuild_script ]]; then
+    echo >&2 -e "$print_error Script to update autobuild not set."
+    echo >&2 -e "        Check xstools.conf."
+    exit 1
+elif [[ ! -x "$autobuild_update_script" ]]; then
     echo >&2 -e "$print_error Cannot not execute autobuild update script."
     echo >&2 -e "        Check if file exists and marked as executable."
     echo >&2 -e "        Please fix this."
