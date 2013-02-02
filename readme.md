@@ -7,8 +7,6 @@ All adjustments can be made in the basic configuration file: **xstools.conf**.
 ## Commands
 
 ```
-    --install-git                   - download xonotic git into basedir
-
     --start-all <-rg>               - start all servers
     --start <-rg> <server(s)>       - start servers
     --stop-all <-rgeqnw>            - stop all servers
@@ -16,7 +14,11 @@ All adjustments can be made in the basic configuration file: **xstools.conf**.
     --restart-all <-rgnqs>          - restart all servers
     --restart <-nqs> <server(s)>    - restart-servers
 
+    --install-git                   - download xonotic git into basedir
     --update-git <-nqs>             - update git and restart git servers
+    --update-autobuild <-nqs>       - update autobuild and update
+                                      autobuild servers
+
     --list                           - list running servers/rcon2irc bots
     --list-configs                   - list server and rcon2irc configs
     --attach <server(s)>             - attach server console
@@ -53,7 +55,6 @@ All adjustments can be made in the basic configuration file: **xstools.conf**.
 
     --help                      - print full help for functions
     -h                          - print this help
-
 ```
 
 ## Extended Folder Tree
