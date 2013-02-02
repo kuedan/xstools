@@ -3,7 +3,7 @@
 # Xonotic Server Tools
 # https://github.com/itsme-/xstools
 #
-# Version: 0.3
+# Version: 0.5
 # Created by: It'sMe
 #
 # Xonotic Server Tools by It'sMe is released under the following License:
