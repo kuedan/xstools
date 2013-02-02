@@ -98,6 +98,27 @@ function version_release_check_and_set() {
     server_command="cd \"$basedir_release\" && ./$executable"
 } # end of version_release_check_and_set()
 
+function version_autobuild_check_and_set() {
+    if [[ ! -d "$basedir_autobuild" ]]; then
+        echo >&2 -e "$print_error Xonotic autobuild basedir not found."
+        echo >&2 -e "        Check xstools.conf"
+        exit 1
+    fi
+    case "$(uname -m)" in
+    x86_64)   executable="xonotic-linux64-dedicated";;
+    *)        executable="xonotic-linux32-dedicated";;
+    esac
+    if [[ ! -x "$basedir_release/$executable" ]]; then
+        echo >&2 -e "$print_error $executable is not marked as executable."
+        echo >&2 -e "        Please fix this."
+        exit 1
+    fi
+    # make sure we are able to differ release and autobuild executable
+    [[ -x "$basedir_release/$executable-autobuild" ]] ||\
+        ln "$basedir_release/$executable" "$basedir_release/$executable-autobuild"
+    server_command="cd \"$basedir_autobuild\" && ./$executable-autobuild"
+} # end of version_release_check_and_set()
+
 # check and set xonotic git stuff
 function version_git_check_and_set() {
     if [[ ! -d "$basedir_git" ]]; then
@@ -116,6 +137,15 @@ function version_git_check_and_set() {
 
 ### --- install/update functions 
 # {{{
+
+function update_autobuild() {
+    if [[ ! -x "$autobuild_update_script" ]]; then
+        echo >&2 -e "$print_error Could not execute autobuild update script."
+        echo >&2 -e "        Please fix this."
+    else
+        ./$autobuild_update_script
+    fi
+}
 
 function update_git() {
 cd "$basedir_git"
@@ -154,13 +184,6 @@ which git &>/dev/null || {
         echo >&2 "Abort."
         exit 1 
     fi
-}
-
-function install_release() {
-    echo "Please download and extract Xonotic on your own."
-    echo "Go to: http://www.xonotic.org/download/"
-    echo "Then edit 'basedir_release' in xstools.conf."
-
 }
 
 # }}}
@@ -203,7 +226,10 @@ function pgrep_server() {
     ps o cmd | grep "+set serverconfig $server_config" |grep -v grep
 }
 function pgrep_server_release() {
-    ps o cmd |grep "xonotic-linux.*dedicated.* +set serverconfig $server_config" |grep -v grep
+    ps o cmd |grep "xonotic-linux.*-dedicated .* +set serverconfig $server_config" |grep -v grep
+}
+function pgrep_server_autobuild() {
+    ps o cmd |grep "xonotic-linux.*-dedicated-autobuild .* +set serverconfig $server_config" |grep -v grep
 }
 function pgrep_server_git() {
     ps o cmd | grep "darkplaces/darkplaces-dedicated -xonotic.* +set serverconfig $server_config" |grep -v /bin/sh |grep -v grep
@@ -270,9 +296,10 @@ done
 function server_start_specific() {
 server_first_config_check $1
 version_has_been_set=false
-while getopts ":rg" opt
+while getopts ":agr" opt
 do
     case $opt in
+        a) version_autobuild_check_and_set && version_has_been_set=true;;
         g) version_git_check_and_set && version_has_been_set=true;;
         r) version_release_check_and_set && version_has_been_set=true;;
     esac
@@ -283,6 +310,7 @@ for server_name in $@; do
 done
 if [[ $version_has_been_set == false ]]; then
     case $default_version in
+        autobuild) version_autobuild_check_and_set && version_has_been_set=true;;
         git) version_git_check_and_set && version_has_been_set=true;;
         release) version_release_check_and_set && version_has_been_set=true;;
         *)  echo >&2 -e "$print_error Invalid version: $default_version." && echo >&2 -e "        Please fix xstools.conf."; exit 1;;
@@ -294,9 +322,10 @@ server_start "$@"
 # start all servers 
 function server_start_all() {
 version_has_been_set=false
-while getopts ":rg" opt
+while getopts ":agr" opt
 do
     case $opt in
+        a) version_autobuild_check_and_set && version_has_been_set=true;;
         g) version_git_check_and_set && version_has_been_set=true;;
         r) version_release_check_and_set && version_has_been_set=true;;
     esac
@@ -304,6 +333,7 @@ done
 shift $((OPTIND-1))
 if [[ $version_has_been_set == false ]]; then
     case $default_version in
+        autobuild) version_autobuild_check_and_set && version_has_been_set=true;;
         git) version_git_check_and_set && version_has_been_set=true;;
         release) version_release_check_and_set && version_has_been_set=true;;
         *)  echo >&2 -e "$print_error Invalid version: $default_version." && echo >&2 -e "        Please fix xstools.conf."; exit 1;;
@@ -508,10 +538,11 @@ fi
 
 # function to stop all servers
 function server_stop_all() {
-while getopts ":rgq:new" options; do
+while getopts ":agrq:new" options; do
     case $options in
-        r) grep_release=true;;
-        g) grep_git=true;;
+        a) [ -z $pgrep_suffix ] && pgrep_suffx=_autobuild || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
+        g) [ -z $pgrep_suffix ] && pgrep_suffx=_git       || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
+        r) [ -z $pgrep_suffix ] && pgrep_suffx=__release  || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
         q) quit_and_redirect=true; quit_and_redirect_custom=true; quit_and_redirect_to="$OPTARG";;
         n) quit_and_redirect=true; quit_and_redirect_now=true;;
         e) quit_when_empty=true;;
@@ -522,11 +553,6 @@ shift $((OPTIND-1))
 if [[ -n $quit_and_redirect && -n $quit_when_empty ]]; then
     echo >&2 -e "$print_error You cannot use -n,-q in combination with -e option."
     exit 1
-fi
-if [[ $grep_release == true && $grep_git != true ]]; then
-    pgrep_suffix=_release
-elif [[ $grep_release != true && $grep_git == true ]]; then
-    pgrep_suffix=_git
 fi
 if [[ -n $quit_and_redirect ]]; then
     send_notice all_servers $@
@@ -692,21 +718,17 @@ fi
 
 # function to restart all servers
 function server_restart_all() {
-while getopts ":rgq:sn" options; do
+while getopts ":agrq:sn" options; do
     case $options in
-        r) grep_release=true;;
-        g) grep_git=true;;
+        a) [ -z $pgrep_suffix ] && pgrep_suffx=_autobuild || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
+        g) [ -z $pgrep_suffix ] && pgrep_suffx=_git       || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
+        r) [ -z $pgrep_suffix ] && pgrep_suffx=__release  || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
         q) restart_and_redirect=true; restart_and_redirect_to="$OPTARG";;
         s) restart_and_redirect=true; restart_and_redirect_to="self";;
         n) restart_and_redirect=true; restart_and_redirect_now=true;;
     esac
 done
 shift $((OPTIND-1))
-if [[ $grep_release == true && $grep_git != true ]]; then
-    pgrep_suffix=_release
-elif [[ $grep_release != true && $grep_git == true ]]; then
-    pgrep_suffix=_git
-fi
 if [[ -n $restart_and_redirect ]]; then
     send_notice all_servers
     server_restart_redirect all_servers
@@ -745,7 +767,15 @@ if [[ -n $update_git ]]; then
         tmux send -t $tmux_session:$tmux_window "
         set sv_adminnick_bak \"\${sv_adminnick}\";
         set sv_adminnick \"^1Server System^3\";
-        say Git update process started (will force restart when finished);
+        say git update process started (will force restart when finished);
+        wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
+    done
+elif [[ -n $update_autobuild ]]
+    for tmux_window in ${send_notice_to}; do
+        tmux send -t $tmux_session:$tmux_window "
+        set sv_adminnick_bak \"\${sv_adminnick}\";
+        set sv_adminnick \"^1Server System^3\";
+        say autobuild update process started (will force restart when finished);
         wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
     done
 elif [[ -n $restart_and_redirect_now && $restart_and_redirect_to == "self" ]]; then
