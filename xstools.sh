@@ -774,7 +774,7 @@ if [[ -n $update_git ]]; then
         say git update process started (will force restart when finished);
         wait; set sv_adminnick \"\${sv_adminnick_bak}\"" C-m
     done
-elif [[ -n $update_autobuild ]]
+elif [[ -n $update_autobuild ]]; then
     for tmux_window in ${send_notice_to}; do
         tmux send -t $tmux_session:$tmux_window "
         set sv_adminnick_bak \"\${sv_adminnick}\";
@@ -2127,7 +2127,7 @@ case $1 in
  --restart|restart)                  basic_config_check; shift && server_restart_specific "$@";;
  --install-git|install-git)          basic_config_check; install_git;;
  --update-git|update-git)            basic_config_check; shift && server_update_git "$@";;
- --update-autobuild|update-autobuild basic_config_check; shift && server_update_autobuild "$@";;
+ --update-autobuild|update-autobuild)   basic_config_check; shift && server_update_autobuild "$@";;
  --list|list|ls)                     basic_config_check; xstools_list_all;;
  --list-configs|list-configs)        basic_config_check; xstools_list_configs;;
  --attach|attach|att)                basic_config_check; shift && server_attach "$@";;
