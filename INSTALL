@@ -16,17 +16,18 @@ The name of this folder is user-defined and can be named as you like.
 
 INSTALLATION:
 
-1) Extract the .zip file of xstools (https://nodeload.github.com/itsme-/xstools/zipball/master)
+1) Extract the .zip file of xstools (https://github.com/itsme-/xstools/archive/master.zip)
    and move this folder to a location you like and name this folder as you like.
    (Do not forget: This is your xonotic user directory)
 
 2) Open xstools.conf in the subfolder 'scripts/' and define the location of your 
-   Xonotic 'user directory' and your 'basedirs'.
-   You can define a 'basedir' for a Xonotic release and git installation.
+   Xonotic 'user directory' (folder, you extracted the .zip file to) and your 'basedirs'.
+   You can define a 'basedir' for a Xonotic release, autobuild and git.
    Next to those folder variables there is an option to set the default version
-   you are going to host. Set it to 'release' or 'git'
-   Please download the release version on your own and move it to the 'basedir'
-   location you have set for 'release'. (http://www.xonotic.org/download/)
+   you are going to host. Set it to 'release' 'autobuild' or 'git'
+   Please download the 'release' version on your own and extract it to the
+   'basedir' location you have set for 'release'. (http://www.xonotic.org/download/)
+   Autobuilds can be found here: http://beta.xonotic.org/autobuild/
    If you want to host git servers, you must clone Xonotic git. Therefore you
    can run './xstools.sh --install-git' (after you have set userdir and basedir
    for git servers in xstools.conf) ATTENTION: A compiler and libraries are needed.
