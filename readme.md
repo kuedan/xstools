@@ -41,7 +41,7 @@ All adjustments can be made in the basic configuration file: **xstools.conf**.
                                   in package folder (-p) and data folder (-d)
         fix <-dp>               - fix server console warnings by mapinfo files
                                   in data folder (-d) and in pk3s of package
-                                  folders (-d)
+                                  folder (-p)
         show                    - show mapinfo files of given pk3 package
 
     --rcon2irc                  syntax: --rcon2irc command <bot(s)>
