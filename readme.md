@@ -7,11 +7,11 @@ All adjustments can be made in the basic configuration file: **xstools.conf**.
 ## Commands
 
 ```
-    --start-all <-rg>               - start all servers
-    --start <-rg> <server(s)>       - start servers
-    --stop-all <-rgeqnw>            - stop all servers
+    --start-all <-agr>               - start all servers
+    --start <-agr> <server(s)>       - start servers
+    --stop-all <-agreqnw>            - stop all servers
     --stop <-eqnw> <server(s)>      - stop servers
-    --restart-all <-rgnqs>          - restart all servers
+    --restart-all <-agrnqs>          - restart all servers
     --restart <-nqs> <server(s)>    - restart-servers
 
     --install-git                   - download xonotic git into basedir
@@ -29,7 +29,7 @@ All adjustments can be made in the basic configuration file: **xstools.conf**.
     --logs set/ del <-d>             - set a new log file for all servers,
                                        delete log files in data folder (-d)
                                        older than given days
-    --maplist <-grdp>                - create maplist for all gametypes based
+    --maplist <-agrdp>                - create maplist for all gametypes based
                                        on data (-d) and package folder (-p),
                                        also supports regex.
     --mapinfo                   syntax: --rcon2irc command <options> <pk3(s)>
