@@ -1272,6 +1272,22 @@ esac
 
 ### --- maplist functions
 # {{{
+function server_maplist_autobuild() {
+echo -e "$print_info Checking autobuild mapinfos."
+map_infos=$(unzip -l "$autobuild_release"/data/xonotic-*-maps*.pk3 |grep -Eo '[A-Za-z0-9#._+-]+\.mapinfo' |tr "\n" " ")
+for map_info in $map_infos; do
+    map_name=${map_info%.mapinfo}
+    if [[ -f $userdir/$data_dirname/maps/$map_info ]]; then
+        # user has defined his own mapinfo
+        continue
+#   elif [[ pk3 has been copied to packages... ]]; then
+#       continue
+    fi
+    unzip -p "$basedir_autobuild"/data/xonotic-*-maps*.pk3 maps/$map_info | grep -Eo "^(gametype|type) $@" >/dev/null &&
+    maplist="$map_name $maplist"
+done
+}
+
 function server_maplist_git() {
 echo -e "$print_info Checking git mapinfos."
 for map_info_location in "$basedir_git"/data/xonotic-maps.pk3dir/maps/*.mapinfo; do
@@ -1315,21 +1331,17 @@ which uniq &>/dev/null || {
     exit 1
 }
 
-while getopts ":rgd:p:" options; do
+while getopts ":agrd:p:" options; do
     case $options in
-        r) version_release==true; _version=release;;
-        g) version_git=true;      _version=git;;
+        a) [ -z $_version ] &&  _version=autobuild || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
+        g) [ -z $_version ] &&  _version=git       || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
+        r) [ -z $_version ] &&  _version=release   || ( echo >&2 "$print_error You cannot combine -a,-g,-r"; exit 1 );;
         d) data_dirname="${OPTARG%/}";;
         p) [ ! -d $OPTARG ] && echo -e >&2 "$print_error Folder ${OPTARG%/} does not exist." && exit 1;
            package_folders="$package_folders ${OPTARG%/}";;
     esac
 done
 shift $((OPTIND-1))
-
-if [[ -n $version_release && -n $version_git ]]; then
-    echo -e >&2 "$print_error Please use -r or -g."
-    exit 1
-fi
 
 [ -z $data_dirname ] && data_dirname=data
 if [[ ! -d "$userdir/$data_dirname" ]]; then
@@ -1345,6 +1357,10 @@ echo -e "       package folder(s): $package_folders"
 echo
 
 case ${_version:-$default_version} in
+    autobuild)
+    version_autobuild_check_and_set
+    server_maplist_autobuild "$@"
+        ;;
     git)
     version_git_check_and_set
     server_maplist_git "$@"
@@ -1850,11 +1866,11 @@ function xstools_help() {
 cat << EOF
 -- Commands --
 xstools
-    --start-all <-rg>               - start all servers
-    --start <-rg> <server(s)>       - start servers
-    --stop-all <-rgeqnw>            - stop all servers
+    --start-all <-agr>               - start all servers
+    --start <-agr> <server(s)>       - start servers
+    --stop-all <-agreqnw>            - stop all servers
     --stop <-eqnw> <server(s)>      - stop servers
-    --restart-all <-rgnqs>          - restart all servers
+    --restart-all <-agrnqs>          - restart all servers
     --restart <-nqs> <server(s)>    - restart-servers
 
     --install-git                   - download xonotic git into basedir
@@ -1872,7 +1888,7 @@ xstools
     --logs set/ del <-d>             - set a new log file for all servers,
                                        delete log files in data folder (-d)
                                        older than given days
-    --maplist <-grdp>                - create maplist for all gametypes based
+    --maplist <-agrdp>                - create maplist for all gametypes based
                                        on data (-d) and package folder (-p),
                                        also supports regex.
     --mapinfo                   syntax: --rcon2irc command <options> <pk3(s)>
@@ -1912,17 +1928,20 @@ servers. Check Wiki for complete help.
 --start-all             Start all servers whose configuration files are placed
                         in 'configs/servers'.
   Options:   -r         Start all servers as release servers.
+             -a         Start all servers as autobuild servers.
              -g         Start all servers as git servers.
                         (otherwise use default)
 
 --start <server(s)>     Start specific server(s).
   Options:   -r         Start given servers as release servers.
+             -a         Start given servers as autobuild servers.
              -g         Start given servers as git servers.
                         (otherwise use default)
 
 --stop-all              Stop all running servers..
-  Options:  -r          command only affects release servers.
-            -g          command only affects git servers.
+  Options:  -r          Command only affects release servers.
+            -a          Command only affects autobuild servers.
+            -g          Command only affects git servers.
                         (otherwise command affects all servers)
 
 --stop <server(s)>      Stop specific server(s).
@@ -1938,8 +1957,9 @@ servers. Check Wiki for complete help.
                         the tmux window on your own.
 
 --restart-all           Restart all running server(s).
-  Options:  -r          command only affects release servers.
-            -g          command only affects git servers.
+  Options:  -r          Command only affects release servers.
+            -a          Command only affects git servers.
+            -g          Command only affects git servers.
                         (otherwise command affects all servers)
 
 --restart <server(s)>   Restart specific server(s).
@@ -1998,7 +2018,7 @@ servers. Check Wiki for complete help.
                         (default is data)
 
 --maplist               Create a maplist for all gamtypes or use a regex.
-  Options:  -g/-r       Scan release or git basedir.
+  Options:  -a/-g/-r    Scan autobuild, release or git basedir.
                         to given server (hostname+port).
             -d          Define the name of data folder - default is data.
             -p          Define the package folders (full path).
