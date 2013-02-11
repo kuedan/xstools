@@ -1081,6 +1081,58 @@ done
 server_send_rescan
 } # end of server_add_pk3()
 
+# send commands to servers via tmux send
+function server_send(){
+if [[ -z $sendall ]]; then
+    # check if arguments contain -c for seperating command from server names
+    if ! echo "$@" | grep ' -c ' &>/dev/null; then
+        echo >&2 -e "$print_error Syntax is: --send <server(s)> -c <command>"
+        exit 1
+    fi
+    # check if first argument is a valid config
+    server_first_config_check $1
+    for var in "$@"; do
+        if [[ "$var" == "-c" ]]; then
+            break
+        fi
+        server_config_check_and_set $var
+        if pgrep_server &>/dev/null; then
+            if ! tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+                echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but server '$server_name' is running."
+                echo >&2 -e "        You have to fix this on your own."
+            else
+                server_names="$server_names $server_name"
+            fi
+        fi
+    done
+    my_command=$(echo "$@" | awk -F' -c ' '{print $2}')
+else
+    for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
+        server_config=${cfg##*/}
+        if pgrep_server &>/dev/null; then
+            server_config_check_and_set ${server_config%.cfg}
+            if ! tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+                echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but server '$server_name' is running."
+                echo >&2 -e "        You have to fix this on your own."
+            else
+                server_names="$server_names $server_name"
+            fi
+        fi
+    done
+    if [[ $1 == '-c' ]]; then
+        shift
+    fi
+    my_command="$@"
+fi
+a_servername=( $server_names )
+counter=0
+while [ "$counter" -lt "${#a_servername[@]}" ]; do
+    echo -e "$print_info Sending command to server '${a_servername[$counter]}'."
+    tmux send -t $tmux_session:server-${a_servername[$counter]} "$my_command" C-m
+    counter=$[$counter+1]
+done
+} # end of server_send()
+
 # send rescan_pending 1 to servers to scan for new added pk3 packages
 function server_send_rescan() {
 echo -e "$print_info Servers will scan for new packages at endmatch."
