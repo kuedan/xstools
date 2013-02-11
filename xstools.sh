@@ -1100,27 +1100,9 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
 done
 } # end of server_send_rescan()
 
-# check files and config for sending commands to servers via rcon
-function server_send_check() {
-if [[ ! -x "$rcon_script" ]]; then
-    echo >&2 -e "$print_error Could not find rcon script."
-    echo >&2 -e "        Check xstools.conf. Also check flags, need +x"
-    exit 1
-elif [[ "$password_file" == "configs" ]]; then
-    search_in_configs="true"
-elif [[ -f "$password_file" ]]; then
-    search_in_configs="false"
-    single_rcon_password=$(awk '/^rcon_password/ {print $2}' $password_file)
-else
-    echo >&2 -e "$print_error Could not find rcon password(s)."
-    echo >&2 -e "        Check xstools.conf."
-    exit 1
-fi
-} # end of server_send_check()
-
 # set ports and passwords for every server and save them in a variable
 # used in for statements
-function server_send_set_ports_and_pws() {
+function server_send_rcon_get_ports_and_pws() {
 # we use servers config name, to save the port
 server_port=$(awk '/^port/ {print $2}' "$userdir"/configs/servers/$server_config)
 # test if we have found a port... simply grep for a field of digits :)
@@ -1154,9 +1136,57 @@ all_rcon_passwords="$all_rcon_passwords $single_rcon_password"
 fi
 } # end of server_send_set_ports_and_pws
 
-# send defined command to all given ports with passwords
-function server_send_command_now() {
-# now save server names, ports and passwords in an array
+# send commands to server(s) via rcon.pl and receive output
+function server_send_rcon() {
+# check if everything is fine ...
+if [[ ! -x "$rcon_script" ]]; then
+    echo >&2 -e "$print_error Could not find rcon script."
+    echo >&2 -e "        Check xstools.conf. Also check flags, need +x"
+    exit 1
+elif [[ "$password_file" == "configs" ]]; then
+    search_in_configs="true"
+elif [[ -f "$password_file" ]]; then
+    single_rcon_password=$(awk '/^rcon_password/ {print $2}' $password_file)
+else
+    echo >&2 -e "$print_error Could not find rcon password(s)."
+    echo >&2 -e "        Check xstools.conf."
+    exit 1
+fi
+
+if [[ -z $sendall ]]; then
+    # check if arguments contain -c for seperating command from server names
+    if ! echo "$@" | grep ' -c ' &>/dev/null; then
+        echo >&2 -e "$print_error Syntax is: --send <server(s)> -c <command>"
+        exit 1
+    fi
+    # check if first argument is a valid config
+    server_first_config_check $1
+    for var in "$@"; do
+        if [[ "$var" == "-c" ]]; then
+            break
+        fi
+        server_config_check_and_set $var
+        server_send_rcon_get_ports_and_pws
+    done
+    my_command=$(echo "$@" | awk -F' -c ' '{print $2}')
+else
+    for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
+        server_config_check_and_set $(basename ${cfg%.cfg})
+        if pgrep_server &>/dev/null; then
+            if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+                server_send_rcon_get_ports_and_pws
+            else
+                echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but server '$server_name' is running."
+                echo >&2 -e "        You have to fix this on your own."
+            fi
+        fi
+    done
+    if [[ $1 == '-c' ]]; then
+        shift
+    fi
+    my_command="$@"
+fi
+# for each server we save a rcon password and port until 'command to send' begins
 a_name=( $all_server_names )
 a_port=( $all_server_ports )
 a_pass=( $all_rcon_passwords )
@@ -1168,53 +1198,7 @@ while [ "$counter" -lt "${#a_name[@]}" ]; do
     echo
     counter=$[$counter+1]
 done
-} # end of server_send_command_now()
-
-# send commands to server(s) via rcon.pl and receive output
-function server_send_command() {
-# check if everything is fine ...
-server_send_check
-# check if arguments contain -c for seperating command from server names
-if ! echo "$@" | grep ' -c ' &>/dev/null; then
-    echo >&2 -e "$print_error Syntax is: --send <server(s)> -c <command>"
-    exit 1
-fi
-
-# check if first argument is a valid config
-server_first_config_check $1
-# for each server we save a rcon password and port until 'command to send' begins
-for var in "$@"; do
-    if [[ "$var" == "-c" ]]; then
-        break
-    fi
-    server_config_check_and_set $var
-    server_send_set_ports_and_pws
-done
-my_command=$(echo "$@" | awk -F' -c ' '{print $2}')
-server_send_command_now
 } # end of server_send_command()
-
-# send commands to all servers via rcon.pl and receive outputs
-function server_send_all_command() {
-# check if everything is fine ...
-server_send_check
-for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
-    server_config_check_and_set $(basename ${cfg%.cfg})
-    if pgrep_server &>/dev/null; then
-        if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
-        server_send_set_ports_and_pws
-        else
-            echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but server '$server_name' is running."
-            echo >&2 -e "        You have to fix this on your own."
-        fi
-    fi
-done
-if [[ $1 == '-c' ]]; then
-    shift
-fi
-my_command="$@"
-server_send_command_now
-} # end of server_send_all_command()
 
 # log files for servers
 function server_set_logs() {
@@ -2164,8 +2148,10 @@ case $1 in
  --attach|attach|att)                basic_config_check; shift && server_attach "$@";;
  --add-pk3|add-pk3)                  basic_config_check; shift && server_add_pk3 "$@";;
  --rescan|rescan)                    basic_config_check; server_send_rescan;;
- --send|send)                        basic_config_check; shift && server_send_command "$@";;
- --send-all|send-all)                basic_config_check; shift && server_send_all_command "$@";;
+ --send|send)                        basic_config_check; shift && server_send "$@";;
+ --send-all|send-all)                basic_config_check; shift && sendall=true && server_send "$@";;
+ --send-rcon|send-rcon)              basic_config_check; shift && server_send_rcon "$@";;
+ --send-rcon-all|send-rcon-all)      basic_config_check; shift && sendall=true && server_send_rcon "$@";;
  --logs|logs)                        basic_config_check; shift && server_logs "$@";;
  --maplist|maplist)                  basic_config_check; shift && server_maplist "$@";;
  --mapinfo|mapinfo)                  basic_config_check; shift && server_mapinfo_control "$@";;
