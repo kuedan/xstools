@@ -429,7 +429,7 @@ if [[ -n $not_wait_for_quit ]]; then
 fi
 if [[ -z $quit_and_redirect_now ]]; then
 # get the new field of server names
-server_names=( $(echo ${server_names[@]}) )
+server_names=( ${server_names[@]} )
 sleep 0.5
 counter=0
 while [ $counter -lt ${#server_names[@]} ]; do
@@ -438,7 +438,7 @@ while [ $counter -lt ${#server_names[@]} ]; do
             tmux send -t $tmux_session:$tmux_window "exit" C-m
             echo -e "       Server '$server_name' has been stopped."
             unset server_names[$counter]
-            server_names=( $(echo ${server_names[@]}) )
+            server_names=( ${server_names[@]} )
         else
             counter=$[$counter+1]
             if [[ $counter -eq ${#server_names[@]} ]]; then
@@ -489,7 +489,7 @@ if [[ -n $not_wait_for_quit ]]; then
     exit
 fi
 # get the new field of server names
-server_names=( $(echo ${server_names[@]}) )
+server_names=( ${server_names[@]} )
 sleep 0.5
 counter=0
 while [ $counter -lt ${#server_names[@]} ]; do
@@ -498,7 +498,7 @@ while [ $counter -lt ${#server_names[@]} ]; do
             tmux send -t $tmux_session:$tmux_window "exit" C-m
             echo -e "       Server '$server_name' has been stopped."
             unset server_names[$counter]
-            server_names=( $(echo ${server_names[@]}) )
+            server_names=( ${server_names[@]} )
         else
             counter=$[$counter+1]
             if [[ $counter -eq ${#server_names[@]} ]]; then
@@ -669,7 +669,7 @@ server_config_check_and_set ${server_names[$counter]}
 done
 if [[ -z $restart_and_redirect_now ]]; then
 # get the new field of server names
-server_names=( $(echo ${server_names[@]}) )
+server_names=( ${server_names[@]} )
 sleep 0.5
 counter=0
 while [ $counter -lt ${#server_names[@]} ]; do
@@ -684,7 +684,7 @@ while [ $counter -lt ${#server_names[@]} ]; do
             fi
             echo -e "       Server '$server_name' has been restarted."
             unset server_names[$counter]
-            server_names=( $(echo ${server_names[@]}) )
+            server_names=( ${server_names[@]} )
         else
             counter=$[$counter+1]
             if [[ $counter -eq ${#server_names[@]} ]]; then
@@ -1124,11 +1124,11 @@ else
     fi
     my_command="$@"
 fi
-a_servername=( $server_names )
+server_names=( $server_names )
 counter=0
-while [ "$counter" -lt "${#a_servername[@]}" ]; do
-    echo -e "$print_info Sending command to server '${a_servername[$counter]}'."
-    tmux send -t $tmux_session:server-${a_servername[$counter]} "$my_command" C-m
+while [ "$counter" -lt "${#server_names[@]}" ]; do
+    echo -e "$print_info Sending command to server '${server_names[$counter]}'."
+    tmux send -t $tmux_session:server-${server_names[$counter]} "$my_command" C-m
     counter=$[$counter+1]
 done
 } # end of server_send()
