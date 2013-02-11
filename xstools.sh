@@ -1125,8 +1125,8 @@ if [[ -n $rcon_password ]]; then
 else
     if [[ $main_rcon_password == "" ]]; then
         echo >&2 -e "$print_error Could not find a rcon password in $server_config"
-        echo >&2 -e "       or in your security.cfg."
-        echo >&2 -e "       No command has been sent to any server."
+        echo >&2 -e "        or in your security.cfg."
+        echo >&2 -e "        No command has been sent to any server."
         exit 1
     fi
     all_rcon_passwords="$all_rcon_passwords $main_rcon_password"
@@ -1143,7 +1143,7 @@ if [[ ! -x "$rcon_script" ]]; then
 fi
 
 # get main rcon password
-main_rcon_password=$(awk '/^rcon_password/ {print $2}' "$userdir"/configs/common/security.cfg)
+main_rcon_password=$(awk '/^rcon_password/ {print $2}' "$userdir"/configs/servers/common/security.cfg)
 
 if [[ -z $sendall ]]; then
     # check if arguments contain -c for seperating command from server names
