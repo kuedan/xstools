@@ -944,9 +944,9 @@ if [[ "$tmux_help" == "true" ]]; then
     echo -e "$print_info You will be attached to a server window."
     echo
     echo -e "$print_attention To get out of tmux..."
-    echo -e "            hold ctrl, then press b, release them, then press d."
+    echo -e "            hold ctrl, press b, release them, press d."
     echo -e "            To scroll..."
-    echo -e "            hold ctrl, then press b, release them, then press 'page up'."
+    echo -e "            hold ctrl, press b, release them, press 'page up'."
     echo -e "            You can scroll with your arrow keys"
     echo -e "            (Press enter to continue)"
     read # wait until info has been read
