@@ -1116,23 +1116,20 @@ elif ! pgrep_server &>/dev/null; then
 fi
 all_server_names="$all_server_names $server_name"
 all_server_ports="$all_server_ports $server_port"
-# if we have to search the rcon_password in every config file, then...
-if [[ $search_in_configs == "true" ]]; then
-    rcon_password=$(awk '/^rcon_password/ {print $2}' $userdir/configs/servers/$server_config)
-    # test if we have found a rcon_password.... simply test if rcon_password is NOT empty
-    if [[ $rcon_password == "" ]]; then
-        echo >&2 -e "$print_error Could not find a rcon password in $server_config"
-        echo >&2 -e "       No command has been sent to any server."
-        exit 1
-    fi
+# set/search our rcon passwords
+# test if our server config file has password - otherwise use $main_rcon_password
+unset rcon_password
+rcon_password=$(awk '/^rcon_password/ {print $2}' "$userdir/configs/servers/$server_config")
+if [[ -n $rcon_password ]]; then
     all_rcon_passwords="$all_rcon_passwords $rcon_password"
 else
-    if [[ $single_rcon_password == "" ]]; then
-        echo >&2 -e "$print_error Could not find a rcon password in your passwords file."
+    if [[ $main_rcon_password == "" ]]; then
+        echo >&2 -e "$print_error Could not find a rcon password in $server_config"
+        echo >&2 -e "       or in your security.cfg."
         echo >&2 -e "       No command has been sent to any server."
         exit 1
     fi
-all_rcon_passwords="$all_rcon_passwords $single_rcon_password"
+    all_rcon_passwords="$all_rcon_passwords $main_rcon_password"
 fi
 } # end of server_send_set_ports_and_pws
 
@@ -1143,15 +1140,10 @@ if [[ ! -x "$rcon_script" ]]; then
     echo >&2 -e "$print_error Could not find rcon script."
     echo >&2 -e "        Check xstools.conf. Also check flags, need +x"
     exit 1
-elif [[ "$password_file" == "configs" ]]; then
-    search_in_configs="true"
-elif [[ -f "$password_file" ]]; then
-    single_rcon_password=$(awk '/^rcon_password/ {print $2}' $password_file)
-else
-    echo >&2 -e "$print_error Could not find rcon password(s)."
-    echo >&2 -e "        Check xstools.conf."
-    exit 1
 fi
+
+# get main rcon password
+main_rcon_password=$(awk '/^rcon_password/ {print $2}' "$userdir"/configs/common/security.cfg)
 
 if [[ -z $sendall ]]; then
     # check if arguments contain -c for seperating command from server names
