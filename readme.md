@@ -24,8 +24,13 @@ All adjustments can be made in the basic configuration file: **xstools.conf**.
     --attach <server(s)>             - attach server console
     --add-pk3 <-p> <url(s)>          - add pk3 files from given urls
     --rescan                         - rescan for new added packages
+
     --send-all <command>             - send a command to all servers
     --send <server(s)> -c <command>  - send a command to given server(s)
+    --send-rcon-all <command>        - send a command to all servers using rcon
+    --send-rcon <server(s)>          - send a command to given server(s)
+        -c <command>                   using rcon
+
     --logs set/ del <-d>             - set a new log file for all servers,
                                        delete log files in data folder (-d)
                                        older than given days

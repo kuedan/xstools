@@ -1911,8 +1911,13 @@ xstools
     --attach <server(s)>             - attach server console
     --add-pk3 <-p> <url(s)>          - add pk3 files from given urls
     --rescan                         - rescan for new added packages
+
     --send-all <command>             - send a command to all servers
     --send <server(s)> -c <command>  - send a command to given server(s)
+    --send-rcon-all <command>        - send a command to all servers using rcon
+    --send-rcon <server(s)>          - send a command to given server(s)
+        -c <command>                   using rcon
+
     --logs set/ del <-d>             - set a new log file for all servers,
                                        delete log files in data folder (-d)
                                        older than given days
@@ -2035,6 +2040,13 @@ servers. Check Wiki for complete help.
 
 --send <server(s)>      Send a command to given servers and receive output.
       -c <command>      The beginning of command is defined by -c.
+
+--send-rcon-all  <command>    Send a command to all servers and receive output.
+                              (uses rcon)
+
+--send-rcon <server(s)>       Send a command to given server(s) and receive
+      -c <command>            output. The beginning of command is defined by -c
+                              (uses rcon)
 
 --logs set              Change the log file of all running servers to
                         'serverconfig.date.log', where 'serverconfig' is the
