@@ -1507,7 +1507,7 @@ for map_pk3 in "$@"; do
         if [[ -f "$userdir/$data_dirname/maps/$map_info" ]]; then
             echo -e "$print_info $map_info already exists."
         else
-            echo -e "$print_info Extract $map_info of ${map_pk3##/*}."
+            echo -e "$print_info Extract $map_info of ${map_pk3##*/}."
             unzip -qnj -d "$userdir/$data_dirname/maps"  $map_pk3 maps/$map_info
         fi
     done
