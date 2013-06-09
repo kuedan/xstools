@@ -1987,9 +1987,9 @@ servers. Check Wiki for complete help.
             -n          Optional parameter in combination with -q. Directly
                         quit, do not wait for endmatch.
             -e          Quit server when empty and next level starts.
-            -w          Optional parameter in combination with -q. xstools
-                        will not wait for server endmatch. You have to close
-                        the tmux window on your own.
+            -w          Optional parameter in combination with -e or -q.
+                        xstools will not wait for server endmatch.
+                        You have to close the tmux window on your own.
 
 --restart-all           Restart all running server(s).
   Options:  -r          Command only affects release servers.
