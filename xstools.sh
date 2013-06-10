@@ -1282,7 +1282,7 @@ if [[ ! -d "$userdir/$data_dirname" ]]; then
      exit 1
 fi
 find "$userdir/$data_dirname"/logs/*.log -type f -mtime +$mdays -exec rm -f {} \; 2>/dev/null
-echo -e "$print_info Log files older than $mdays days deleted."
+echo -e "$print_info Log files in $data_dirname older than $mdays days deleted."
 } # end of server_del_logs
 
 function server_logs() {
