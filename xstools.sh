@@ -72,7 +72,7 @@ elif [[ -z "$tmux_session" ]]; then
     echo >&2 -e "        Check xstools.conf"
     exit 1
 elif [[ -f "$userdir/lock_update" ]]; then
-    echo >&2 "xstools is locked, because of a git update."
+    echo >&2 "xstools is locked, because of a git/autobuild update."
     echo >&2 "You can use xstools again, when update is done."
     echo >&2 "To unlock manual: remove lock_update in your userdir."
     exit 1
