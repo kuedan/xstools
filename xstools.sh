@@ -1281,7 +1281,7 @@ if [[ ! -d "$userdir/$data_dirname" ]]; then
      echo -e >&2 "$print_error Data folder $data_dirname does not exist."
      exit 1
 fi
-find "$userdir/$data_dirname"/logs/*.log -type f -mtime +$mdays -exec rm -f {} \; 2>/dev/null
+find "$userdir/$data_dirname"/logs/*.log -type f -mtime +$mdays -delete 2>/dev/null
 echo -e "$print_info Log files in $data_dirname older than $mdays days deleted."
 } # end of server_del_logs
 
