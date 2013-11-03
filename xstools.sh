@@ -1646,7 +1646,8 @@ for map_info_l in "$userdir/$data_dirname/maps/*.mapinfo"; do
     sed -i -e 's/^type /gametype /g'\
            -e 's/^gametype freezetag/gametype ft/g'\
            -e 's/^gametype keepaway/gametype ka/g'\
-           -e 's/^gametype nexball/gametype nb/g' $map_info_l &>/dev/null
+           -e 's/^gametype nexball/gametype nb/g' \
+           -e '/^gametype rune/d' $map_info_l &>/dev/null
 done
 echo -e "$print_info Scanning pk3 packages and fix them"
 echo -e "       Existing mapinfos are not overwritten."
@@ -1661,12 +1662,13 @@ for folder in $package_folders; do
         for map_info in $map_infos; do
             if [[ -f "$userdir/$data_dirname/maps/$map_info" ]]; then
                 continue
-            elif unzip -qp $map_pk3 maps/$map_info |grep -E '(^type )|(^gametype (freezetag)|(keepaway)|(nexball))' &>/dev/null; then
+            elif unzip -qp $map_pk3 maps/$map_info |grep -E '(^type )|(^gametype (freezetag)|(keepaway)|(nexball)|(rune))' &>/dev/null; then
                 unzip -qjn -d "$userdir/$data_dirname/maps/" $map_pk3 maps/$map_info
                 sed -i -e 's/^type /gametype /g'\
                        -e 's/^gametype freezetag/gametype ft/g'\
                        -e 's/^gametype keepaway/gametype ka/g'\
-                       -e 's/^gametype nexball/gametype nb/g' $map_info_l &>/dev/null
+                       -e 's/^gametype nexball/gametype nb/g' \
+                       -e '/^gametype rune/d' $map_info_l &>/dev/null
             fi
         done
     done
