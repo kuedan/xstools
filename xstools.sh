@@ -278,7 +278,7 @@ for var in $@; do
         echo -e "$print_info Server '$server_name' has been started."
     # option 3: server is not running; tmux session exists, and window already exists
     # -> print error and continue with for loop
-    elif tmux list-windows -t $tmux_session |grep "$tmux_window " &>/dev/null; then
+    elif tmux list-windows -t $tmux_session |grep "$tmux_window[ -\*]" &>/dev/null; then
         echo &>2 -e "$print_error Server '$server_name' does not run, but tmux window '$tmux_window' exists."
         echo &>2 -e "          Use '--attach $server_name' to check window status."
         continue
@@ -352,7 +352,7 @@ case $1 in
         for server_name in $@; do
         server_config_check_and_set $server_name
             if pgrep_server &>/dev/null; then
-                if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+                if tmux list-windows -t $tmux_session| grep "$tmux_window[ -\*]" &>/dev/null; then
                     tmux send -t $tmux_session:$tmux_window "endmatch; quit" C-m
                     sleep 0.5
                     tmux send -t $tmux_session:$tmux_window "exit" C-m
@@ -369,7 +369,7 @@ case $1 in
         for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
             server_config_check_and_set $(basename ${cfg%.cfg})
             if pgrep_server$pgrep_suffix &>/dev/null; then
-                if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+                if tmux list-windows -t $tmux_session| grep "$tmux_window[ -\*]" &>/dev/null; then
                     tmux send -t $tmux_session:$tmux_window "endmatch; quit" C-m
                     sleep 0.5
                     tmux send -t $tmux_session:$tmux_window "exit" C-m
@@ -402,7 +402,7 @@ counter=0
 while [ $counter -lt ${#server_names[@]} ]; do
 server_config_check_and_set ${server_names[$counter]}
     if pgrep_server &>/dev/null; then
-        if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+        if tmux list-windows -t $tmux_session| grep "$tmux_window[ -\*]" &>/dev/null; then
             echo -e "$print_info Sending 'quit_and_redirect $quit_and_redirect_to' to '$server_name'"
             tmux send -t $tmux_session:$tmux_window "quit_and_redirect ${quit_and_redirect_to}" C-m
             if [[ -n $restart_and_redirect_now ]]; then
@@ -469,7 +469,7 @@ counter=0
 while [ $counter -lt ${#server_names[@]} ]; do
 server_config_check_and_set ${server_names[$counter]}
     if pgrep_server &>/dev/null; then
-        if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+        if tmux list-windows -t $tmux_session| grep "$tmux_window[ -\*]" &>/dev/null; then
             echo -e "$print_info Sending 'quit_when_empty 1' to '$server_name'"
             tmux send -t $tmux_session:$tmux_window "quit_when_empty 1" C-m
         else
@@ -572,7 +572,7 @@ case $1 in
         for server_name in $@; do
             server_config_check_and_set $server_name
             if pgrep_server &>/dev/null; then
-                if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+                if tmux list-windows -t $tmux_session| grep "$tmux_window[ -\*]" &>/dev/null; then
                     echo -e "$print_info Restarting server '$server_name'..."
                     tmux send -t $tmux_session:$tmux_window "endmatch; quit" C-m
                     sleep 0.5
@@ -596,7 +596,7 @@ case $1 in
         for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
             server_config_check_and_set $(basename ${cfg%.cfg})
             if pgrep_server$pgrep_suffix &>/dev/null; then
-                if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+                if tmux list-windows -t $tmux_session| grep "$tmux_window[ -\*]" &>/dev/null; then
                     echo -e "$print_info Restarting server '$server_name'..."
                     tmux send -t $tmux_session:$tmux_window "endmatch; quit" C-m
                     sleep 0.5
@@ -637,7 +637,7 @@ counter=0
 while [ $counter -lt ${#server_names[@]} ]; do
 server_config_check_and_set ${server_names[$counter]}
     if pgrep_server &>/dev/null; then
-        if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+        if tmux list-windows -t $tmux_session| grep "$tmux_window[ -\*]" &>/dev/null; then
             echo -e "$print_info Sending 'quit_and_redirect $restart_and_redirect_to' to '$server_name'..."
             tmux send -t $tmux_session:$tmux_window "quit_and_redirect ${restart_and_redirect_to}" C-m
             if [[ -n $restart_and_redirect_now ]]; then
@@ -746,7 +746,7 @@ case $1 in
         for server_name in $@; do
             server_config_check_and_set $server_name
             if pgrep_server &>/dev/null; then
-                if tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window " &>/dev/null; then
+                if tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window[ -\*]" &>/dev/null; then
                     send_notice_to="$send_notice_to $tmux_window"
                 fi
             fi
@@ -756,7 +756,7 @@ case $1 in
         server_config_check_and_set $(basename ${cfg%.cfg})
         # search for servers and save them in a field
         if pgrep_server$pgrep_suffix &>/dev/null; then
-            if tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window " &>/dev/null; then
+            if tmux list-windows -t $tmux_session 2>/dev/null| grep "$tmux_window[ -\*]" &>/dev/null; then
                 send_notice_to="$send_notice_to $tmux_window"
             fi
         fi
@@ -1097,7 +1097,7 @@ if [[ -z $sendall ]]; then
         fi
         server_config_check_and_set $var
         if pgrep_server &>/dev/null; then
-            if ! tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+            if ! tmux list-windows -t $tmux_session| grep "$tmux_window[ -\*]" &>/dev/null; then
                 echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but server '$server_name' is running."
                 echo >&2 -e "        You have to fix this on your own."
             else
@@ -1111,7 +1111,7 @@ else
         server_config=${cfg##*/}
         if pgrep_server &>/dev/null; then
             server_config_check_and_set ${server_config%.cfg}
-            if ! tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+            if ! tmux list-windows -t $tmux_session| grep "$tmux_window[ -\*]" &>/dev/null; then
                 echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but server '$server_name' is running."
                 echo >&2 -e "        You have to fix this on your own."
             else
@@ -1141,7 +1141,7 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     server_config=${cfg##*/}
     if pgrep_server &>/dev/null; then
         server_config_check_and_set ${server_config%.cfg}
-        if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+        if tmux list-windows -t $tmux_session| grep "$tmux_window[ -\*]" &>/dev/null; then
             tmux send -t $tmux_session:$tmux_window "rescan_pending 1" C-m
             echo -e "       - $server_name"
         else
@@ -1217,7 +1217,7 @@ else
     for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
         server_config_check_and_set $(basename ${cfg%.cfg})
         if pgrep_server &>/dev/null; then
-            if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+            if tmux list-windows -t $tmux_session| grep "$tmux_window[ -\*]" &>/dev/null; then
                 server_send_rcon_get_ports_and_pws
             else
                 echo >&2 -e "$print_error tmux window '$tmux_window' does not exist, but server '$server_name' is running."
@@ -1251,7 +1251,7 @@ for cfg in $(ls "$userdir"/configs/servers/*.cfg 2>/dev/null); do
     server_config=${cfg##*/}
     if pgrep_server &>/dev/null; then
         server_config_check_and_set ${server_config%.cfg}
-        if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+        if tmux list-windows -t $tmux_session| grep "$tmux_window[ -\*]" &>/dev/null; then
             log_format="logs/${server_name}_$(date +%F).log"
             tmux send -t $tmux_session:$tmux_window "log_file \"$log_format\"" C-m
             echo -e "       - $server_name"
@@ -1744,7 +1744,7 @@ rcon2irc_config_check_and_set $var
         rcon2irc_check_start
     # option 3: rcon2irc is not running; tmux session exists, and window already exists
     # in this case: print error and continue with for loop
-    elif tmux list-windows -t $tmux_session | grep "$tmux_window " &>/dev/null; then
+    elif tmux list-windows -t $tmux_session | grep "$tmux_window[ -\*]" &>/dev/null; then
         echo >&2 -e "$print_error rcon2irc '$rcon2irc_name' does not run, but tmux window '$tmux_window' exists."
         echo >&2 -e "        Use '--rcon2irc attach $rcon2irc_name' to check window status."
         continue
@@ -1773,7 +1773,7 @@ done
 for var in $@; do
 rcon2irc_config_check_and_set $var
     if [[ $(ps o cmd | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep ) ]]; then
-        if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+        if tmux list-windows -t $tmux_session| grep "$tmux_window[ -\*]" &>/dev/null; then
             rcon_pid=$(ps o pid,cmd | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $1}')
             kill -9 $rcon_pid
             sleep 1
@@ -1795,7 +1795,7 @@ for conf in $(ls "$userdir"/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
     rcon2irc_config_check_and_set $(basename ${conf%.rcon2irc.conf})
     # nearly the same if statement like rcon2irc_stop
     if [[ $(ps o cmd | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep ) ]]; then
-        if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+        if tmux list-windows -t $tmux_session| grep "$tmux_window[ -\*]" &>/dev/null; then
             rcon_pid=$(ps o pid,cmd | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $1}')
             kill -9 $rcon_pid
             sleep 1
@@ -1818,7 +1818,7 @@ for var in $@; do
 rcon2irc_config_check_and_set $var
     # We can only restart a server if server is running and tmux session exists
     if [[ $(ps o cmd | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep ) ]]; then
-        if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+        if tmux list-windows -t $tmux_session| grep "$tmux_window[ -\*]" &>/dev/null; then
             rcon_pid=$(ps o pid,cmd | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $1}')
             echo -e "$print_info Restarting rcon2irc '$rcon2irc_name'"
             kill -9 $rcon_pid
@@ -1845,7 +1845,7 @@ function rcon2irc_restart_all() {
 for conf in $(ls $userdir/configs/rcon2irc/*.rcon2irc.conf 2>/dev/null); do
     rcon2irc_config_check_and_set $(basename ${conf%.rcon2irc.conf})
     if [[ $(ps o cmd | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null |grep -v grep) ]]; then
-        if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+        if tmux list-windows -t $tmux_session| grep "$tmux_window[ -\*]" &>/dev/null; then
             rcon_pid=$(ps o pid,cmd | grep "perl $rcon2irc_script $rcon2irc_config"  2>/dev/null|grep -v grep | awk '{print $1}')
             echo -e "$print_info Restarting rcon2irc '$rcon2irc_name'"
             kill -9 $rcon_pid
@@ -1881,7 +1881,7 @@ if [[ "$tmux_help" == "true" ]]; then
 fi
 for var in $@; do
 rcon2irc_config_check_and_set $var
-    if tmux list-windows -t $tmux_session| grep "$tmux_window " &>/dev/null; then
+    if tmux list-windows -t $tmux_session| grep "$tmux_window[ -\*]" &>/dev/null; then
         tmux select-window -t $tmux_session:$tmux_window
         tmux attach -t $tmux_session
     else
