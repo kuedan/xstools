@@ -95,3 +95,9 @@ Check this [Documentation](http://lcbx.dyndns.org/xonotic/xstools).
 
 For any questions or help, join [#xstools, quakenet](http://webchat.quakenet.org/?channels=xstools) (IRC).
 
+## Credits
+
+ - [-z-], thanks for ideas/input via [Nexuiz Server Toolz](https://github.com/z/nst)
+ 
+ 
+ 
