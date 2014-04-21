@@ -91,7 +91,7 @@ Use the following extenstions for your configs:
 
 ## Documentation
 
-Check this [Documentation](http://lcbx.dyndns.org/xonotic/xstools).
+Check this [Documentation](http://x2.devfull.de/xonotic/xstools).
 
 For any questions or help, join [#xstools, quakenet](http://webchat.quakenet.org/?channels=xstools) (IRC).
 
